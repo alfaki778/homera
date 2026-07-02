@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>هوميرا · لوحة التحكم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="dash.css"/>
+<script src="dash-tweaks.js"></script>
+</head>
+<body>
+<div class="dash">
+
+  <!-- ============ الشريط الجانبي ============ -->
+  <aside class="side" id="side">
+    <button class="burger-close" id="closeSide" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="brand">
+      <span class="name">HOMERA</span>
+      <span class="tag">Admin · Dashboard</span>
+    </div>
+
+    <div class="grp">الرئيسية</div>
+    <div class="navitem active" data-view="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      نظرة عامة
+    </div>
+    <div class="navitem" data-view="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>
+      المشاريع
+    </div>
+
+    <div class="grp">خارجي</div>
+    <a class="navitem" href="هوميرا - الرئيسية.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
+      الموقع
+      <span class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+    </a>
+
+    <div class="spacer"></div>
+    <div class="me">
+      <div class="av">هـ</div>
+      <div class="info"><b>إدارة هوميرا</b><span>مدير النظام</span></div>
+    </div>
+  </aside>
+
+  <!-- ============ المحتوى ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="m-burger" id="openSide" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div>
+        <h1 id="pageTitle">نظرة عامة</h1>
+        <div class="sub" id="pageSub">ملخّص أداء مشاريع هوميرا</div>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="text" id="searchInput" placeholder="ابحث عن مشروع…"/>
+      </div>
+      <button class="icon-btn" aria-label="الإشعارات"><span class="dot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10.5 19a1.5 1.5 0 0 0 3 0"/></svg></button>
+    </header>
+
+    <div class="content">
+
+      <!-- ===== نظرة عامة ===== -->
+      <section class="view active" id="view-overview">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div><span class="delta up">+1 هذا الشهر</span></div>
+            <div class="val" id="kpiProjects">6</div><div class="lbl">إجمالي المشاريع</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg></div><span class="delta flat">90 وحدة</span></div>
+            <div class="val" id="kpiUnits">90</div><div class="lbl">إجمالي الوحدات</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5-8 8"/><circle cx="16.5" cy="6.5" r="2.5"/><path d="M9 13l-4 4v2h2l4-4"/></svg></div><span class="delta flat">42%</span></div>
+            <div class="val" id="kpiAvail">38</div><div class="lbl">الوحدات المتاحة</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div><span class="delta up">+6</span></div>
+            <div class="val" id="kpiSold">52</div><div class="lbl">الوحدات المباعة</div>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="card">
+            <div class="hd"><h3>أحدث المشاريع</h3><div class="act"><button class="link-btn" data-goto="projects">عرض الكل</button></div></div>
+            <table class="tbl"><thead><tr>
+              <th>المشروع</th><th>السعر</th><th>الوحدات</th><th>الحالة</th><th>نسبة البيع</th>
+            </tr></thead><tbody id="overviewTbody"></tbody></table>
+          </div>
+
+          <div class="card aside-card">
+            <span class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg> الاستفسارات تُدار خارجياً</span>
+            <p>يتم استقبال استفسارات العملاء عبر واتساب والموقع مباشرةً. اضغط لفتح محادثات العملاء.</p>
+            <button class="btn-wa" onclick="openWA()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Z"/></svg>
+              فتح الاستفسارات (واتساب)
+            </button>
+            <div style="margin-top:20px">
+              <div class="mini-stat"><span class="k">قيمة المبيعات</span><span class="v" id="msRevenue" style="direction:ltr">—</span></div>
+              <div class="mini-stat"><span class="k">نسبة البيع الإجمالية</span><span class="v" id="msOverall">58%</span></div>
+              <div class="mini-stat"><span class="k">أعلى مشروع مبيعاً</span><span class="v" id="msTop" style="direction:rtl">الصفا 121</span></div>
+              <div class="mini-stat"><span class="k">مشاريع قيد البيع</span><span class="v" id="msSale">4</span></div>
+              <div class="mini-stat"><span class="k">مشاريع مكتملة</span><span class="v" id="msDone">1</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== المشاريع ===== -->
+      <section class="view" id="view-projects">
+        <div class="toolbar">
+          <div class="chips" id="statusChips">
+            <button class="chip on" data-status="all">الكل</button>
+            <button class="chip" data-status="sale">قيد البيع</button>
+            <button class="chip" data-status="done">مكتمل</button>
+            <button class="chip" data-status="new">جديد</button>
+          </div>
+          <button class="btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة مشروع</button>
+        </div>
+        <div class="card">
+          <table class="tbl"><thead><tr>
+            <th>المشروع</th><th>الحي</th><th>النوع</th><th>السعر</th><th>الوحدات (متاح/مباع)</th><th>الحالة</th><th>نسبة البيع</th><th></th>
+          </tr></thead><tbody id="projectsTbody"></tbody></table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openWA(){ window.open('https://wa.me/966120000000?text=' + encodeURIComponent('استفسارات عملاء هوميرا'), '_blank'); }
+
+  var PROJECTS = [
+    {name:'مشروع النعيم 120', dist:'حي النعيم', city:'جدة', area:175, facade:'جنوبية', type:'شقق', price:750000, total:16, avail:3, sold:13, status:'sale', pct:81},
+    {name:'مشروع الفضيلة 117', dist:'حي الفضيلة', city:'جدة', area:200, facade:'شمالية', type:'فيلا', price:1100000, total:12, avail:5, sold:7, status:'sale', pct:58},
+    {name:'مشروع الروضة 116', dist:'حي الروضة', city:'جدة', area:165, facade:'شرقية', type:'شقق', price:690000, total:20, avail:8, sold:12, status:'sale', pct:60},
+    {name:'مشروع أبحر 122', dist:'أبحر الشمالية', city:'جدة', area:185, facade:'غربية', type:'شقق', price:820000, total:24, avail:14, sold:10, status:'sale', pct:42},
+    {name:'مشروع الصفا 121', dist:'حي الصفا', city:'جدة', area:210, facade:'شمالية', type:'فيلا', price:1050000, total:10, avail:0, sold:10, status:'done', pct:100},
+    {name:'مشروع السلامة 118', dist:'حي السلامة', city:'جدة', area:240, facade:'غربية', type:'فيلا', price:1250000, total:8, avail:8, sold:0, status:'new', pct:0}
+  ];
+  var STATUS = {sale:{c:'sale',t:'قيد البيع'}, done:{c:'done',t:'مكتمل'}, new:{c:'new',t:'جديد'}};
+  var fmt = function(n){ return n.toLocaleString('en-US'); };
+  var REVENUE = PROJECTS.reduce(function(s,p){ return s + p.sold*p.price; }, 0);
+
+  function bldg(){ return '<span class="sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg></span>'; }
+  function statusPill(s){ var o=STATUS[s]; return '<span class="pill '+o.c+'">'+o.t+'</span>'; }
+  function prog(p){ return '<div class="prog"><div class="bar"><i style="width:'+p+'%"></i></div><span class="pct">'+p+'%</span></div>'; }
+
+  function rowOverview(p){
+    return '<tr>'+
+      '<td data-label="المشروع"><div class="proj">'+bldg()+'<div><b>'+p.name+'</b><span>'+p.dist+' · '+p.type+'</span></div></div></td>'+
+      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح / '+p.total+'</span></span></td>'+
+      '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
+      '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
+    '</tr>';
+  }
+  function rowFull(p){
+    return '<tr class="proj-row" data-status="'+p.status+'" data-name="'+p.name+'">'+
+      '<td data-label="المشروع"><div class="proj">'+bldg()+'<div><b>'+p.name+'</b><span>'+p.type+'</span></div></div></td>'+
+      '<td data-label="الحي">'+p.dist+'</td>'+
+      '<td data-label="النوع">'+p.type+'</td>'+
+      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح · '+p.sold+' مباع</span></span></td>'+
+      '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
+      '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
+      '<td data-label=""><div style="display:flex;gap:8px"><button class="rowbtn sell-btn" data-name="'+p.name+'" title="تسجيل بيع وحدة"'+(p.avail<=0?' disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></button><button class="rowbtn view-btn" aria-label="عرض"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>'+
+    '</tr>';
+  }
+
+  var currentFilter='all', currentSearch='';
+  function setTxt(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+  function computeKPIs(){
+    var count=PROJECTS.length,
+        total=PROJECTS.reduce(function(s,p){return s+p.total;},0),
+        avail=PROJECTS.reduce(function(s,p){return s+p.avail;},0),
+        sold=PROJECTS.reduce(function(s,p){return s+p.sold;},0);
+    setTxt('kpiProjects',count); setTxt('kpiUnits',total); setTxt('kpiAvail',avail); setTxt('kpiSold',sold);
+    setTxt('msOverall',(total?Math.round(sold/total*100):0)+'%');
+    var top=PROJECTS.slice().sort(function(a,b){return b.sold-a.sold;})[0];
+    setTxt('msTop', top?top.name.replace('مشروع ',''):'—');
+    setTxt('msSale', PROJECTS.filter(function(p){return p.status==='sale';}).length);
+    setTxt('msDone', PROJECTS.filter(function(p){return p.status==='done';}).length);
+    setTxt('msRevenue', fmt(REVENUE)+' ر.س');
+  }
+  function applyFilters(){
+    document.querySelectorAll('#projectsTbody .proj-row').forEach(function(r){
+      var okS = currentFilter==='all' || r.dataset.status===currentFilter;
+      var okQ = !currentSearch || r.dataset.name.indexOf(currentSearch)>-1;
+      r.classList.toggle('hide', !(okS && okQ));
+    });
+  }
+  function renderAll(){
+    document.getElementById('overviewTbody').innerHTML = PROJECTS.slice(0,4).map(rowOverview).join('');
+    document.getElementById('projectsTbody').innerHTML = PROJECTS.map(rowFull).join('');
+    computeKPIs(); applyFilters();
+  }
+  renderAll();
+
+  // تبديل العرض
+  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا']};
+  function showView(v){
+    document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
+    document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
+    document.getElementById('pageTitle').textContent = titles[v][0];
+    document.getElementById('pageSub').textContent = titles[v][1];
+    document.getElementById('side').classList.remove('open');
+  }
+  document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.addEventListener('click',function(){ showView(n.dataset.view); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click',function(){ showView(b.dataset.goto); }); });
+
+  // فلترة الحالة
+  document.querySelectorAll('#statusChips .chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.querySelectorAll('#statusChips .chip').forEach(function(x){x.classList.remove('on');});
+      c.classList.add('on'); currentFilter=c.dataset.status; applyFilters();
+    });
+  });
+
+  // بحث
+  document.getElementById('searchInput').addEventListener('input',function(e){
+    currentSearch=e.target.value.trim();
+    if(currentSearch && !document.getElementById('view-projects').classList.contains('active')){ showView('projects'); }
+    applyFilters();
+  });
+
+  // القائمة الجوّالة
+  document.getElementById('openSide').addEventListener('click',function(){ document.getElementById('side').classList.add('open'); });
+  document.getElementById('closeSide').addEventListener('click',function(){ document.getElementById('side').classList.remove('open'); });
+
+  document.addEventListener('DOMContentLoaded', function(){
+  // ===== النوافذ =====
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  var bIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg>';
+  function openView(p){
+    var s=STATUS[p.status];
+    document.getElementById('viewBody').innerHTML =
+      '<div class="mv-head"><span class="sq">'+bIcon+'</span><div><b>'+p.name+'</b><span>'+p.dist+' · '+p.type+'</span></div></div>'+
+      '<div class="mv-grid">'+
+        '<div class="mv-item"><div class="k">السعر</div><div class="v ltr">'+fmt(p.price)+' ر.س</div></div>'+
+        '<div class="mv-item"><div class="k">المساحة</div><div class="v ltr">'+(p.area?p.area+' م²':'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">نوع العقار</div><div class="v">'+p.type+'</div></div>'+
+        '<div class="mv-item"><div class="k">المدينة</div><div class="v">'+(p.city||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">الواجهة</div><div class="v">'+(p.facade||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">الحالة</div><div class="v">'+s.t+'</div></div>'+
+        '<div class="mv-item"><div class="k">إجمالي الوحدات</div><div class="v ltr">'+p.total+'</div></div>'+
+        '<div class="mv-item"><div class="k">الوحدات المتاحة</div><div class="v ltr">'+p.avail+'</div></div>'+
+        '<div class="mv-item"><div class="k">الوحدات المباعة</div><div class="v ltr">'+p.sold+'</div></div>'+
+        '<div class="mv-item"><div class="k">نسبة البيع</div><div class="v ltr">'+p.pct+'%</div></div>'+
+        '<div class="mv-item full"><div class="k">التقدّم</div><div class="v">'+prog(p.pct)+'</div></div>'+
+      '</div>'+
+      '<button class="btn-primary" id="modalSell" style="margin-top:18px;width:100%;justify-content:center"'+(p.avail<=0?' disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>'+(p.avail<=0?'نفدت الوحدات':'تسجيل بيع وحدة')+'</button>';
+    openModal('viewModal');
+    var ms=document.getElementById('modalSell'); if(ms && !ms.disabled) ms.onclick=function(){ openSell(p); };
+  }
+  document.getElementById('projectsTbody').addEventListener('click',function(e){
+    var sell=e.target.closest('.sell-btn');
+    if(sell){ if(sell.disabled) return; var sp=PROJECTS.find(function(x){return x.name===sell.dataset.name;}); if(sp) openSell(sp); return; }
+    var v=e.target.closest('.view-btn'); if(!v) return;
+    var row=v.closest('.proj-row'); if(!row) return;
+    var p=PROJECTS.find(function(x){return x.name===row.dataset.name;});
+    if(p) openView(p);
+  });
+  var toastEl;
+  function toast(msg){
+    if(!toastEl){ toastEl=document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+    toastEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove('show'); },2400);
+  }
+  var sellTarget=null;
+  function openSell(p){
+    sellTarget=p;
+    document.getElementById('sellName').textContent=p.name.replace('مشروع ','');
+    document.getElementById('sellPrice').value=p.price;
+    document.getElementById('sellUnitsNote').textContent='المتبقّي بعد البيع: '+(p.avail-1)+' من '+p.total+' وحدة';
+    openModal('sellModal');
+    setTimeout(function(){ document.getElementById('sellPrice').focus(); },50);
+  }
+  function sellUnit(p, salePrice){
+    if(p.avail<=0) return;
+    p.avail--; p.sold++; p.pct = p.total?Math.round(p.sold/p.total*100):0;
+    if(p.avail===0) p.status='done';
+    REVENUE += (salePrice||0);
+    renderAll();
+    if(document.getElementById('viewModal').classList.contains('open')) openView(p);
+    toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ','')+' بمبلغ '+fmt(salePrice||0)+' ر.س');
+  }
+  document.getElementById('sellClose').addEventListener('click',function(){ closeModal('sellModal'); });
+  document.getElementById('sellCancel').addEventListener('click',function(){ closeModal('sellModal'); });
+  document.getElementById('sellModal').addEventListener('click',function(e){ if(e.target.id==='sellModal') closeModal('sellModal'); });
+  document.getElementById('sellForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    if(sellTarget) sellUnit(sellTarget, parseInt(this.price.value,10)||0);
+    closeModal('sellModal');
+  });
+  document.getElementById('viewClose').addEventListener('click',function(){ closeModal('viewModal'); });
+  document.getElementById('viewModal').addEventListener('click',function(e){ if(e.target.id==='viewModal') closeModal('viewModal'); });
+
+  document.getElementById('addBtn').addEventListener('click',function(){ openModal('addModal'); });
+  document.getElementById('addClose').addEventListener('click',function(){ closeModal('addModal'); });
+  document.getElementById('addCancel').addEventListener('click',function(){ closeModal('addModal'); });
+  document.getElementById('addModal').addEventListener('click',function(e){ if(e.target.id==='addModal') closeModal('addModal'); });
+  document.getElementById('addForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var f=e.target;
+    var total=Math.max(1,parseInt(f.total.value,10)||0), sold=Math.min(Math.max(0,parseInt(f.sold.value,10)||0),total);
+    REVENUE += sold * (parseInt(f.price.value,10)||0);
+    PROJECTS.unshift({ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
+      total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0 });
+    renderAll(); f.reset(); closeModal('addModal'); showView('projects');
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal('viewModal'); closeModal('addModal'); closeModal('sellModal'); } });
+  });
+</script>
+
+<!-- النوافذ -->
+<div class="modal-ov" id="viewModal">
+  <div class="modal">
+    <div class="mh"><h3>تفاصيل المشروع</h3><button class="x" id="viewClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="mb" id="viewBody"></div>
+  </div>
+</div>
+<div class="modal-ov" id="addModal">
+  <div class="modal">
+    <div class="mh"><h3>إضافة مشروع</h3><button class="x" id="addClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <form id="addForm">
+      <div class="mb">
+        <div class="field"><label>اسم المشروع</label><input name="name" required placeholder="مشروع …"/></div>
+        <div class="frow">
+          <div class="field"><label>المدينة</label><input name="city" required value="جدة" placeholder="جدة"/></div>
+          <div class="field"><label>الحي</label><input name="dist" required placeholder="حي …"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>نوع العقار</label><select name="type"><option>فيلا</option><option>شقق</option></select></div>
+          <div class="field"><label>المساحة (م²)</label><input name="area" type="number" min="0" required placeholder="200"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الواجهة</label><select name="facade"><option>شمالية</option><option>جنوبية</option><option>شرقية</option><option>غربية</option></select></div>
+          <div class="field"><label>السعر (ر.س)</label><input name="price" type="number" min="0" required placeholder="1000000"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الحالة</label><select name="status"><option value="new">جديد</option><option value="sale">قيد البيع</option><option value="done">مكتمل</option></select></div>
+          <div class="field"><label>إجمالي الوحدات</label><input name="total" type="number" min="1" required placeholder="12"/></div>
+        </div>
+        <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
+      </div>
+      <div class="mf-foot"><button type="submit" class="btn-primary">حفظ المشروع</button><button type="button" class="btn-ghost" id="addCancel">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-ov" id="sellModal">
+  <div class="modal" style="max-width:420px">
+    <div class="mh"><h3>تأكيد بيع وحدة</h3><button class="x" id="sellClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <form id="sellForm">
+      <div class="mb">
+        <p style="font-size:14px;color:var(--muted);margin-bottom:16px">سيتم تسجيل بيع وحدة واحدة من <b id="sellName" style="color:var(--text)"></b> وإضافة المبلغ إلى قيمة المبيعات.</p>
+        <div class="field"><label>سعر البيع (ر.س)</label><input name="price" id="sellPrice" type="number" min="0" required/></div>
+        <div id="sellUnitsNote" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="mf-foot"><button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تأكيد البيع</button><button type="button" class="btn-ghost" id="sellCancel">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- لوحة التعديلات -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<div id="tweaks-root"></div>
+<script type="text/babel" src="dash-tweaks-app.jsx"></script>
+
+</body>
+</html>
