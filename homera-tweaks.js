@@ -27,7 +27,11 @@
     contactText: 'تواصل مع فريق هوميرا مباشرةً — نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
     contactPhone: '+966 12 000 0000',
     contactAddress: 'حي الفيصلية، جدة، السعودية',
-    contactEmail: 'info@homera.sa'
+    contactEmail: 'info@homera.sa',
+    projFadilaImg: '',
+    projRoudahImg: '',
+    projSalamahImg: '',
+    projNaeemImg: ''
   };
 
   var FONT_STACK = {
@@ -120,6 +124,10 @@
     setSlotImg('home-hero', t.heroImage);
     setSlotImg('home-hero-split', t.heroImage);
     setSlotImg('about-img', t.aboutImage);
+    setSlotImg('home-proj-fadila', t.projFadilaImg);
+    setSlotImg('home-proj-roudah', t.projRoudahImg);
+    setSlotImg('home-proj-salamah', t.projSalamahImg);
+    setSlotImg('home-proj-naeem', t.projNaeemImg);
 
     window.__HOMERA_TWEAKS = t;
   }
