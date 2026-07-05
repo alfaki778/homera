@@ -31,7 +31,10 @@
     projFadilaImg: '',
     projRoudahImg: '',
     projSalamahImg: '',
-    projNaeemImg: ''
+    projNaeemImg: '',
+    banners: [],
+    pgProjectsBanner: '', pgPFadila: '', pgPRoudah: '', pgPSalamah: '', pgPNaeem: '', pgPSafa: '', pgPAbhur: '',
+    pgFadilaBanner: '', pgFadilaMain: '', pgFadilaT1: '', pgFadilaT2: '', pgFadilaT3: '', pgFadilaT4: '', pgFadilaMap: ''
   };
 
   var FONT_STACK = {
@@ -128,8 +131,39 @@
     setSlotImg('home-proj-roudah', t.projRoudahImg);
     setSlotImg('home-proj-salamah', t.projSalamahImg);
     setSlotImg('home-proj-naeem', t.projNaeemImg);
+    // صفحة المشاريع
+    setSlotImg('projects-banner', t.pgProjectsBanner);
+    setSlotImg('p-fadila', t.pgPFadila);
+    setSlotImg('p-roudah', t.pgPRoudah);
+    setSlotImg('p-salamah', t.pgPSalamah);
+    setSlotImg('p-naeem', t.pgPNaeem);
+    setSlotImg('p-safa', t.pgPSafa);
+    setSlotImg('p-abhur', t.pgPAbhur);
+    // صفحة تفاصيل المشروع
+    setSlotImg('fadila-banner', t.pgFadilaBanner);
+    setSlotImg('fadila-main', t.pgFadilaMain);
+    setSlotImg('fadila-t1', t.pgFadilaT1);
+    setSlotImg('fadila-t2', t.pgFadilaT2);
+    setSlotImg('fadila-t3', t.pgFadilaT3);
+    setSlotImg('fadila-t4', t.pgFadilaT4);
+    setSlotImg('fadila-map', t.pgFadilaMap);
+
+    // بنرات الصفحة الرئيسية
+    renderBanners(t.banners);
 
     window.__HOMERA_TWEAKS = t;
+  }
+
+  function renderBanners(list) {
+    var sec = document.getElementById('home-banners');
+    var track = document.getElementById('bannersTrack');
+    if (!sec || !track) return;
+    list = Array.isArray(list) ? list : [];
+    if (!list.length) { sec.setAttribute('hidden', ''); track.innerHTML = ''; return; }
+    sec.removeAttribute('hidden');
+    track.innerHTML = list.map(function (src) {
+      return '<div class="banner-item"><img src="' + src + '" alt="بنر"/></div>';
+    }).join('');
   }
 
   function setText(sel, val) {

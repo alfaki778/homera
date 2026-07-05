@@ -13,6 +13,13 @@
 <style>
 /* ===== الهيرو ===== */
 .hero{position:relative;overflow:hidden;}
+.hero-centered{background:#0E3340;}
+/* بنرات الصفحة الرئيسية */
+.home-banners{background:var(--paper);padding:32px 0;}
+.home-banners .wrap{max-width:1200px;margin:0 auto;padding:0 24px;}
+.home-banners .banners-track{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin;}
+.home-banners .banner-item{flex:0 0 92%;max-width:1120px;scroll-snap-align:center;border-radius:var(--radius);overflow:hidden;box-shadow:0 14px 34px rgba(14,51,64,.14);}
+.home-banners .banner-item img{width:100%;height:auto;display:block;}
 /* --- المتغيّر: مركزي --- */
 [data-hero-variant="centered"] .hero-split{display:none;}
 [data-hero-variant="centered"] .hero-centered{display:grid;}
@@ -252,6 +259,11 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- ============ بنرات ============ -->
+<section class="home-banners" id="home-banners" hidden>
+  <div class="wrap"><div class="banners-track" id="bannersTrack"></div></div>
 </section>
 
 <!-- ============ المميزات ============ -->
