@@ -211,18 +211,7 @@
 
             <div class="card">
               <div class="hd"><h3>صور المشاريع المختارة</h3></div>
-              <div class="field"><label>مشروع الفضيلة 117</label>
-                <label class="uploader" for="projFadilaInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
-                <input type="file" id="projFadilaInput" accept="image/*" hidden/><div class="thumbs" id="projFadilaPrev"></div></div>
-              <div class="field"><label>مشروع الروضة 116</label>
-                <label class="uploader" for="projRoudahInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
-                <input type="file" id="projRoudahInput" accept="image/*" hidden/><div class="thumbs" id="projRoudahPrev"></div></div>
-              <div class="field"><label>مشروع السلامة 118</label>
-                <label class="uploader" for="projSalamahInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
-                <input type="file" id="projSalamahInput" accept="image/*" hidden/><div class="thumbs" id="projSalamahPrev"></div></div>
-              <div class="field"><label>مشروع النعيم 120</label>
-                <label class="uploader" for="projNaeemInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
-                <input type="file" id="projNaeemInput" accept="image/*" hidden/><div class="thumbs" id="projNaeemPrev"></div></div>
+              <p style="font-size:13px;color:var(--muted);line-height:1.8;margin:0">تُدار الآن من قسم <b>«المشاريع»</b>: عدّل المشروع وارفع صورته الأساسية، وتظهر تلقائياً على بطاقته في الصفحة الرئيسية.</p>
             </div>
 
             <div class="card">
@@ -325,6 +314,24 @@
     computeKPIs(); applyFilters();
   }
   renderAll();
+
+  // ربط صور المشاريع المعروضة في الصفحة الرئيسية بصور المشاريع في الإدارة
+  var FEATURED_MAP = {
+    'مشروع الفضيلة 117':'projFadilaImg',
+    'مشروع الروضة 116':'projRoudahImg',
+    'مشروع السلامة 118':'projSalamahImg',
+    'مشروع النعيم 120':'projNaeemImg'
+  };
+  function syncFeaturedToHome(){
+    var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){}
+    var changed=false;
+    Object.keys(FEATURED_MAP).forEach(function(nm){
+      var key=FEATURED_MAP[nm];
+      var pr=PROJECTS.find(function(x){return x.name===nm;});
+      if(pr){ var v=pr.cover||''; if(t[key]!==v){ t[key]=v; changed=true; } }
+    });
+    if(changed){ try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); }catch(e){} }
+  }
 
   // تبديل العرض
   var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية']};
@@ -498,7 +505,7 @@
       p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
       p.cover=coverData; p.gallery=galleryData.slice();
       editingProject=null;
-      renderAll(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+      renderAll(); syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
       toast('تم تعديل المشروع — '+p.name.replace('مشروع ',''));
       return;
     }
@@ -506,7 +513,7 @@
     PROJECTS.unshift({ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
       total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
       cover:coverData, gallery:galleryData.slice() });
-    renderAll(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+    renderAll(); syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
   });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal('viewModal'); closeModal('addModal'); closeModal('sellModal'); } });
 
@@ -573,11 +580,7 @@
 
   var LP_IMAGES = [
     {key:'heroImage',    input:'heroImgInput',    prev:'heroImgPrev'},
-    {key:'aboutImage',   input:'aboutImgInput',   prev:'aboutImgPrev'},
-    {key:'projFadilaImg',  input:'projFadilaInput',  prev:'projFadilaPrev'},
-    {key:'projRoudahImg',  input:'projRoudahInput',  prev:'projRoudahPrev'},
-    {key:'projSalamahImg', input:'projSalamahInput', prev:'projSalamahPrev'},
-    {key:'projNaeemImg',   input:'projNaeemInput',   prev:'projNaeemPrev'}
+    {key:'aboutImage',   input:'aboutImgInput',   prev:'aboutImgPrev'}
   ];
   LP_EXTRA_GROUPS.forEach(function(g){ g.items.forEach(function(it){ LP_IMAGES.push({key:it.key, input:it.key+'Input', prev:it.key+'Prev'}); }); });
   var lpImgData = {};
