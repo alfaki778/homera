@@ -4,6 +4,14 @@
    يعمل على كل الصفحات؛ لوحة التعديل (React) تعيش في الصفحة الرئيسية.
    ============================================================ */
 (function () {
+  // مبكّراً جداً (قبل رسم الجسم): إخفاء الاسم النصّي فوراً إن وُجد شعار،
+  // وضبط ارتفاعه — لتفادي وميض الشعار القديم عند التحديث.
+  try {
+    var _early = JSON.parse(localStorage.getItem('homera_tweaks') || '{}');
+    if (_early && _early.logo) document.documentElement.classList.add('tw-has-logo');
+    if (_early && _early.logoSize) document.documentElement.style.setProperty('--brand-logo-h', (Number(_early.logoSize) || 46) + 'px');
+  } catch (e) {}
+
   window.HOMERA_TWEAK_DEFAULTS = {
     heroVariant: 'centered',
     heroEyebrow: 'بيتك في جدة',

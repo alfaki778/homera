@@ -87,6 +87,9 @@ a{color:inherit;text-decoration:none;}
 /* الشعار المرفوع من لوحة التحكم */
 .brandmark img.brand-logo{height:var(--brand-logo-h,44px);width:auto;max-width:240px;object-fit:contain;display:block;}
 .brandmark.has-logo .name,.brandmark.has-logo .tag{display:none;}
+/* إخفاء فوري للاسم النصّي عند وجود شعار (تفادي الوميض عند التحديث) */
+.tw-has-logo .brandmark .name,.tw-has-logo .brandmark .tag,
+.tw-has-logo .foot-brand .name,.tw-has-logo .foot-brand .tag{display:none;}
 .foot-brand img.brand-logo{height:calc(var(--brand-logo-h,44px) + 10px);width:auto;max-width:260px;object-fit:contain;display:block;margin-bottom:8px;}
 .foot-brand.has-logo .name,.foot-brand.has-logo .tag{display:none;}
 .brandmark .name{
