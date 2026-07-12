@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>هوميرا · الصفحة غير موجودة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --petrol-d:#0E3340; --petrol:#15495B; --gold:#C7A36B; --gold-l:#E6C888;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:'Alexandria',system-ui,-apple-system,sans-serif;
+    background:var(--petrol-d);
+    color:#fff;min-height:100dvh;display:grid;place-items:center;
+    text-align:center;padding:28px;position:relative;overflow:hidden;
+  }
+  /* خلفية متدرّجة + توهّج ذهبي */
+  body::before{
+    content:"";position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(120% 90% at 50% 0%,rgba(21,73,91,.75),transparent 60%),
+      radial-gradient(90% 70% at 50% 120%,rgba(199,163,107,.16),transparent 60%),
+      linear-gradient(160deg,var(--petrol-d),#0a2731);
+  }
+  /* شبكة نقاط خفيفة */
+  body::after{
+    content:"";position:absolute;inset:0;z-index:0;opacity:.35;
+    background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(circle at 50% 40%,#000,transparent 72%);
+            mask-image:radial-gradient(circle at 50% 40%,#000,transparent 72%);
+  }
+  .wrap{position:relative;z-index:1;max-width:600px;}
+
+  .brand{display:inline-flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:34px;}
+  .brand .nm{font-size:22px;font-weight:800;letter-spacing:.26em;color:#fff;}
+  .brand .tg{font-size:9.5px;letter-spacing:.34em;color:var(--gold);text-transform:uppercase;}
+
+  .code{
+    position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-size:clamp(96px,26vw,190px);font-weight:800;line-height:.9;letter-spacing:-.02em;
+    color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(180deg,#fff 20%,rgba(230,200,136,.85) 100%);
+    filter:drop-shadow(0 18px 40px rgba(0,0,0,.4));
+  }
+  /* بيت/مبنى بدل الصفر الأوسط */
+  .code .house{
+    width:.62em;height:.62em;color:var(--gold);flex:none;
+    filter:drop-shadow(0 8px 18px rgba(199,163,107,.4));
+  }
+  .rule{width:66px;height:3px;background:var(--gold);border-radius:3px;margin:22px auto 0;}
+
+  h1{font-size:clamp(24px,4.4vw,34px);font-weight:700;margin-top:26px;}
+  p{color:rgba(255,255,255,.78);font-size:clamp(15px,1.8vw,17px);line-height:1.9;margin-top:16px;max-width:480px;margin-inline:auto;}
+
+  .cta{margin-top:38px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;padding:13px 26px;border-radius:12px;
+    font-family:inherit;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;transition:.2s;
+  }
+  .btn svg{width:18px;height:18px;}
+  .btn.gold{background:var(--gold);color:#22150A;}
+  .btn.gold:hover{background:var(--gold-l);transform:translateY(-2px);}
+  .btn.ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.28);}
+  .btn.ghost:hover{border-color:var(--gold);color:var(--gold-l);}
+
+  .foot{margin-top:44px;font-size:12.5px;color:rgba(255,255,255,.42);letter-spacing:.02em;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <span class="nm">HOMERA</span>
+      <span class="tg">Real Estate Development</span>
+    </div>
+
+    <div class="code" aria-label="404">
+      <span>4</span>
+      <svg class="house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+      <span>4</span>
+    </div>
+    <div class="rule"></div>
+
+    <h1>عذراً، الصفحة غير موجودة</h1>
+    <p>يبدو أنّ الرابط الذي تبحث عنه قد نُقل أو لم يعد متاحاً. لا تقلق — نعيدك إلى المكان الصحيح.</p>
+
+    <div class="cta">
+      <a class="btn gold" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        العودة للرئيسية
+      </a>
+      <a class="btn ghost" href="/هوميرا - المشاريع.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+        تصفّح المشاريع
+      </a>
+    </div>
+
+    <div class="foot">© هوميرا للتطوير والتسويق العقاري</div>
+  </div>
+</body>
+</html>
