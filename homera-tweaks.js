@@ -153,15 +153,16 @@
     setSlotImg('home-proj-naeem', t.projNaeemImg);
     // صفحة المشاريع
     setSlotImg('projects-banner', t.pgProjectsBanner);
-    setSlotImg('p-fadila', t.pgPFadila);
-    setSlotImg('p-roudah', t.pgPRoudah);
-    setSlotImg('p-salamah', t.pgPSalamah);
-    setSlotImg('p-naeem', t.pgPNaeem);
+    // بديل تلقائي: إن لم توجد صورة خاصة بصفحة المشاريع، استخدم صورة الصفحة الرئيسية
+    setSlotImg('p-fadila', t.pgPFadila || t.projFadilaImg);
+    setSlotImg('p-roudah', t.pgPRoudah || t.projRoudahImg);
+    setSlotImg('p-salamah', t.pgPSalamah || t.projSalamahImg);
+    setSlotImg('p-naeem', t.pgPNaeem || t.projNaeemImg);
     setSlotImg('p-safa', t.pgPSafa);
     setSlotImg('p-abhur', t.pgPAbhur);
     // صفحة تفاصيل المشروع
     setSlotImg('fadila-banner', t.pgFadilaBanner);
-    setSlotImg('fadila-main', t.pgFadilaMain);
+    setSlotImg('fadila-main', t.pgFadilaMain || t.projFadilaImg);
     setSlotImg('fadila-t1', t.pgFadilaT1);
     setSlotImg('fadila-t2', t.pgFadilaT2);
     setSlotImg('fadila-t3', t.pgFadilaT3);
