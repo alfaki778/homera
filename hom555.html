@@ -403,7 +403,8 @@
       var pr=PROJECTS.find(function(x){return x.name===nm;});
       if(pr){ var v=pr.cover || (pr.gallery&&pr.gallery[0]) || ''; if(t[key]!==v){ t[key]=v; changed=true; } }
     });
-    if(changed){ try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); }catch(e){} }
+    if(changed){ try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); }catch(e){ return false; } }
+    return true;
   }
 
   // تبديل العرض
@@ -518,7 +519,37 @@
 
   // ===== رفع الصور (أساسية + فرعية) =====
   var coverData=null, galleryData=[];
-  function readFile(file){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(r.result); }; r.onerror=rej; r.readAsDataURL(file); }); }
+  // يقرأ الصورة ويصغّرها/يضغطها لتقليل الحجم وتفادي امتلاء التخزين
+  function readFile(file){
+    return new Promise(function(res){
+      var r=new FileReader();
+      r.onload=function(){
+        var dataUrl=r.result;
+        var img=new Image();
+        img.onload=function(){
+          try{
+            var maxDim=1400;
+            var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+            var scale=Math.min(1, maxDim/Math.max(w,h));
+            var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+            var c=document.createElement('canvas'); c.width=cw; c.height=ch;
+            var ctx=c.getContext('2d'); ctx.drawImage(img,0,0,cw,ch);
+            // كشف الشفافية: إن وُجدت نُبقيها PNG، وإلا نستخدم JPEG الأخف
+            var hasAlpha=false;
+            try{ var d=ctx.getImageData(0,0,cw,ch).data; for(var i=3;i<d.length;i+=4){ if(d[i]<250){ hasAlpha=true; break; } } }
+            catch(e){ hasAlpha=/png|gif|webp|svg/i.test(file.type||''); }
+            var out = hasAlpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.85);
+            // لو الناتج أكبر من الأصل (نادر) نُبقي الأصل
+            res(out && out.length < dataUrl.length ? out : dataUrl);
+          }catch(e){ res(dataUrl); }
+        };
+        img.onerror=function(){ res(dataUrl); };
+        img.src=dataUrl;
+      };
+      r.onerror=function(){ res(''); };
+      r.readAsDataURL(file);
+    });
+  }
   function renderCoverPrev(){
     document.getElementById('coverPrev').innerHTML = coverData
       ? '<div class="thumb"><img src="'+coverData+'" alt=""><button type="button" class="th-x" data-cover aria-label="حذف">×</button></div>' : '';
@@ -578,15 +609,16 @@
       p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
       p.cover=coverData; p.gallery=galleryData.slice();
       editingProject=null;
-      renderAll(); syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
-      toast('تم تعديل المشروع — '+p.name.replace('مشروع ',''));
+      renderAll(); var okE=syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+      toast(okE ? 'تم تعديل المشروع — '+p.name.replace('مشروع ','') : 'تم التعديل لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.');
       return;
     }
     REVENUE += sold * price;
     PROJECTS.unshift({ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
       total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
       cover:coverData, gallery:galleryData.slice() });
-    renderAll(); syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+    renderAll(); var okA=syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+    if(!okA) toast('تمت الإضافة لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.');
   });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal('viewModal'); closeModal('addModal'); closeModal('sellModal'); } });
 
