@@ -393,7 +393,7 @@
     Object.keys(FEATURED_MAP).forEach(function(nm){
       var key=FEATURED_MAP[nm];
       var pr=PROJECTS.find(function(x){return x.name===nm;});
-      if(pr){ var v=pr.cover||''; if(t[key]!==v){ t[key]=v; changed=true; } }
+      if(pr){ var v=pr.cover || (pr.gallery&&pr.gallery[0]) || ''; if(t[key]!==v){ t[key]=v; changed=true; } }
     });
     if(changed){ try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); }catch(e){} }
   }
