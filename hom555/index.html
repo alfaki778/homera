@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>هوميرا · لوحة التحكم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="dash.css"/>
+<style>
+/* ===== رفع الصور في نموذج إضافة مشروع ===== */
+.uploader{display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;
+  border:1.5px dashed var(--border);border-radius:12px;padding:15px;color:var(--muted);
+  font-size:13.5px;font-weight:600;background:rgba(0,0,0,.015);transition:.2s;text-align:center;}
+.uploader:hover{border-color:var(--accent);color:var(--accent-d);background:var(--warn-bg);}
+.uploader svg{width:20px;height:20px;flex:none;}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.thumbs .thumb{position:relative;width:80px;height:80px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);background:var(--warn-bg);}
+.thumbs .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumbs .th-x{position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border:none;border-radius:50%;
+  background:rgba(14,51,64,.85);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;}
+.thumbs .th-x:hover{background:#c0392b;}
+/* صورة مصغّرة داخل خلية المشروع */
+.tbl .proj .sq.img{padding:0;overflow:hidden;background:none;}
+.tbl .proj .sq.img img{width:100%;height:100%;object-fit:cover;display:block;}
+/* نافذة تفاصيل المشروع */
+.mv-cover{width:100%;height:190px;border-radius:14px;overflow:hidden;margin-bottom:16px;background:var(--warn-bg);}
+.mv-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.mv-gallery{margin-top:16px;}
+.mv-gallery .k{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+.mv-gallery .thumbs .thumb{width:90px;height:66px;}
+/* ===== محرّر الصفحة الرئيسية ===== */
+.field textarea{width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:10px 12px;resize:vertical;line-height:1.8;box-sizing:border-box;}
+.field textarea:focus{outline:none;border-color:var(--accent);}
+.lp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:start;}
+@media(max-width:900px){.lp-grid{grid-template-columns:1fr;}}
+.lp-grid .card .hd{margin-bottom:14px;}
+.lp-foot{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px;}
+.lp-foot .btn-ghost{text-decoration:none;display:inline-flex;align-items:center;}
+#heroImgPrev .thumb,#aboutImgPrev .thumb{width:130px;height:82px;}
+</style>
+<script src="dash-tweaks.js"></script>
+</head>
+<body>
+<div class="dash">
+
+  <!-- ============ الشريط الجانبي ============ -->
+  <aside class="side" id="side">
+    <button class="burger-close" id="closeSide" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="brand">
+      <span class="name">HOMERA</span>
+      <span class="tag">Admin · Dashboard</span>
+    </div>
+
+    <div class="grp">الرئيسية</div>
+    <div class="navitem active" data-view="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      نظرة عامة
+    </div>
+    <div class="navitem" data-view="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>
+      المشاريع
+    </div>
+    <div class="navitem" data-view="landing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      الصفحة الرئيسية
+    </div>
+
+    <div class="grp">خارجي</div>
+    <a class="navitem" href="https://homera-theta.vercel.app/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
+      الموقع
+      <span class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+    </a>
+
+    <div class="spacer"></div>
+    <div class="me">
+      <div class="av">هـ</div>
+      <div class="info"><b>إدارة هوميرا</b><span>مدير النظام</span></div>
+    </div>
+  </aside>
+
+  <!-- ============ المحتوى ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="m-burger" id="openSide" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div>
+        <h1 id="pageTitle">نظرة عامة</h1>
+        <div class="sub" id="pageSub">ملخّص أداء مشاريع هوميرا</div>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="text" id="searchInput" placeholder="ابحث عن مشروع…"/>
+      </div>
+      <button class="icon-btn" aria-label="الإشعارات"><span class="dot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10.5 19a1.5 1.5 0 0 0 3 0"/></svg></button>
+    </header>
+
+    <div class="content">
+
+      <!-- ===== نظرة عامة ===== -->
+      <section class="view active" id="view-overview">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div><span class="delta up">+1 هذا الشهر</span></div>
+            <div class="val" id="kpiProjects">6</div><div class="lbl">إجمالي المشاريع</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg></div><span class="delta flat">90 وحدة</span></div>
+            <div class="val" id="kpiUnits">90</div><div class="lbl">إجمالي الوحدات</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5-8 8"/><circle cx="16.5" cy="6.5" r="2.5"/><path d="M9 13l-4 4v2h2l4-4"/></svg></div><span class="delta flat">42%</span></div>
+            <div class="val" id="kpiAvail">38</div><div class="lbl">الوحدات المتاحة</div>
+          </div>
+          <div class="kpi">
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div><span class="delta up">+6</span></div>
+            <div class="val" id="kpiSold">52</div><div class="lbl">الوحدات المباعة</div>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="card">
+            <div class="hd"><h3>أحدث المشاريع</h3><div class="act"><button class="link-btn" data-goto="projects">عرض الكل</button></div></div>
+            <table class="tbl"><thead><tr>
+              <th>المشروع</th><th>السعر</th><th>الوحدات</th><th>الحالة</th><th>نسبة البيع</th>
+            </tr></thead><tbody id="overviewTbody"></tbody></table>
+          </div>
+
+          <div class="card aside-card">
+            <span class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg> الاستفسارات تُدار خارجياً</span>
+            <p>يتم استقبال استفسارات العملاء عبر واتساب والموقع مباشرةً. اضغط لفتح محادثات العملاء.</p>
+            <button class="btn-wa" onclick="openWA()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Z"/></svg>
+              فتح الاستفسارات (واتساب)
+            </button>
+            <div style="margin-top:20px">
+              <div class="mini-stat"><span class="k">قيمة المبيعات</span><span class="v" id="msRevenue" style="direction:ltr">—</span></div>
+              <div class="mini-stat"><span class="k">نسبة البيع الإجمالية</span><span class="v" id="msOverall">58%</span></div>
+              <div class="mini-stat"><span class="k">أعلى مشروع مبيعاً</span><span class="v" id="msTop" style="direction:rtl">الصفا 121</span></div>
+              <div class="mini-stat"><span class="k">مشاريع قيد البيع</span><span class="v" id="msSale">4</span></div>
+              <div class="mini-stat"><span class="k">مشاريع مكتملة</span><span class="v" id="msDone">1</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== المشاريع ===== -->
+      <section class="view" id="view-projects">
+        <div class="toolbar">
+          <div class="chips" id="statusChips">
+            <button class="chip on" data-status="all">الكل</button>
+            <button class="chip" data-status="sale">قيد البيع</button>
+            <button class="chip" data-status="done">مكتمل</button>
+            <button class="chip" data-status="new">جديد</button>
+          </div>
+          <button class="btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة مشروع</button>
+        </div>
+        <div class="card">
+          <table class="tbl"><thead><tr>
+            <th>المشروع</th><th>الحي</th><th>النوع</th><th>السعر</th><th>الوحدات (متاح/مباع)</th><th>الحالة</th><th>نسبة البيع</th><th></th>
+          </tr></thead><tbody id="projectsTbody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ===== تعديل الصفحة الرئيسية ===== -->
+      <section class="view" id="view-landing">
+        <form id="landingForm">
+          <div class="lp-grid" id="lpGrid">
+
+            <div class="card">
+              <div class="hd"><h3>قسم الهيرو</h3></div>
+              <div class="field"><label>تصميم الهيرو</label>
+                <select name="heroVariant"><option value="centered">مركزي</option><option value="split">مقسوم</option></select></div>
+              <div class="field"><label>الترويسة الصغيرة</label><input name="heroEyebrow"/></div>
+              <div class="field"><label>العنوان الرئيسي</label><input name="heroTitle"/></div>
+              <div class="field"><label>النص التعريفي</label><textarea name="heroText" rows="3"></textarea></div>
+              <div class="field"><label>صورة الهيرو</label>
+                <label class="uploader" for="heroImgInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لاختيار صورة الهيرو</span></label>
+                <input type="file" id="heroImgInput" accept="image/*" hidden/>
+                <div class="thumbs" id="heroImgPrev"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="hd"><h3>قسم «من نحن»</h3></div>
+              <div class="field"><label>الترويسة الصغيرة</label><input name="aboutEyebrow"/></div>
+              <div class="field"><label>العنوان</label><input name="aboutTitle"/></div>
+              <div class="field"><label>النص</label><textarea name="aboutText" rows="3"></textarea></div>
+              <div class="field"><label>ميزة 1</label><input name="aboutP1"/></div>
+              <div class="field"><label>ميزة 2</label><input name="aboutP2"/></div>
+              <div class="field"><label>ميزة 3</label><input name="aboutP3"/></div>
+              <div class="field"><label>صورة القسم</label>
+                <label class="uploader" for="aboutImgInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لاختيار صورة القسم</span></label>
+                <input type="file" id="aboutImgInput" accept="image/*" hidden/>
+                <div class="thumbs" id="aboutImgPrev"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="hd"><h3>قسم التواصل</h3></div>
+              <div class="field"><label>الترويسة الصغيرة</label><input name="contactEyebrow"/></div>
+              <div class="field"><label>العنوان</label><input name="contactTitle"/></div>
+              <div class="field"><label>النص</label><textarea name="contactText" rows="3"></textarea></div>
+              <div class="field"><label>رقم الهاتف</label><input name="contactPhone" dir="ltr"/></div>
+              <div class="field"><label>العنوان (المقر)</label><input name="contactAddress"/></div>
+              <div class="field"><label>البريد الإلكتروني</label><input name="contactEmail" dir="ltr"/></div>
+            </div>
+
+            <div class="card">
+              <div class="hd"><h3>صور المشاريع المختارة</h3></div>
+              <div class="field"><label>مشروع الفضيلة 117</label>
+                <label class="uploader" for="projFadilaInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
+                <input type="file" id="projFadilaInput" accept="image/*" hidden/><div class="thumbs" id="projFadilaPrev"></div></div>
+              <div class="field"><label>مشروع الروضة 116</label>
+                <label class="uploader" for="projRoudahInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
+                <input type="file" id="projRoudahInput" accept="image/*" hidden/><div class="thumbs" id="projRoudahPrev"></div></div>
+              <div class="field"><label>مشروع السلامة 118</label>
+                <label class="uploader" for="projSalamahInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
+                <input type="file" id="projSalamahInput" accept="image/*" hidden/><div class="thumbs" id="projSalamahPrev"></div></div>
+              <div class="field"><label>مشروع النعيم 120</label>
+                <label class="uploader" for="projNaeemInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع صورة المشروع</span></label>
+                <input type="file" id="projNaeemInput" accept="image/*" hidden/><div class="thumbs" id="projNaeemPrev"></div></div>
+            </div>
+
+            <div class="card">
+              <div class="hd"><h3>بنرات الصفحة الرئيسية</h3></div>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:12px">صور إعلانية تظهر كشريط في الصفحة الرئيسية — يمكن رفع أكثر من صورة.</p>
+              <label class="uploader" for="bannersInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة بنرات</span></label>
+              <input type="file" id="bannersInput" accept="image/*" multiple hidden/>
+              <div class="thumbs" id="bannersPrev"></div>
+            </div>
+
+            <div class="card" id="lpStyleCard">
+              <div class="hd"><h3>النمط العام</h3></div>
+              <div class="field"><label>لون التمييز</label>
+                <select name="accent"><option value="gold">ذهبي</option><option value="petrol">بترولي</option></select></div>
+              <div class="field"><label>الخط</label>
+                <select name="fontFamily"><option>Alexandria</option><option>Cairo</option><option>Tajawal</option><option>IBM Plex Sans Arabic</option></select></div>
+              <div class="field"><label>وزن العناوين</label>
+                <select name="headingWeight"><option value="700">عريض</option><option value="800">أعرض</option></select></div>
+            </div>
+
+          </div>
+          <div class="lp-foot">
+            <button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> حفظ ونشر التعديلات</button>
+            <a class="btn-ghost" href="https://homera-theta.vercel.app/" target="_blank" rel="noopener">معاينة الصفحة</a>
+            <button type="button" class="btn-ghost" id="lpReset">استعادة الافتراضي</button>
+          </div>
+        </form>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openWA(){ window.open('https://wa.me/966120000000?text=' + encodeURIComponent('استفسارات عملاء هوميرا'), '_blank'); }
+
+  var PROJECTS = [
+    {name:'مشروع النعيم 120', dist:'حي النعيم', city:'جدة', area:175, facade:'جنوبية', type:'شقق', price:750000, total:16, avail:3, sold:13, status:'sale', pct:81},
+    {name:'مشروع الفضيلة 117', dist:'حي الفضيلة', city:'جدة', area:200, facade:'شمالية', type:'فيلا', price:1100000, total:12, avail:5, sold:7, status:'sale', pct:58},
+    {name:'مشروع الروضة 116', dist:'حي الروضة', city:'جدة', area:165, facade:'شرقية', type:'شقق', price:690000, total:20, avail:8, sold:12, status:'sale', pct:60},
+    {name:'مشروع أبحر 122', dist:'أبحر الشمالية', city:'جدة', area:185, facade:'غربية', type:'شقق', price:820000, total:24, avail:14, sold:10, status:'sale', pct:42},
+    {name:'مشروع الصفا 121', dist:'حي الصفا', city:'جدة', area:210, facade:'شمالية', type:'فيلا', price:1050000, total:10, avail:0, sold:10, status:'done', pct:100},
+    {name:'مشروع السلامة 118', dist:'حي السلامة', city:'جدة', area:240, facade:'غربية', type:'فيلا', price:1250000, total:8, avail:8, sold:0, status:'new', pct:0}
+  ];
+  var STATUS = {sale:{c:'sale',t:'قيد البيع'}, done:{c:'done',t:'مكتمل'}, new:{c:'new',t:'جديد'}};
+  var fmt = function(n){ return n.toLocaleString('en-US'); };
+  var REVENUE = PROJECTS.reduce(function(s,p){ return s + p.sold*p.price; }, 0);
+
+  function bldg(p){ if(p&&p.cover){ return '<span class="sq img"><img src="'+p.cover+'" alt=""></span>'; } return '<span class="sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg></span>'; }
+  function statusPill(s){ var o=STATUS[s]; return '<span class="pill '+o.c+'">'+o.t+'</span>'; }
+  function prog(p){ return '<div class="prog"><div class="bar"><i style="width:'+p+'%"></i></div><span class="pct">'+p+'%</span></div>'; }
+
+  function rowOverview(p){
+    return '<tr>'+
+      '<td data-label="المشروع"><div class="proj">'+bldg(p)+'<div><b>'+p.name+'</b><span>'+p.dist+' · '+p.type+'</span></div></div></td>'+
+      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح / '+p.total+'</span></span></td>'+
+      '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
+      '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
+    '</tr>';
+  }
+  function rowFull(p){
+    return '<tr class="proj-row" data-status="'+p.status+'" data-name="'+p.name+'">'+
+      '<td data-label="المشروع"><div class="proj">'+bldg(p)+'<div><b>'+p.name+'</b><span>'+p.type+'</span></div></div></td>'+
+      '<td data-label="الحي">'+p.dist+'</td>'+
+      '<td data-label="النوع">'+p.type+'</td>'+
+      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح · '+p.sold+' مباع</span></span></td>'+
+      '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
+      '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
+      '<td data-label=""><div style="display:flex;gap:8px"><button class="rowbtn sell-btn" data-name="'+p.name+'" title="تسجيل بيع وحدة"'+(p.avail<=0?' disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></button><button class="rowbtn edit-btn" title="تعديل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button><button class="rowbtn view-btn" aria-label="عرض"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>'+
+    '</tr>';
+  }
+
+  var currentFilter='all', currentSearch='';
+  function setTxt(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+  function computeKPIs(){
+    var count=PROJECTS.length,
+        total=PROJECTS.reduce(function(s,p){return s+p.total;},0),
+        avail=PROJECTS.reduce(function(s,p){return s+p.avail;},0),
+        sold=PROJECTS.reduce(function(s,p){return s+p.sold;},0);
+    setTxt('kpiProjects',count); setTxt('kpiUnits',total); setTxt('kpiAvail',avail); setTxt('kpiSold',sold);
+    setTxt('msOverall',(total?Math.round(sold/total*100):0)+'%');
+    var top=PROJECTS.slice().sort(function(a,b){return b.sold-a.sold;})[0];
+    setTxt('msTop', top?top.name.replace('مشروع ',''):'—');
+    setTxt('msSale', PROJECTS.filter(function(p){return p.status==='sale';}).length);
+    setTxt('msDone', PROJECTS.filter(function(p){return p.status==='done';}).length);
+    setTxt('msRevenue', fmt(REVENUE)+' ر.س');
+  }
+  function applyFilters(){
+    document.querySelectorAll('#projectsTbody .proj-row').forEach(function(r){
+      var okS = currentFilter==='all' || r.dataset.status===currentFilter;
+      var okQ = !currentSearch || r.dataset.name.indexOf(currentSearch)>-1;
+      r.classList.toggle('hide', !(okS && okQ));
+    });
+  }
+  function renderAll(){
+    document.getElementById('overviewTbody').innerHTML = PROJECTS.slice(0,4).map(rowOverview).join('');
+    document.getElementById('projectsTbody').innerHTML = PROJECTS.map(rowFull).join('');
+    computeKPIs(); applyFilters();
+  }
+  renderAll();
+
+  // تبديل العرض
+  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية']};
+  function showView(v){
+    document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
+    document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
+    document.getElementById('pageTitle').textContent = titles[v][0];
+    document.getElementById('pageSub').textContent = titles[v][1];
+    document.getElementById('side').classList.remove('open');
+  }
+  document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.addEventListener('click',function(){ showView(n.dataset.view); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click',function(){ showView(b.dataset.goto); }); });
+
+  // فلترة الحالة
+  document.querySelectorAll('#statusChips .chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.querySelectorAll('#statusChips .chip').forEach(function(x){x.classList.remove('on');});
+      c.classList.add('on'); currentFilter=c.dataset.status; applyFilters();
+    });
+  });
+
+  // بحث
+  document.getElementById('searchInput').addEventListener('input',function(e){
+    currentSearch=e.target.value.trim();
+    if(currentSearch && !document.getElementById('view-projects').classList.contains('active')){ showView('projects'); }
+    applyFilters();
+  });
+
+  // القائمة الجوّالة
+  document.getElementById('openSide').addEventListener('click',function(){ document.getElementById('side').classList.add('open'); });
+  document.getElementById('closeSide').addEventListener('click',function(){ document.getElementById('side').classList.remove('open'); });
+
+  document.addEventListener('DOMContentLoaded', function(){
+  // ===== النوافذ =====
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  var bIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg>';
+  function openView(p){
+    var s=STATUS[p.status];
+    var galHtml = (p.gallery && p.gallery.length)
+      ? '<div class="mv-gallery"><div class="k">صور فرعية ('+p.gallery.length+')</div><div class="thumbs">'+
+          p.gallery.map(function(d){ return '<div class="thumb"><img src="'+d+'" alt=""></div>'; }).join('')+
+        '</div></div>'
+      : '';
+    document.getElementById('viewBody').innerHTML =
+      (p.cover ? '<div class="mv-cover"><img src="'+p.cover+'" alt=""></div>' : '')+
+      '<div class="mv-head"><span class="sq'+(p.cover?' img':'')+'">'+(p.cover?'<img src="'+p.cover+'" alt="">':bIcon)+'</span><div><b>'+p.name+'</b><span>'+p.dist+' · '+p.type+'</span></div></div>'+
+      '<div class="mv-grid">'+
+        '<div class="mv-item"><div class="k">السعر</div><div class="v ltr">'+fmt(p.price)+' ر.س</div></div>'+
+        '<div class="mv-item"><div class="k">المساحة</div><div class="v ltr">'+(p.area?p.area+' م²':'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">نوع العقار</div><div class="v">'+p.type+'</div></div>'+
+        '<div class="mv-item"><div class="k">المدينة</div><div class="v">'+(p.city||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">الواجهة</div><div class="v">'+(p.facade||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">الحالة</div><div class="v">'+s.t+'</div></div>'+
+        '<div class="mv-item"><div class="k">إجمالي الوحدات</div><div class="v ltr">'+p.total+'</div></div>'+
+        '<div class="mv-item"><div class="k">الوحدات المتاحة</div><div class="v ltr">'+p.avail+'</div></div>'+
+        '<div class="mv-item"><div class="k">الوحدات المباعة</div><div class="v ltr">'+p.sold+'</div></div>'+
+        '<div class="mv-item"><div class="k">نسبة البيع</div><div class="v ltr">'+p.pct+'%</div></div>'+
+        '<div class="mv-item full"><div class="k">التقدّم</div><div class="v">'+prog(p.pct)+'</div></div>'+
+      '</div>'+
+      galHtml+
+      '<button class="btn-primary" id="modalSell" style="margin-top:18px;width:100%;justify-content:center"'+(p.avail<=0?' disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>'+(p.avail<=0?'نفدت الوحدات':'تسجيل بيع وحدة')+'</button>';
+    openModal('viewModal');
+    var ms=document.getElementById('modalSell'); if(ms && !ms.disabled) ms.onclick=function(){ openSell(p); };
+  }
+  document.getElementById('projectsTbody').addEventListener('click',function(e){
+    var sell=e.target.closest('.sell-btn');
+    if(sell){ if(sell.disabled) return; var sp=PROJECTS.find(function(x){return x.name===sell.dataset.name;}); if(sp) openSell(sp); return; }
+    var ed=e.target.closest('.edit-btn');
+    if(ed){ var er=ed.closest('.proj-row'); if(er){ var ep=PROJECTS.find(function(x){return x.name===er.dataset.name;}); if(ep) openEdit(ep); } return; }
+    var v=e.target.closest('.view-btn'); if(!v) return;
+    var row=v.closest('.proj-row'); if(!row) return;
+    var p=PROJECTS.find(function(x){return x.name===row.dataset.name;});
+    if(p) openView(p);
+  });
+  var toastEl;
+  function toast(msg){
+    if(!toastEl){ toastEl=document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+    toastEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove('show'); },2400);
+  }
+  var sellTarget=null;
+  function openSell(p){
+    sellTarget=p;
+    document.getElementById('sellName').textContent=p.name.replace('مشروع ','');
+    document.getElementById('sellPrice').value=p.price;
+    document.getElementById('sellUnitsNote').textContent='المتبقّي بعد البيع: '+(p.avail-1)+' من '+p.total+' وحدة';
+    openModal('sellModal');
+    setTimeout(function(){ document.getElementById('sellPrice').focus(); },50);
+  }
+  function sellUnit(p, salePrice){
+    if(p.avail<=0) return;
+    p.avail--; p.sold++; p.pct = p.total?Math.round(p.sold/p.total*100):0;
+    if(p.avail===0) p.status='done';
+    REVENUE += (salePrice||0);
+    renderAll();
+    if(document.getElementById('viewModal').classList.contains('open')) openView(p);
+    toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ','')+' بمبلغ '+fmt(salePrice||0)+' ر.س');
+  }
+  document.getElementById('sellClose').addEventListener('click',function(){ closeModal('sellModal'); });
+  document.getElementById('sellCancel').addEventListener('click',function(){ closeModal('sellModal'); });
+  document.getElementById('sellModal').addEventListener('click',function(e){ if(e.target.id==='sellModal') closeModal('sellModal'); });
+  document.getElementById('sellForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    if(sellTarget) sellUnit(sellTarget, parseInt(this.price.value,10)||0);
+    closeModal('sellModal');
+  });
+  document.getElementById('viewClose').addEventListener('click',function(){ closeModal('viewModal'); });
+  document.getElementById('viewModal').addEventListener('click',function(e){ if(e.target.id==='viewModal') closeModal('viewModal'); });
+
+  // ===== رفع الصور (أساسية + فرعية) =====
+  var coverData=null, galleryData=[];
+  function readFile(file){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(r.result); }; r.onerror=rej; r.readAsDataURL(file); }); }
+  function renderCoverPrev(){
+    document.getElementById('coverPrev').innerHTML = coverData
+      ? '<div class="thumb"><img src="'+coverData+'" alt=""><button type="button" class="th-x" data-cover aria-label="حذف">×</button></div>' : '';
+  }
+  function renderGalPrev(){
+    document.getElementById('galPrev').innerHTML = galleryData.map(function(d,i){
+      return '<div class="thumb"><img src="'+d+'" alt=""><button type="button" class="th-x" data-gi="'+i+'" aria-label="حذف">×</button></div>';
+    }).join('');
+  }
+  function resetUploads(){ coverData=null; galleryData=[]; document.getElementById('coverInput').value=''; document.getElementById('galInput').value=''; renderCoverPrev(); renderGalPrev(); }
+  document.getElementById('coverInput').addEventListener('change', function(){
+    var file=this.files && this.files[0]; if(!file) return;
+    readFile(file).then(function(d){ coverData=d; renderCoverPrev(); });
+  });
+  document.getElementById('galInput').addEventListener('change', function(){
+    var files=Array.prototype.slice.call(this.files||[]); if(!files.length) return;
+    Promise.all(files.map(readFile)).then(function(arr){ galleryData=galleryData.concat(arr); renderGalPrev(); this.value=''; }.bind(this));
+  });
+  document.getElementById('coverPrev').addEventListener('click', function(e){
+    if(!e.target.closest('[data-cover]')) return;
+    coverData=null; document.getElementById('coverInput').value=''; renderCoverPrev();
+  });
+  document.getElementById('galPrev').addEventListener('click', function(e){
+    var b=e.target.closest('[data-gi]'); if(!b) return;
+    galleryData.splice(parseInt(b.dataset.gi,10),1); renderGalPrev();
+  });
+
+  // ===== إضافة / تعديل مشروع =====
+  var editingProject=null;
+  var addFormEl=document.getElementById('addForm');
+  function openEdit(p){
+    editingProject=p;
+    document.getElementById('addTitle').textContent='تعديل مشروع';
+    var f=addFormEl;
+    f.name.value=p.name; f.dist.value=p.dist; f.city.value=p.city||''; f.area.value=p.area||'';
+    f.facade.value=p.facade||'شمالية'; f.type.value=p.type||'فيلا'; f.price.value=p.price||'';
+    f.status.value=p.status||'new'; f.total.value=p.total||''; f.sold.value=p.sold||0;
+    coverData=p.cover||null; galleryData=(p.gallery||[]).slice();
+    document.getElementById('coverInput').value=''; document.getElementById('galInput').value='';
+    renderCoverPrev(); renderGalPrev();
+    openModal('addModal');
+  }
+  document.getElementById('addBtn').addEventListener('click',function(){ editingProject=null; document.getElementById('addTitle').textContent='إضافة مشروع'; addFormEl.reset(); resetUploads(); openModal('addModal'); });
+  document.getElementById('addClose').addEventListener('click',function(){ closeModal('addModal'); });
+  document.getElementById('addCancel').addEventListener('click',function(){ closeModal('addModal'); });
+  document.getElementById('addModal').addEventListener('click',function(e){ if(e.target.id==='addModal') closeModal('addModal'); });
+  document.getElementById('addForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var f=e.target;
+    var total=Math.max(1,parseInt(f.total.value,10)||0), sold=Math.min(Math.max(0,parseInt(f.sold.value,10)||0),total);
+    var price=parseInt(f.price.value,10)||0;
+    if(editingProject){
+      var p=editingProject;
+      REVENUE += (sold*price) - (p.sold*p.price);   // تعديل مساهمة المشروع في الإيراد
+      p.name=f.name.value.trim(); p.dist=f.dist.value.trim(); p.city=f.city.value.trim()||'جدة';
+      p.area=parseInt(f.area.value,10)||0; p.facade=f.facade.value; p.type=f.type.value; p.price=price;
+      p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
+      p.cover=coverData; p.gallery=galleryData.slice();
+      editingProject=null;
+      renderAll(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+      toast('تم تعديل المشروع — '+p.name.replace('مشروع ',''));
+      return;
+    }
+    REVENUE += sold * price;
+    PROJECTS.unshift({ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
+      total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
+      cover:coverData, gallery:galleryData.slice() });
+    renderAll(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal('viewModal'); closeModal('addModal'); closeModal('sellModal'); } });
+
+  // ===== محرّر الصفحة الرئيسية =====
+  var LP_DEFAULTS = {
+    heroVariant:'centered', heroEyebrow:'بيتك في جدة', heroTitle:'حياة عنوانها الرقي والراحة',
+    heroText:'هوميرا شركة سعودية راسخة تتمتع بخبرة واسعة في مجالات التطوير العقاري والتسويق والاستثمار، تأسست على أسس قوية، وتقدّم حلولاً عقارية متكاملة تلبّي احتياجات السوق المحلي وتواكب تطلعات العملاء.',
+    fontFamily:'Alexandria', headingWeight:800, accent:'gold',
+    aboutEyebrow:'من نحن', aboutTitle:'نبني الثقة قبل أن نبني العقار',
+    aboutText:'هوميرا للتطوير العقاري تقدّم مشاريع سكنية واستثمارية في جدة بمعايير جودة عالية وشفافية كاملة، من التصميم إلى التسليم.',
+    aboutP1:'خبرة راسخة في التطوير والتسويق والاستثمار العقاري.',
+    aboutP2:'حلول عقارية متكاملة تلبّي احتياجات السوق المحلي.',
+    aboutP3:'التزام بالجودة والمواعيد وضمان على الإنشاءات.',
+    contactEyebrow:'تواصل معنا', contactTitle:'لنبدأ رحلتك نحو منزلك',
+    contactText:'تواصل مع فريق هوميرا مباشرةً — نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
+    contactPhone:'+966 12 000 0000', contactAddress:'حي الفيصلية، جدة، السعودية', contactEmail:'info@homera.sa',
+    heroImage:'', aboutImage:'',
+    projFadilaImg:'', projRoudahImg:'', projSalamahImg:'', projNaeemImg:'',
+    banners:[],
+    pgProjectsBanner:'', pgPFadila:'', pgPRoudah:'', pgPSalamah:'', pgPNaeem:'', pgPSafa:'', pgPAbhur:'',
+    pgFadilaBanner:'', pgFadilaMain:'', pgFadilaT1:'', pgFadilaT2:'', pgFadilaT3:'', pgFadilaT4:'', pgFadilaMap:''
+  };
+  var LP_TEXT_KEYS = ['heroVariant','heroEyebrow','heroTitle','heroText','aboutEyebrow','aboutTitle','aboutText','aboutP1','aboutP2','aboutP3','contactEyebrow','contactTitle','contactText','contactPhone','contactAddress','contactEmail','accent','fontFamily'];
+  var lpForm=document.getElementById('landingForm');
+
+  // بطاقات صور صفحات إضافية — تُولّد ديناميكياً
+  var LP_EXTRA_GROUPS = [
+    {title:'صور صفحة المشاريع', items:[
+      {key:'pgProjectsBanner', label:'بنر أعلى الصفحة'},
+      {key:'pgPFadila', label:'مشروع الفضيلة 117'},
+      {key:'pgPRoudah', label:'مشروع الروضة 116'},
+      {key:'pgPSalamah', label:'مشروع السلامة 118'},
+      {key:'pgPNaeem', label:'مشروع النعيم 120'},
+      {key:'pgPSafa', label:'مشروع الصفا 121'},
+      {key:'pgPAbhur', label:'مشروع أبحر 122'}
+    ]},
+    {title:'صور صفحة تفاصيل المشروع (الفضيلة 117)', items:[
+      {key:'pgFadilaBanner', label:'البنر العلوي'},
+      {key:'pgFadilaMain', label:'الصورة الرئيسية'},
+      {key:'pgFadilaT1', label:'صورة مصغّرة 1'},
+      {key:'pgFadilaT2', label:'صورة مصغّرة 2'},
+      {key:'pgFadilaT3', label:'صورة مصغّرة 3'},
+      {key:'pgFadilaT4', label:'صورة مصغّرة 4'},
+      {key:'pgFadilaMap', label:'صورة الموقع / الخريطة'}
+    ]}
+  ];
+  var UP_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+  (function buildExtraCards(){
+    var styleCard=document.getElementById('lpStyleCard');
+    var grid=document.getElementById('lpGrid');
+    LP_EXTRA_GROUPS.forEach(function(g){
+      var card=document.createElement('div'); card.className='card';
+      var html='<div class="hd"><h3>'+g.title+'</h3></div>';
+      g.items.forEach(function(it){
+        html+='<div class="field"><label>'+it.label+'</label>'+
+          '<label class="uploader" for="'+it.key+'Input">'+UP_SVG+'<span>اضغط لرفع الصورة</span></label>'+
+          '<input type="file" id="'+it.key+'Input" accept="image/*" hidden/>'+
+          '<div class="thumbs" id="'+it.key+'Prev"></div></div>';
+      });
+      card.innerHTML=html;
+      grid.insertBefore(card, styleCard);
+    });
+  })();
+
+  var LP_IMAGES = [
+    {key:'heroImage',    input:'heroImgInput',    prev:'heroImgPrev'},
+    {key:'aboutImage',   input:'aboutImgInput',   prev:'aboutImgPrev'},
+    {key:'projFadilaImg',  input:'projFadilaInput',  prev:'projFadilaPrev'},
+    {key:'projRoudahImg',  input:'projRoudahInput',  prev:'projRoudahPrev'},
+    {key:'projSalamahImg', input:'projSalamahInput', prev:'projSalamahPrev'},
+    {key:'projNaeemImg',   input:'projNaeemInput',   prev:'projNaeemPrev'}
+  ];
+  LP_EXTRA_GROUPS.forEach(function(g){ g.items.forEach(function(it){ LP_IMAGES.push({key:it.key, input:it.key+'Input', prev:it.key+'Prev'}); }); });
+  var lpImgData = {};
+  var lpBanners = [];
+  function lpReadStore(){ var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){} return Object.assign({}, LP_DEFAULTS, t); }
+  function lpImgPrev(elId, data, key){
+    document.getElementById(elId).innerHTML = data
+      ? '<div class="thumb"><img src="'+data+'" alt=""><button type="button" class="th-x" data-imgkey="'+key+'" aria-label="حذف">×</button></div>' : '';
+  }
+  function lpLoad(){
+    var t=lpReadStore();
+    LP_TEXT_KEYS.forEach(function(k){ if(lpForm[k]!=null) lpForm[k].value = t[k]; });
+    lpForm.headingWeight.value = String(t.headingWeight);
+    LP_IMAGES.forEach(function(im){ lpImgData[im.key]=t[im.key]||''; lpImgPrev(im.prev, lpImgData[im.key], im.key); });
+    lpBanners = Array.isArray(t.banners) ? t.banners.slice() : [];
+    lpRenderBanners();
+  }
+  LP_IMAGES.forEach(function(im){
+    document.getElementById(im.input).addEventListener('change', function(){
+      var f=this.files&&this.files[0]; if(!f) return;
+      readFile(f).then(function(d){ lpImgData[im.key]=d; lpImgPrev(im.prev, d, im.key); });
+    });
+    document.getElementById(im.prev).addEventListener('click', function(e){
+      if(e.target.closest('[data-imgkey]')){ lpImgData[im.key]=''; document.getElementById(im.input).value=''; lpImgPrev(im.prev, '', im.key); }
+    });
+  });
+
+  // البنرات (متعددة)
+  function lpRenderBanners(){
+    document.getElementById('bannersPrev').innerHTML = lpBanners.map(function(d,i){
+      return '<div class="thumb"><img src="'+d+'" alt=""><button type="button" class="th-x" data-bi="'+i+'" aria-label="حذف">×</button></div>';
+    }).join('');
+  }
+  document.getElementById('bannersInput').addEventListener('change', function(){
+    var files=Array.prototype.slice.call(this.files||[]); if(!files.length) return;
+    Promise.all(files.map(readFile)).then(function(arr){ lpBanners=lpBanners.concat(arr); lpRenderBanners(); this.value=''; }.bind(this));
+  });
+  document.getElementById('bannersPrev').addEventListener('click', function(e){
+    var b=e.target.closest('[data-bi]'); if(!b) return;
+    lpBanners.splice(parseInt(b.dataset.bi,10),1); lpRenderBanners();
+  });
+
+  lpForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var t=lpReadStore();
+    LP_TEXT_KEYS.forEach(function(k){ t[k]=lpForm[k].value; });
+    t.headingWeight = Number(lpForm.headingWeight.value);
+    LP_IMAGES.forEach(function(im){ t[im.key]=lpImgData[im.key]||''; });
+    t.banners = lpBanners.slice();
+    try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); toast('تم حفظ التعديلات — ستظهر عند فتح الصفحات'); }
+    catch(err){ toast('تعذّر الحفظ — قد تكون الصور كبيرة جداً'); }
+  });
+  document.getElementById('lpReset').addEventListener('click', function(){
+    try{ localStorage.removeItem('homera_tweaks'); }catch(e){}
+    lpImgData={}; lpBanners=[]; lpLoad(); toast('تمت استعادة الإعدادات الافتراضية');
+  });
+  lpLoad();
+  });
+</script>
+
+<!-- النوافذ -->
+<div class="modal-ov" id="viewModal">
+  <div class="modal">
+    <div class="mh"><h3>تفاصيل المشروع</h3><button class="x" id="viewClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="mb" id="viewBody"></div>
+  </div>
+</div>
+<div class="modal-ov" id="addModal">
+  <div class="modal">
+    <div class="mh"><h3 id="addTitle">إضافة مشروع</h3><button class="x" id="addClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <form id="addForm">
+      <div class="mb">
+        <div class="field"><label>اسم المشروع</label><input name="name" required placeholder="مشروع …"/></div>
+        <div class="frow">
+          <div class="field"><label>المدينة</label><input name="city" required value="جدة" placeholder="جدة"/></div>
+          <div class="field"><label>الحي</label><input name="dist" required placeholder="حي …"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>نوع العقار</label><select name="type"><option>فيلا</option><option>شقق</option></select></div>
+          <div class="field"><label>المساحة (م²)</label><input name="area" type="number" min="0" required placeholder="200"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الواجهة</label><select name="facade"><option>شمالية</option><option>جنوبية</option><option>شرقية</option><option>غربية</option></select></div>
+          <div class="field"><label>السعر (ر.س)</label><input name="price" type="number" min="0" required placeholder="1000000"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الحالة</label><select name="status"><option value="new">جديد</option><option value="sale">قيد البيع</option><option value="done">مكتمل</option></select></div>
+          <div class="field"><label>إجمالي الوحدات</label><input name="total" type="number" min="1" required placeholder="12"/></div>
+        </div>
+        <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
+
+        <div class="field">
+          <label>الصورة الأساسية</label>
+          <label class="uploader" for="coverInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span>اضغط لاختيار صورة أساسية</span>
+          </label>
+          <input type="file" id="coverInput" accept="image/*" hidden/>
+          <div class="thumbs" id="coverPrev"></div>
+        </div>
+
+        <div class="field">
+          <label>صور فرعية (اختياري · متعددة)</label>
+          <label class="uploader" for="galInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>اضغط لإضافة صور فرعية</span>
+          </label>
+          <input type="file" id="galInput" accept="image/*" multiple hidden/>
+          <div class="thumbs" id="galPrev"></div>
+        </div>
+      </div>
+      <div class="mf-foot"><button type="submit" class="btn-primary">حفظ المشروع</button><button type="button" class="btn-ghost" id="addCancel">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-ov" id="sellModal">
+  <div class="modal" style="max-width:420px">
+    <div class="mh"><h3>تأكيد بيع وحدة</h3><button class="x" id="sellClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <form id="sellForm">
+      <div class="mb">
+        <p style="font-size:14px;color:var(--muted);margin-bottom:16px">سيتم تسجيل بيع وحدة واحدة من <b id="sellName" style="color:var(--text)"></b> وإضافة المبلغ إلى قيمة المبيعات.</p>
+        <div class="field"><label>سعر البيع (ر.س)</label><input name="price" id="sellPrice" type="number" min="0" required/></div>
+        <div id="sellUnitsNote" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="mf-foot"><button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تأكيد البيع</button><button type="button" class="btn-ghost" id="sellCancel">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- لوحة التعديلات -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<div id="tweaks-root"></div>
+<script type="text/babel" src="dash-tweaks-app.jsx"></script>
+
+</body>
+</html>
