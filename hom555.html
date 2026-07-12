@@ -41,10 +41,76 @@
 .lp-foot{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px;}
 .lp-foot .btn-ghost{text-decoration:none;display:inline-flex;align-items:center;}
 #heroImgPrev .thumb,#aboutImgPrev .thumb{width:130px;height:82px;}
+/* ===== بوابة الدخول ===== */
+#authGate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:20px;direction:rtl;
+  background:linear-gradient(160deg,#0E3340,#15495B);font-family:'Alexandria',system-ui,sans-serif;}
+#authGate.hide{display:none;}
+.auth-card{background:#fff;border-radius:18px;padding:34px 30px;width:100%;max-width:380px;box-shadow:0 30px 70px rgba(0,0,0,.4);}
+.auth-brand{text-align:center;margin-bottom:16px;}
+.auth-brand .nm{display:block;font-weight:800;letter-spacing:.22em;color:#0E3340;font-size:22px;}
+.auth-brand .tg{display:block;font-size:10px;letter-spacing:.28em;color:#C7A36B;text-transform:uppercase;margin-top:4px;}
+.auth-card h2{text-align:center;font-size:20px;color:#14202A;margin:6px 0 2px;}
+.auth-sub{text-align:center;font-size:13px;color:#6E7C82;margin-bottom:18px;}
+.auth-card label{display:block;font-size:13px;font-weight:600;color:#14202A;margin:12px 0 6px;}
+.auth-card input{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E6E2D6;border-radius:10px;font-family:inherit;font-size:14px;}
+.auth-card input:focus{outline:none;border-color:#C7A36B;}
+.auth-err{color:#c0392b;font-size:13px;margin-top:12px;text-align:center;}
+.auth-btn{width:100%;margin-top:20px;padding:12px;border:none;border-radius:10px;background:#0E3340;color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;}
+.auth-btn:hover{background:#15495B;}
+.logout-btn{margin-top:10px;width:100%;display:flex;align-items:center;gap:10px;justify-content:flex-start;
+  padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:none;color:var(--muted);
+  font-family:inherit;font-size:14px;cursor:pointer;transition:.15s;}
+.logout-btn:hover{color:#c0392b;border-color:#c0392b;}
+.logout-btn svg{width:18px;height:18px;}
 </style>
 <script src="dash-tweaks.js"></script>
 </head>
 <body>
+
+<!-- ============ بوابة الدخول ============ -->
+<div id="authGate">
+  <form id="authForm" class="auth-card" autocomplete="on">
+    <div class="auth-brand"><span class="nm">HOMERA</span><span class="tg">Admin</span></div>
+    <h2>تسجيل الدخول</h2>
+    <p class="auth-sub">منطقة إدارة هوميرا — الدخول للمصرّح لهم فقط.</p>
+    <label for="authEmail">البريد الإلكتروني</label>
+    <input type="email" id="authEmail" dir="ltr" autocomplete="username" required placeholder="admin@homera.sa"/>
+    <label for="authPass">كلمة المرور</label>
+    <input type="password" id="authPass" dir="ltr" autocomplete="current-password" required placeholder="••••••••"/>
+    <div class="auth-err" id="authErr" hidden>بيانات الدخول غير صحيحة، حاول مرة أخرى.</div>
+    <button type="submit" class="auth-btn">دخول</button>
+  </form>
+</div>
+
+<script>
+(function(){
+  var AUTH_EMAIL='admin@homera.sa';
+  var AUTH_HASH='efb949d6f2b4bb99b94905f123f1c5b9cb991f1014d73f8aed8c5508de1aed27';
+  var KEY='homera_admin_auth';
+  var gate=document.getElementById('authGate');
+  function hideGate(){ gate.classList.add('hide'); }
+  async function sha256(s){
+    if(!(window.crypto&&window.crypto.subtle)) return null;
+    var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  }
+  if(sessionStorage.getItem(KEY)==='ok'){ hideGate(); }
+  document.getElementById('authForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var em=document.getElementById('authEmail').value.trim().toLowerCase();
+    var pw=document.getElementById('authPass').value;
+    var errEl=document.getElementById('authErr');
+    var h=await sha256(pw);
+    if(em===AUTH_EMAIL && h && h===AUTH_HASH){
+      sessionStorage.setItem(KEY,'ok'); errEl.setAttribute('hidden',''); hideGate();
+    } else {
+      errEl.removeAttribute('hidden');
+    }
+  });
+  window.HOMERA_logout=function(){ sessionStorage.removeItem(KEY); location.reload(); };
+})();
+</script>
+
 <div class="dash">
 
   <!-- ============ الشريط الجانبي ============ -->
@@ -81,6 +147,10 @@
       <div class="av">هـ</div>
       <div class="info"><b>إدارة هوميرا</b><span>مدير النظام</span></div>
     </div>
+    <button type="button" class="logout-btn" onclick="HOMERA_logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+      تسجيل الخروج
+    </button>
   </aside>
 
   <!-- ============ المحتوى ============ -->
