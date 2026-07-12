@@ -246,6 +246,10 @@
               <label class="uploader" for="logoInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع الشعار</span></label>
               <input type="file" id="logoInput" accept="image/*" hidden/>
               <div class="thumbs" id="logoPrev"></div>
+              <div class="field" style="margin-top:14px">
+                <label>حجم الشعار — <span id="logoSizeVal">46</span>px</label>
+                <input type="range" name="logoSize" id="logoSize" min="28" max="90" step="2" style="width:100%"/>
+              </div>
             </div>
 
             <div class="card">
@@ -287,12 +291,25 @@
               <div class="field"><label>البريد الإلكتروني</label><input name="contactEmail" dir="ltr"/></div>
             </div>
 
+
             <div class="card">
-              <div class="hd"><h3>بنرات الصفحة الرئيسية</h3></div>
-              <p style="font-size:13px;color:var(--muted);margin-bottom:12px">صور إعلانية تظهر كشريط في الصفحة الرئيسية — يمكن رفع أكثر من صورة.</p>
-              <label class="uploader" for="bannersInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة بنرات</span></label>
-              <input type="file" id="bannersInput" accept="image/*" multiple hidden/>
-              <div class="thumbs" id="bannersPrev"></div>
+              <div class="hd"><h3>الإحصائيات</h3></div>
+              <div class="frow">
+                <div class="field"><label>الرقم 1</label><input name="stat1Num" dir="ltr"/></div>
+                <div class="field"><label>الوصف 1</label><input name="stat1Label"/></div>
+              </div>
+              <div class="frow">
+                <div class="field"><label>الرقم 2</label><input name="stat2Num" dir="ltr"/></div>
+                <div class="field"><label>الوصف 2</label><input name="stat2Label"/></div>
+              </div>
+              <div class="frow">
+                <div class="field"><label>الرقم 3</label><input name="stat3Num" dir="ltr"/></div>
+                <div class="field"><label>الوصف 3</label><input name="stat3Label"/></div>
+              </div>
+              <div class="frow">
+                <div class="field"><label>الرقم 4</label><input name="stat4Num" dir="ltr"/></div>
+                <div class="field"><label>الوصف 4</label><input name="stat4Label"/></div>
+              </div>
             </div>
 
             <div class="card" id="lpStyleCard">
@@ -638,13 +655,15 @@
     contactEyebrow:'تواصل معنا', contactTitle:'لنبدأ رحلتك نحو منزلك',
     contactText:'تواصل مع فريق هوميرا مباشرةً — نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
     contactPhone:'+966 12 000 0000', contactAddress:'حي الفيصلية، جدة، السعودية', contactEmail:'info@homera.sa',
-    logo:'', heroImage:'', aboutImage:'',
+    stat1Num:'+12', stat1Label:'سنة خبرة', stat2Num:'+40', stat2Label:'مشروع منجز',
+    stat3Num:'+1500', stat3Label:'عميل سعيد', stat4Num:'6', stat4Label:'مدن نخدمها',
+    logo:'', logoSize:46, heroImage:'', aboutImage:'',
     projFadilaImg:'', projRoudahImg:'', projSalamahImg:'', projNaeemImg:'',
     banners:[],
     pgProjectsBanner:'', pgPFadila:'', pgPRoudah:'', pgPSalamah:'', pgPNaeem:'', pgPSafa:'', pgPAbhur:'',
     pgFadilaBanner:'', pgFadilaMain:'', pgFadilaT1:'', pgFadilaT2:'', pgFadilaT3:'', pgFadilaT4:'', pgFadilaMap:''
   };
-  var LP_TEXT_KEYS = ['heroVariant','heroEyebrow','heroTitle','heroText','aboutEyebrow','aboutTitle','aboutText','aboutP1','aboutP2','aboutP3','contactEyebrow','contactTitle','contactText','contactPhone','contactAddress','contactEmail','accent','fontFamily'];
+  var LP_TEXT_KEYS = ['heroVariant','heroEyebrow','heroTitle','heroText','aboutEyebrow','aboutTitle','aboutText','aboutP1','aboutP2','aboutP3','contactEyebrow','contactTitle','contactText','contactPhone','contactAddress','contactEmail','stat1Num','stat1Label','stat2Num','stat2Label','stat3Num','stat3Label','stat4Num','stat4Label','accent','fontFamily'];
   var lpForm=document.getElementById('landingForm');
 
   // بطاقات صور صفحات إضافية — تُولّد ديناميكياً
@@ -678,7 +697,6 @@
   ];
   LP_EXTRA_GROUPS.forEach(function(g){ g.items.forEach(function(it){ LP_IMAGES.push({key:it.key, input:it.key+'Input', prev:it.key+'Prev'}); }); });
   var lpImgData = {};
-  var lpBanners = [];
   function lpReadStore(){ var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){} return Object.assign({}, LP_DEFAULTS, t); }
   function lpImgPrev(elId, data, key){
     document.getElementById(elId).innerHTML = data
@@ -688,9 +706,9 @@
     var t=lpReadStore();
     LP_TEXT_KEYS.forEach(function(k){ if(lpForm[k]!=null) lpForm[k].value = t[k]; });
     lpForm.headingWeight.value = String(t.headingWeight);
+    lpForm.logoSize.value = String(t.logoSize||46);
+    document.getElementById('logoSizeVal').textContent = String(t.logoSize||46);
     LP_IMAGES.forEach(function(im){ lpImgData[im.key]=t[im.key]||''; lpImgPrev(im.prev, lpImgData[im.key], im.key); });
-    lpBanners = Array.isArray(t.banners) ? t.banners.slice() : [];
-    lpRenderBanners();
   }
   LP_IMAGES.forEach(function(im){
     document.getElementById(im.input).addEventListener('change', function(){
@@ -702,35 +720,21 @@
     });
   });
 
-  // البنرات (متعددة)
-  function lpRenderBanners(){
-    document.getElementById('bannersPrev').innerHTML = lpBanners.map(function(d,i){
-      return '<div class="thumb"><img src="'+d+'" alt=""><button type="button" class="th-x" data-bi="'+i+'" aria-label="حذف">×</button></div>';
-    }).join('');
-  }
-  document.getElementById('bannersInput').addEventListener('change', function(){
-    var files=Array.prototype.slice.call(this.files||[]); if(!files.length) return;
-    Promise.all(files.map(readFile)).then(function(arr){ lpBanners=lpBanners.concat(arr); lpRenderBanners(); this.value=''; }.bind(this));
-  });
-  document.getElementById('bannersPrev').addEventListener('click', function(e){
-    var b=e.target.closest('[data-bi]'); if(!b) return;
-    lpBanners.splice(parseInt(b.dataset.bi,10),1); lpRenderBanners();
-  });
-
   lpForm.addEventListener('submit', function(e){
     e.preventDefault();
     var t=lpReadStore();
     LP_TEXT_KEYS.forEach(function(k){ t[k]=lpForm[k].value; });
     t.headingWeight = Number(lpForm.headingWeight.value);
+    t.logoSize = Number(lpForm.logoSize.value);
     LP_IMAGES.forEach(function(im){ t[im.key]=lpImgData[im.key]||''; });
-    t.banners = lpBanners.slice();
     try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); toast('تم حفظ التعديلات — ستظهر عند فتح الصفحات'); }
     catch(err){ toast('تعذّر الحفظ — قد تكون الصور كبيرة جداً'); }
   });
   document.getElementById('lpReset').addEventListener('click', function(){
     try{ localStorage.removeItem('homera_tweaks'); }catch(e){}
-    lpImgData={}; lpBanners=[]; lpLoad(); toast('تمت استعادة الإعدادات الافتراضية');
+    lpImgData={}; lpLoad(); toast('تمت استعادة الإعدادات الافتراضية');
   });
+  document.getElementById('logoSize').addEventListener('input', function(){ document.getElementById('logoSizeVal').textContent=this.value; });
   lpLoad();
   });
 </script>

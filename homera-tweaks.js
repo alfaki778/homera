@@ -15,6 +15,7 @@
     buttonShape: 'rounded',
     cornerRadius: 16,
     logo: '',
+    logoSize: 46,
     heroImage: '',
     aboutImage: '',
     aboutEyebrow: 'من نحن',
@@ -29,6 +30,10 @@
     contactPhone: '+966 12 000 0000',
     contactAddress: 'حي الفيصلية، جدة، السعودية',
     contactEmail: 'info@homera.sa',
+    stat1Num: '+12', stat1Label: 'سنة خبرة',
+    stat2Num: '+40', stat2Label: 'مشروع منجز',
+    stat3Num: '+1500', stat3Label: 'عميل سعيد',
+    stat4Num: '6', stat4Label: 'مدن نخدمها',
     projFadilaImg: '',
     projRoudahImg: '',
     projSalamahImg: '',
@@ -124,6 +129,12 @@
     setText('[data-tw="contactAddress"]', t.contactAddress);
     setText('[data-tw="contactEmail"]', t.contactEmail);
 
+    // الإحصائيات
+    setText('[data-tw="stat1Num"]', t.stat1Num); setText('[data-tw="stat1Label"]', t.stat1Label);
+    setText('[data-tw="stat2Num"]', t.stat2Num); setText('[data-tw="stat2Label"]', t.stat2Label);
+    setText('[data-tw="stat3Num"]', t.stat3Num); setText('[data-tw="stat3Label"]', t.stat3Label);
+    setText('[data-tw="stat4Num"]', t.stat4Num); setText('[data-tw="stat4Label"]', t.stat4Label);
+
     // الصور (عبر خاصية src في عنصر image-slot)
     setSlotImg('home-hero', t.heroImage);
     setSlotImg('home-hero-split', t.heroImage);
@@ -152,7 +163,8 @@
     // بنرات الصفحة الرئيسية
     renderBanners(t.banners);
 
-    // الشعار (يظهر في الترويسة والفوتر بكل الصفحات)
+    // الشعار (يظهر في الترويسة والفوتر بكل الصفحات) + حجمه
+    r.setProperty('--brand-logo-h', (Number(t.logoSize) || 46) + 'px');
     applyLogo(t.logo);
 
     window.__HOMERA_TWEAKS = t;
