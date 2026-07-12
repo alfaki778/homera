@@ -168,9 +168,6 @@
     setSlotImg('fadila-t4', t.pgFadilaT4);
     setSlotImg('fadila-map', t.pgFadilaMap);
 
-    // بنرات الصفحة الرئيسية
-    renderBanners(t.banners);
-
     // الشعار (يظهر في الترويسة والفوتر بكل الصفحات) + حجمه
     r.setProperty('--brand-logo-h', (Number(t.logoSize) || 46) + 'px');
     applyLogo(t.logo);
@@ -194,17 +191,6 @@
     });
   }
 
-  function renderBanners(list) {
-    var sec = document.getElementById('home-banners');
-    var track = document.getElementById('bannersTrack');
-    if (!sec || !track) return;
-    list = Array.isArray(list) ? list : [];
-    if (!list.length) { sec.setAttribute('hidden', ''); track.innerHTML = ''; return; }
-    sec.removeAttribute('hidden');
-    track.innerHTML = list.map(function (src) {
-      return '<div class="banner-item"><img src="' + src + '" alt="بنر"/></div>';
-    }).join('');
-  }
 
   function setText(sel, val) {
     if (val == null) return;
