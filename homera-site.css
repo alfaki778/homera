@@ -83,6 +83,18 @@ a{color:inherit;text-decoration:none;}
   content:"";position:absolute;bottom:-2px;right:0;left:0;height:2px;
   background:var(--gold);border-radius:2px;
 }
+/* أنميشن عنوان الهيرو: تبديل الكلمة الذهبية (الرقي / الراحة) */
+.hero-title-anim .swap{display:inline-grid;vertical-align:bottom;}
+.hero-title-anim .swap .w{grid-area:1/1;color:var(--gold-l);will-change:opacity,transform;}
+.hero-title-anim .swap .w:nth-child(1){animation:heroSwapA 5s ease-in-out infinite;}
+.hero-title-anim .swap .w:nth-child(2){animation:heroSwapB 5s ease-in-out infinite;}
+@keyframes heroSwapA{0%,40%{opacity:1;transform:translateY(0)}50%,90%{opacity:0;transform:translateY(-10px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes heroSwapB{0%,40%{opacity:0;transform:translateY(10px)}50%,90%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion: reduce){
+  .hero-title-anim .swap .w{animation:none;}
+  .hero-title-anim .swap .w:nth-child(2){opacity:0;}
+}
+
 .brandmark{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
 /* الشعار المرفوع من لوحة التحكم */
 .brandmark img.brand-logo{height:var(--brand-logo-h,44px);width:auto;max-width:240px;object-fit:contain;display:block;}
