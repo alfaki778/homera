@@ -62,6 +62,9 @@
   font-family:inherit;font-size:14px;cursor:pointer;transition:.15s;}
 .logout-btn:hover{color:#c0392b;border-color:#c0392b;}
 .logout-btn svg{width:18px;height:18px;}
+/* شعار الموقع داخل الشريط الجانبي للوحة التحكم */
+.side .brand img.brand-logo{height:40px;width:auto;max-width:180px;object-fit:contain;display:block;}
+.side .brand.has-logo .name,.side .brand.has-logo .tag{display:none;}
 </style>
 <script src="dash-tweaks.js"></script>
 </head>
@@ -702,6 +705,14 @@
     document.getElementById(elId).innerHTML = data
       ? '<div class="thumb"><img src="'+data+'" alt=""><button type="button" class="th-x" data-imgkey="'+key+'" aria-label="حذف">×</button></div>' : '';
   }
+  function applySidebarLogo(url){
+    var brand=document.querySelector('.side .brand'); if(!brand) return;
+    var img=brand.querySelector('img.brand-logo');
+    if(url){
+      if(!img){ img=document.createElement('img'); img.className='brand-logo'; img.alt='هوميرا'; brand.insertBefore(img, brand.firstChild); }
+      img.src=url; brand.classList.add('has-logo');
+    } else { if(img) img.remove(); brand.classList.remove('has-logo'); }
+  }
   function lpLoad(){
     var t=lpReadStore();
     LP_TEXT_KEYS.forEach(function(k){ if(lpForm[k]!=null) lpForm[k].value = t[k]; });
@@ -709,6 +720,7 @@
     lpForm.logoSize.value = String(t.logoSize||46);
     document.getElementById('logoSizeVal').textContent = String(t.logoSize||46);
     LP_IMAGES.forEach(function(im){ lpImgData[im.key]=t[im.key]||''; lpImgPrev(im.prev, lpImgData[im.key], im.key); });
+    applySidebarLogo(t.logo);
   }
   LP_IMAGES.forEach(function(im){
     document.getElementById(im.input).addEventListener('change', function(){
@@ -727,7 +739,7 @@
     t.headingWeight = Number(lpForm.headingWeight.value);
     t.logoSize = Number(lpForm.logoSize.value);
     LP_IMAGES.forEach(function(im){ t[im.key]=lpImgData[im.key]||''; });
-    try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); toast('تم حفظ التعديلات — ستظهر عند فتح الصفحات'); }
+    try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); applySidebarLogo(t.logo); toast('تم حفظ التعديلات — ستظهر عند فتح الصفحات'); }
     catch(err){ toast('تعذّر الحفظ — قد تكون الصور كبيرة جداً'); }
   });
   document.getElementById('lpReset').addEventListener('click', function(){
