@@ -14,6 +14,7 @@
     accent: 'gold',
     buttonShape: 'rounded',
     cornerRadius: 16,
+    logo: '',
     heroImage: '',
     aboutImage: '',
     aboutEyebrow: 'من نحن',
@@ -151,7 +152,26 @@
     // بنرات الصفحة الرئيسية
     renderBanners(t.banners);
 
+    // الشعار (يظهر في الترويسة والفوتر بكل الصفحات)
+    applyLogo(t.logo);
+
     window.__HOMERA_TWEAKS = t;
+  }
+
+  function applyLogo(url) {
+    ['.brandmark', '.foot-brand'].forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (host) {
+        var img = host.querySelector('img.brand-logo');
+        if (url) {
+          if (!img) { img = document.createElement('img'); img.className = 'brand-logo'; img.alt = 'هوميرا'; host.insertBefore(img, host.firstChild); }
+          if (img.getAttribute('src') !== url) img.src = url;
+          host.classList.add('has-logo');
+        } else {
+          if (img) img.remove();
+          host.classList.remove('has-logo');
+        }
+      });
+    });
   }
 
   function renderBanners(list) {

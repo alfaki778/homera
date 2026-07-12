@@ -241,6 +241,14 @@
           <div class="lp-grid" id="lpGrid">
 
             <div class="card">
+              <div class="hd"><h3>شعار الموقع</h3></div>
+              <p style="font-size:13px;color:var(--muted);line-height:1.8;margin:0 0 12px">يظهر في ترويسة وفوتر جميع الصفحات بدل الاسم النصّي. يُفضّل صورة PNG بخلفية شفافة.</p>
+              <label class="uploader" for="logoInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لرفع الشعار</span></label>
+              <input type="file" id="logoInput" accept="image/*" hidden/>
+              <div class="thumbs" id="logoPrev"></div>
+            </div>
+
+            <div class="card">
               <div class="hd"><h3>قسم الهيرو</h3></div>
               <div class="field"><label>تصميم الهيرو</label>
                 <select name="heroVariant"><option value="centered">مركزي</option><option value="split">مقسوم</option></select></div>
@@ -595,7 +603,7 @@
     contactEyebrow:'تواصل معنا', contactTitle:'لنبدأ رحلتك نحو منزلك',
     contactText:'تواصل مع فريق هوميرا مباشرةً — نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
     contactPhone:'+966 12 000 0000', contactAddress:'حي الفيصلية، جدة، السعودية', contactEmail:'info@homera.sa',
-    heroImage:'', aboutImage:'',
+    logo:'', heroImage:'', aboutImage:'',
     projFadilaImg:'', projRoudahImg:'', projSalamahImg:'', projNaeemImg:'',
     banners:[],
     pgProjectsBanner:'', pgPFadila:'', pgPRoudah:'', pgPSalamah:'', pgPNaeem:'', pgPSafa:'', pgPAbhur:'',
@@ -644,6 +652,7 @@
   })();
 
   var LP_IMAGES = [
+    {key:'logo',         input:'logoInput',       prev:'logoPrev'},
     {key:'heroImage',    input:'heroImgInput',    prev:'heroImgPrev'},
     {key:'aboutImage',   input:'aboutImgInput',   prev:'aboutImgPrev'}
   ];

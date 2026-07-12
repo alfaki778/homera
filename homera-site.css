@@ -84,6 +84,11 @@ a{color:inherit;text-decoration:none;}
   background:var(--gold);border-radius:2px;
 }
 .brandmark{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
+/* الشعار المرفوع من لوحة التحكم */
+.brandmark img.brand-logo{height:42px;width:auto;max-width:170px;object-fit:contain;display:block;}
+.brandmark.has-logo .name,.brandmark.has-logo .tag{display:none;}
+.foot-brand img.brand-logo{height:52px;width:auto;max-width:190px;object-fit:contain;display:block;margin-bottom:8px;}
+.foot-brand.has-logo .name,.foot-brand.has-logo .tag{display:none;}
 .brandmark .name{
   font-weight:700;letter-spacing:.22em;font-size:17px;color:#fff;
   padding-right:.22em;
