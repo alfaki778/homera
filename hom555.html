@@ -432,6 +432,20 @@
     return true;
   }
 
+  // استرجاع صور المشاريع المحفوظة إلى الجدول عند التحميل (البيانات مؤقتة)
+  function hydrateProjectsFromStore(){
+    var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){}
+    Object.keys(PROJECT_SLOTS).forEach(function(nm){
+      var pr=PROJECTS.find(function(x){return x.name===nm;});
+      if(!pr || pr.cover) return;
+      var keys=PROJECT_SLOTS[nm];
+      for(var i=0;i<keys.length;i++){ if(t[keys[i]]){ pr.cover=t[keys[i]]; break; } }
+    });
+  }
+  hydrateProjectsFromStore();   // حمّل الصور المحفوظة إلى الجدول
+  renderAll();                  // أعد الرسم لتظهر في الجدول
+  syncFeaturedToHome();         // انشر الصور لكل بطاقات الصفحات (يصلح الصور القديمة تلقائياً)
+
   // تبديل العرض
   var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية']};
   function showView(v){
