@@ -388,20 +388,23 @@
   }
   renderAll();
 
-  // ربط صور المشاريع المعروضة في الصفحة الرئيسية بصور المشاريع في الإدارة
-  var FEATURED_MAP = {
-    'مشروع الفضيلة 117':'projFadilaImg',
-    'مشروع الروضة 116':'projRoudahImg',
-    'مشروع السلامة 118':'projSalamahImg',
-    'مشروع النعيم 120':'projNaeemImg'
+  // ربط صورة المشروع في الإدارة بكل بطاقاته عبر الصفحات (الرئيسية + المشاريع + التفاصيل)
+  var PROJECT_SLOTS = {
+    'مشروع الفضيلة 117': ['projFadilaImg','pgPFadila','pgFadilaMain'],
+    'مشروع الروضة 116':  ['projRoudahImg','pgPRoudah'],
+    'مشروع السلامة 118': ['projSalamahImg','pgPSalamah'],
+    'مشروع النعيم 120':  ['projNaeemImg','pgPNaeem'],
+    'مشروع الصفا 121':   ['pgPSafa'],
+    'مشروع أبحر 122':    ['pgPAbhur']
   };
   function syncFeaturedToHome(){
     var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){}
     var changed=false;
-    Object.keys(FEATURED_MAP).forEach(function(nm){
-      var key=FEATURED_MAP[nm];
+    Object.keys(PROJECT_SLOTS).forEach(function(nm){
       var pr=PROJECTS.find(function(x){return x.name===nm;});
-      if(pr){ var v=pr.cover || (pr.gallery&&pr.gallery[0]) || ''; if(t[key]!==v){ t[key]=v; changed=true; } }
+      if(!pr) return;
+      var v=pr.cover || (pr.gallery&&pr.gallery[0]) || '';
+      PROJECT_SLOTS[nm].forEach(function(key){ if(t[key]!==v){ t[key]=v; changed=true; } });
     });
     if(changed){ try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); }catch(e){ return false; } }
     return true;
@@ -628,7 +631,7 @@
     heroText:'هوميرا شركة سعودية راسخة تتمتع بخبرة واسعة في مجالات التطوير العقاري والتسويق والاستثمار، تأسست على أسس قوية، وتقدّم حلولاً عقارية متكاملة تلبّي احتياجات السوق المحلي وتواكب تطلعات العملاء.',
     fontFamily:'Alexandria', headingWeight:800, accent:'gold',
     aboutEyebrow:'من نحن', aboutTitle:'نبني الثقة قبل أن نبني العقار',
-    aboutText:'هوميرا للتطوير العقاري تقدّم مشاريع سكنية واستثمارية في جدة بمعايير جودة عالية وشفافية كاملة، من التصميم إلى التسليم.',
+    aboutText:'هوميرا هي منصة عقارية متخصصة تربط العملاء بأفضل الفرص العقارية والاستثمارية، وتوفّر تجربة متكاملة لشراء وبيع وإعادة بيع العقارات، من خلال عرض المشاريع والوحدات السكنية، وتقديم الاستشارات العقارية، وربط العملاء بالحلول التمويلية المناسبة، لمساعدتهم على اتخاذ القرار الاستثماري الصحيح وإتمام الصفقات بكل احترافية.',
     aboutP1:'خبرة راسخة في التطوير والتسويق والاستثمار العقاري.',
     aboutP2:'حلول عقارية متكاملة تلبّي احتياجات السوق المحلي.',
     aboutP3:'التزام بالجودة والمواعيد وضمان على الإنشاءات.',
