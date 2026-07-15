@@ -67,9 +67,43 @@ function migrate($config) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(190) NOT NULL UNIQUE,
+        name VARCHAR(190) NOT NULL DEFAULT '',
+        role ENUM('admin','editor') NOT NULL DEFAULT 'editor',
+        password_hash VARCHAR(255) NOT NULL,
+        active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_sessions (
+        token_hash CHAR(64) PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX (user_id),
+        CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     seed_settings($pdo);
+    seed_users($pdo);
+    clean_projects_once($pdo);
     seed_projects($pdo);
     return $pdo;
+}
+
+function hash_password_pbkdf2($password, $salt = null) {
+    $salt = $salt ?: base64_encode(random_bytes(16));
+    $iterations = 120000;
+    $hash = base64_encode(hash_pbkdf2('sha256', (string)$password, $salt, $iterations, 32, true));
+    return 'pbkdf2$' . $iterations . '$' . $salt . '$' . $hash;
+}
+
+function verify_password_pbkdf2($password, $stored) {
+    $parts = explode('$', (string)$stored);
+    if (count($parts) !== 4 || $parts[0] !== 'pbkdf2') return false;
+    $hash = base64_encode(hash_pbkdf2('sha256', (string)$password, $parts[2], (int)$parts[1], 32, true));
+    return hash_equals($parts[3], $hash);
 }
 
 function default_settings() {
@@ -119,6 +153,21 @@ function seed_settings($pdo) {
     repair_default_settings($pdo);
 }
 
+function seed_users($pdo) {
+    $count = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+    if ($count > 0) return;
+    $stmt = $pdo->prepare('INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)');
+    $stmt->execute(['sami@seem.sa', 'Sami', 'admin', hash_password_pbkdf2('Sami@123456', 'homera-default-sami-2026')]);
+}
+
+function clean_projects_once($pdo) {
+    $stmt = $pdo->prepare("SELECT name FROM settings WHERE name = 'projects_cleaned_20260715' LIMIT 1");
+    $stmt->execute();
+    if ($stmt->fetch()) return;
+    $pdo->exec('DELETE FROM projects');
+    $pdo->exec("INSERT INTO settings (name, payload) VALUES ('projects_cleaned_20260715', '{}') ON DUPLICATE KEY UPDATE payload = VALUES(payload)");
+}
+
 function repair_default_settings($pdo) {
     $stmt = $pdo->prepare("SELECT payload FROM settings WHERE name = 'site' LIMIT 1");
     $stmt->execute();
@@ -132,20 +181,7 @@ function repair_default_settings($pdo) {
 }
 
 function seed_projects($pdo) {
-    $count = (int)$pdo->query('SELECT COUNT(*) FROM projects')->fetchColumn();
-    if ($count > 0) return;
-    $projects = [
-        ['مشروع النعيم 120','حي النعيم','جدة',175,'جنوبية','شقق',750000,16,13,'sale','uploads/7.jpg'],
-        ['مشروع الفضيلة 117','حي الفضيلة','جدة',200,'شمالية','فيلا',1100000,12,7,'sale','uploads/3.jpg'],
-        ['مشروع الروضة 116','حي الروضة','جدة',165,'شرقية','شقق',690000,20,12,'sale','uploads/4.jpg'],
-        ['مشروع أبحر 122','أبحر الشمالية','جدة',185,'غربية','شقق',820000,24,10,'sale',''],
-        ['مشروع الصفا 121','حي الصفا','جدة',210,'شمالية','فيلا',1050000,10,10,'done',''],
-        ['مشروع السلامة 118','حي السلامة','جدة',240,'غربية','فيلا',1250000,8,0,'new','uploads/6.jpg'],
-    ];
-    $stmt = $pdo->prepare('INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, cover, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    foreach ($projects as $i => $project) {
-        $stmt->execute([$project[0], $project[1], $project[2], $project[3], $project[4], $project[5], $project[6], $project[7], $project[8], $project[9], $project[10], $i]);
-    }
+    return;
 }
 
 function get_settings($pdo) {
@@ -210,24 +246,93 @@ function save_project($pdo, $project) {
     return (int)$pdo->lastInsertId();
 }
 
+function public_user($row) {
+    return ['id' => (int)$row['id'], 'email' => $row['email'], 'name' => $row['name'] ?: '', 'role' => $row['role'], 'active' => (int)$row['active'] === 1];
+}
+
+function token_hash($token) { return hash('sha256', (string)$token); }
+
+function login_user($pdo, $data) {
+    $email = strtolower(trim($data['email'] ?? ''));
+    $password = (string)($data['password'] ?? '');
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE email=? AND active=1 LIMIT 1');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+    if (!$user || !verify_password_pbkdf2($password, $user['password_hash'])) respond(['ok' => false, 'error' => 'بيانات الدخول غير صحيحة'], 401);
+    $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    $expires = date('Y-m-d H:i:s', time() + 60 * 60 * 12);
+    $ins = $pdo->prepare('INSERT INTO user_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)');
+    $ins->execute([token_hash($token), (int)$user['id'], $expires]);
+    return ['token' => $token, 'user' => public_user($user)];
+}
+
+function current_user($pdo, $data) {
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $token = $headers['X-Homera-Session'] ?? $headers['x-homera-session'] ?? ($data['sessionToken'] ?? '');
+    if (!$token) return null;
+    $stmt = $pdo->prepare('SELECT u.* FROM user_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > NOW() AND u.active=1 LIMIT 1');
+    $stmt->execute([token_hash($token)]);
+    $user = $stmt->fetch();
+    return $user ?: null;
+}
+
+function require_user($pdo, $data, $roles) {
+    $user = current_user($pdo, $data);
+    if (!$user || ($roles && !in_array($user['role'], $roles, true))) respond(['ok' => false, 'error' => 'ليست لديك صلاحية تنفيذ هذا الإجراء'], $user ? 403 : 401);
+    return $user;
+}
+
+function list_users($pdo) {
+    return array_map('public_user', $pdo->query('SELECT id, email, name, role, active FROM users ORDER BY id ASC')->fetchAll());
+}
+
+function create_user($pdo, $user) {
+    $email = strtolower(trim($user['email'] ?? ''));
+    $password = (string)($user['password'] ?? '');
+    if (!$email || !$password) respond(['ok' => false, 'error' => 'البريد وكلمة المرور مطلوبة'], 422);
+    $role = ($user['role'] ?? '') === 'admin' ? 'admin' : 'editor';
+    $stmt = $pdo->prepare('INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)');
+    $stmt->execute([$email, trim($user['name'] ?? ''), $role, hash_password_pbkdf2($password)]);
+}
+
+function change_password($pdo, $user, $data) {
+    $new = (string)($data['newPassword'] ?? '');
+    if (strlen($new) < 8) respond(['ok' => false, 'error' => 'كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل'], 422);
+    $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id=? LIMIT 1');
+    $stmt->execute([(int)$user['id']]);
+    $hash = $stmt->fetchColumn();
+    if (!$hash || !verify_password_pbkdf2((string)($data['currentPassword'] ?? ''), $hash)) respond(['ok' => false, 'error' => 'كلمة المرور الحالية غير صحيحة'], 422);
+    $up = $pdo->prepare('UPDATE users SET password_hash=? WHERE id=?');
+    $up->execute([hash_password_pbkdf2($new), (int)$user['id']]);
+    $pdo->prepare('DELETE FROM user_sessions WHERE user_id=?')->execute([(int)$user['id']]);
+}
+
 try {
     $pdo = migrate($config);
     $action = $_GET['action'] ?? 'bootstrap';
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $data = [];
+        if ($action === 'users') { require_user($pdo, $data, ['admin']); respond(['ok' => true, 'users' => list_users($pdo)]); }
         if ($action === 'settings') respond(['ok' => true, 'settings' => get_settings($pdo)]);
         if ($action === 'projects') respond(['ok' => true, 'projects' => get_projects($pdo)]);
         respond(['ok' => true, 'settings' => get_settings($pdo), 'projects' => get_projects($pdo)]);
     }
     $data = input_json();
+    if ($action === 'login') respond(['ok' => true] + login_user($pdo, $data));
+    if ($action === 'user') { require_user($pdo, $data, ['admin']); create_user($pdo, $data['user'] ?? []); respond(['ok' => true, 'users' => list_users($pdo)]); }
+    if ($action === 'password') { $user = require_user($pdo, $data, ['admin', 'editor']); change_password($pdo, $user, $data); respond(['ok' => true]); }
     if ($action === 'settings') {
+        require_user($pdo, $data, ['admin', 'editor']);
         save_settings($pdo, $data['settings'] ?? []);
         respond(['ok' => true, 'settings' => get_settings($pdo)]);
     }
     if ($action === 'project') {
+        require_user($pdo, $data, ['admin', 'editor']);
         save_project($pdo, $data['project'] ?? []);
         respond(['ok' => true, 'projects' => get_projects($pdo)]);
     }
     if ($action === 'sell') {
+        require_user($pdo, $data, ['admin', 'editor']);
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
         $stmt = $id > 0 ? $pdo->prepare('SELECT * FROM projects WHERE id=?') : $pdo->prepare('SELECT * FROM projects WHERE name=?');

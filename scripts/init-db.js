@@ -1,4 +1,8 @@
+const crypto = require('crypto');
 const mysql = require('mysql2/promise');
+
+const DEFAULT_ADMIN_EMAIL = 'sami@seem.sa';
+const DEFAULT_ADMIN_PASSWORD = 'Sami@123456';
 
 const dbConfig = {
   host: process.env.HOMERA_DB_HOST || process.env.DB_HOST || '127.0.0.1',
@@ -68,14 +72,13 @@ const defaultSettings = {
   pgFadilaMap: ''
 };
 
-const defaultProjects = [
-  ['مشروع النعيم 120', 'حي النعيم', 'جدة', 175, 'جنوبية', 'شقق', 750000, 16, 13, 'sale', 'uploads/7.jpg'],
-  ['مشروع الفضيلة 117', 'حي الفضيلة', 'جدة', 200, 'شمالية', 'فيلا', 1100000, 12, 7, 'sale', 'uploads/3.jpg'],
-  ['مشروع الروضة 116', 'حي الروضة', 'جدة', 165, 'شرقية', 'شقق', 690000, 20, 12, 'sale', 'uploads/4.jpg'],
-  ['مشروع أبحر 122', 'أبحر الشمالية', 'جدة', 185, 'غربية', 'شقق', 820000, 24, 10, 'sale', ''],
-  ['مشروع الصفا 121', 'حي الصفا', 'جدة', 210, 'شمالية', 'فيلا', 1050000, 10, 10, 'done', ''],
-  ['مشروع السلامة 118', 'حي السلامة', 'جدة', 240, 'غربية', 'فيلا', 1250000, 8, 0, 'new', 'uploads/6.jpg']
-];
+const defaultProjects = [];
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('base64')) {
+  const iterations = 120000;
+  const hash = crypto.pbkdf2Sync(String(password || ''), salt, iterations, 32, 'sha256').toString('base64');
+  return ['pbkdf2', iterations, salt, hash].join('$');
+}
 
 function createPool() {
   return mysql.createPool(dbConfig);
@@ -113,6 +116,26 @@ async function createTables(db) {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(190) NOT NULL UNIQUE,
+    name VARCHAR(190) NOT NULL DEFAULT '',
+    role ENUM('admin','editor') NOT NULL DEFAULT 'editor',
+    password_hash VARCHAR(255) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS user_sessions (
+    token_hash CHAR(64) PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (user_id),
+    CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 }
 
 async function seedSettings(db) {
@@ -136,7 +159,24 @@ async function repairDefaultSettings(db) {
   await db.query("UPDATE settings SET payload=? WHERE name = 'site'", [JSON.stringify(settings)]);
 }
 
+async function seedUsers(db) {
+  const [rows] = await db.query('SELECT COUNT(*) AS count FROM users');
+  if (Number(rows[0].count) > 0) return;
+  await db.query(
+    'INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)',
+    [DEFAULT_ADMIN_EMAIL, 'Sami', 'admin', hashPassword(DEFAULT_ADMIN_PASSWORD, 'homera-default-sami-2026')]
+  );
+}
+
+async function cleanProjectsOnce(db) {
+  const [rows] = await db.query("SELECT name FROM settings WHERE name = 'projects_cleaned_20260715' LIMIT 1");
+  if (rows.length) return;
+  await db.query('DELETE FROM projects');
+  await db.query("INSERT INTO settings (name, payload) VALUES ('projects_cleaned_20260715', '{}') ON DUPLICATE KEY UPDATE payload=VALUES(payload)");
+}
+
 async function seedProjects(db) {
+  if (!defaultProjects.length) return;
   const [rows] = await db.query('SELECT COUNT(*) AS count FROM projects');
   if (Number(rows[0].count) > 0) return;
 
@@ -153,6 +193,7 @@ function hasBrokenArabic(value) {
 }
 
 async function repairSeedProjects(db) {
+  if (!defaultProjects.length) return;
   const [rows] = await db.query('SELECT id, name, dist, city, facade, type, sort_order FROM projects ORDER BY sort_order ASC, id ASC LIMIT ?', [defaultProjects.length]);
   for (const row of rows) {
     const index = Number(row.sort_order);
@@ -173,6 +214,8 @@ async function migrate() {
   await createTables(db);
   await seedSettings(db);
   await repairDefaultSettings(db);
+  await seedUsers(db);
+  await cleanProjectsOnce(db);
   await seedProjects(db);
   await repairSeedProjects(db);
   return db;

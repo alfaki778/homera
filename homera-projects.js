@@ -13,13 +13,13 @@
   }
   function renderHome(projects) {
     var track = document.getElementById('cTrack');
-    if (!track || !projects.length) return;
-    track.innerHTML = projects.slice(0, 6).map(card).join('');
+    if (!track) return;
+    track.innerHTML = projects.length ? projects.slice(0, 6).map(card).join('') : '';
   }
   function renderProjects(projects) {
     var grid = document.getElementById('grid');
-    if (!grid || !projects.length) return;
-    grid.innerHTML = projects.map(card).join('');
+    if (!grid) return;
+    grid.innerHTML = projects.length ? projects.map(card).join('') : '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:36px">لا توجد مشاريع متاحة حالياً.</div>';
     if (typeof window.HOMERA_initProjectFilters === 'function') window.HOMERA_initProjectFilters();
   }
   function init() {

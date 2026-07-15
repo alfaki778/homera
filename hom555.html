@@ -73,7 +73,7 @@
 .side .brand.has-logo .name,.side .brand.has-logo .tag{display:none;}
 .tw-has-logo .side .brand .name,.tw-has-logo .side .brand .tag{display:none;}
 </style>
-<script src="homera-api.js?v=1"></script>
+<script src="homera-api.js?v=2"></script>
 <script src="dash-tweaks.js?v=3"></script>
 </head>
 <body>
@@ -85,7 +85,7 @@
     <h2>تسجيل الدخول</h2>
     <p class="auth-sub">منطقة إدارة هوميرا — الدخول للمصرّح لهم فقط.</p>
     <label for="authEmail">البريد الإلكتروني</label>
-    <input type="email" id="authEmail" dir="ltr" autocomplete="username" required placeholder="admin@homera.sa"/>
+    <input type="email" id="authEmail" dir="ltr" autocomplete="username" required placeholder="sami@seem.sa"/>
     <label for="authPass">كلمة المرور</label>
     <input type="password" id="authPass" dir="ltr" autocomplete="current-password" required placeholder="••••••••"/>
     <div class="auth-err" id="authErr" hidden>بيانات الدخول غير صحيحة، حاول مرة أخرى.</div>
@@ -95,30 +95,25 @@
 
 <script>
 (function(){
-  var AUTH_EMAIL='admin@homera.sa';
-  var AUTH_HASH='efb949d6f2b4bb99b94905f123f1c5b9cb991f1014d73f8aed8c5508de1aed27';
-  var KEY='homera_admin_auth';
   var gate=document.getElementById('authGate');
-  function hideGate(){ gate.classList.add('hide'); }
-  async function sha256(s){
-    if(!(window.crypto&&window.crypto.subtle)) return null;
-    var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-    return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-  }
-  if(sessionStorage.getItem(KEY)==='ok'){ hideGate(); }
-  document.getElementById('authForm').addEventListener('submit', async function(e){
+  function setCurrentUser(user){ window.HOMERA_CURRENT_USER=user||null; if(window.HOMERA_applyAccess) window.HOMERA_applyAccess(); }
+  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); }
+  var session=window.HOMERA_API && window.HOMERA_API.currentSession && window.HOMERA_API.currentSession();
+  if(session && session.user){ hideGate(session.user); }
+  document.getElementById('authForm').addEventListener('submit', function(e){
     e.preventDefault();
     var em=document.getElementById('authEmail').value.trim().toLowerCase();
     var pw=document.getElementById('authPass').value;
     var errEl=document.getElementById('authErr');
-    var h=await sha256(pw);
-    if(em===AUTH_EMAIL && h && h===AUTH_HASH){
-      sessionStorage.setItem(KEY,'ok'); errEl.setAttribute('hidden',''); hideGate();
-    } else {
-      errEl.removeAttribute('hidden');
-    }
+    errEl.setAttribute('hidden','');
+    if(!window.HOMERA_API){ errEl.textContent='API غير متاح حالياً.'; errEl.removeAttribute('hidden'); return; }
+    window.HOMERA_API.login(em,pw).then(function(user){ hideGate(user); })
+      .catch(function(err){ errEl.textContent=err.message||'بيانات الدخول غير صحيحة، حاول مرة أخرى.'; errEl.removeAttribute('hidden'); });
   });
-  window.HOMERA_logout=function(){ sessionStorage.removeItem(KEY); location.reload(); };
+  window.HOMERA_logout=function(){
+    if(window.HOMERA_API) window.HOMERA_API.logout();
+    location.reload();
+  }
 })();
 </script>
 
@@ -146,6 +141,16 @@
       الصفحة الرئيسية
     </div>
 
+    <div class="grp">الحساب</div>
+    <div class="navitem" data-view="password">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      تغيير كلمة المرور
+    </div>
+    <div class="navitem" data-view="users" data-admin-only hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      المستخدمون
+    </div>
+
     <div class="grp">خارجي</div>
     <a class="navitem" href="./">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
@@ -156,7 +161,7 @@
     <div class="spacer"></div>
     <div class="me">
       <div class="av">هـ</div>
-      <div class="info"><b>إدارة هوميرا</b><span>مدير النظام</span></div>
+      <div class="info"><b id="meName">إدارة هوميرا</b><span id="meRole">مدير النظام</span></div>
     </div>
     <button type="button" class="logout-btn" onclick="HOMERA_logout()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
@@ -185,20 +190,20 @@
       <section class="view active" id="view-overview">
         <div class="kpis">
           <div class="kpi">
-            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div><span class="delta up">+1 هذا الشهر</span></div>
-            <div class="val" id="kpiProjects">6</div><div class="lbl">إجمالي المشاريع</div>
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div></div>
+            <div class="val" id="kpiProjects">—</div><div class="lbl">إجمالي المشاريع</div>
           </div>
           <div class="kpi">
-            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg></div><span class="delta flat">90 وحدة</span></div>
-            <div class="val" id="kpiUnits">90</div><div class="lbl">إجمالي الوحدات</div>
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg></div></div>
+            <div class="val" id="kpiUnits">—</div><div class="lbl">إجمالي الوحدات</div>
           </div>
           <div class="kpi">
-            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5-8 8"/><circle cx="16.5" cy="6.5" r="2.5"/><path d="M9 13l-4 4v2h2l4-4"/></svg></div><span class="delta flat">42%</span></div>
-            <div class="val" id="kpiAvail">38</div><div class="lbl">الوحدات المتاحة</div>
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5-8 8"/><circle cx="16.5" cy="6.5" r="2.5"/><path d="M9 13l-4 4v2h2l4-4"/></svg></div></div>
+            <div class="val" id="kpiAvail">—</div><div class="lbl">الوحدات المتاحة</div>
           </div>
           <div class="kpi">
-            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div><span class="delta up">+6</span></div>
-            <div class="val" id="kpiSold">52</div><div class="lbl">الوحدات المباعة</div>
+            <div class="top"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div></div>
+            <div class="val" id="kpiSold">—</div><div class="lbl">الوحدات المباعة</div>
           </div>
         </div>
 
@@ -218,11 +223,10 @@
               فتح الاستفسارات (واتساب)
             </button>
             <div style="margin-top:20px">
-              <div class="mini-stat"><span class="k">قيمة المبيعات</span><span class="v" id="msRevenue" style="direction:ltr">—</span></div>
-              <div class="mini-stat"><span class="k">نسبة البيع الإجمالية</span><span class="v" id="msOverall">58%</span></div>
-              <div class="mini-stat"><span class="k">أعلى مشروع مبيعاً</span><span class="v" id="msTop" style="direction:rtl">الصفا 121</span></div>
-              <div class="mini-stat"><span class="k">مشاريع قيد البيع</span><span class="v" id="msSale">4</span></div>
-              <div class="mini-stat"><span class="k">مشاريع مكتملة</span><span class="v" id="msDone">1</span></div>
+              <div class="mini-stat"><span class="k">نسبة البيع الإجمالية</span><span class="v" id="msOverall">—</span></div>
+              <div class="mini-stat"><span class="k">أعلى مشروع مبيعاً</span><span class="v" id="msTop" style="direction:rtl">—</span></div>
+              <div class="mini-stat"><span class="k">مشاريع قيد البيع</span><span class="v" id="msSale">—</span></div>
+              <div class="mini-stat"><span class="k">مشاريع مكتملة</span><span class="v" id="msDone">—</span></div>
             </div>
           </div>
         </div>
@@ -341,6 +345,39 @@
         </form>
       </section>
 
+      <!-- ===== تغيير كلمة المرور ===== -->
+      <section class="view" id="view-password">
+        <div class="card" style="max-width:560px">
+          <div class="hd"><h3>تغيير كلمة المرور</h3></div>
+          <form id="passwordForm" style="padding:22px">
+            <div class="field"><label>كلمة المرور الحالية</label><input name="currentPassword" type="password" autocomplete="current-password" required/></div>
+            <div class="field"><label>كلمة المرور الجديدة</label><input name="newPassword" type="password" autocomplete="new-password" minlength="8" required/></div>
+            <div class="field"><label>تأكيد كلمة المرور الجديدة</label><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required/></div>
+            <button type="submit" class="btn-primary">تحديث كلمة المرور</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== المستخدمون ===== -->
+      <section class="view" id="view-users">
+        <div class="split">
+          <div class="card">
+            <div class="hd"><h3>المستخدمون</h3></div>
+            <table class="tbl"><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>الحالة</th></tr></thead><tbody id="usersTbody"></tbody></table>
+          </div>
+          <div class="card">
+            <div class="hd"><h3>إضافة مستخدم</h3></div>
+            <form id="userForm" style="padding:22px">
+              <div class="field"><label>الاسم</label><input name="name" placeholder="اسم المستخدم"/></div>
+              <div class="field"><label>البريد الإلكتروني</label><input name="email" type="email" dir="ltr" required placeholder="user@example.com"/></div>
+              <div class="field"><label>الدور</label><select name="role"><option value="editor">محرر</option><option value="admin">أدمن</option></select></div>
+              <div class="field"><label>كلمة المرور</label><input name="password" type="password" minlength="8" required/></div>
+              <button type="submit" class="btn-primary">إضافة المستخدم</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -348,17 +385,9 @@
 <script>
   function openWA(){ window.open('https://wa.me/966530425505?text=' + encodeURIComponent('استفسارات عملاء هوميرا'), '_blank'); }
 
-  var PROJECTS = [
-    {name:'مشروع النعيم 120', dist:'حي النعيم', city:'جدة', area:175, facade:'جنوبية', type:'شقق', price:750000, total:16, avail:3, sold:13, status:'sale', pct:81},
-    {name:'مشروع الفضيلة 117', dist:'حي الفضيلة', city:'جدة', area:200, facade:'شمالية', type:'فيلا', price:1100000, total:12, avail:5, sold:7, status:'sale', pct:58},
-    {name:'مشروع الروضة 116', dist:'حي الروضة', city:'جدة', area:165, facade:'شرقية', type:'شقق', price:690000, total:20, avail:8, sold:12, status:'sale', pct:60},
-    {name:'مشروع أبحر 122', dist:'أبحر الشمالية', city:'جدة', area:185, facade:'غربية', type:'شقق', price:820000, total:24, avail:14, sold:10, status:'sale', pct:42},
-    {name:'مشروع الصفا 121', dist:'حي الصفا', city:'جدة', area:210, facade:'شمالية', type:'فيلا', price:1050000, total:10, avail:0, sold:10, status:'done', pct:100},
-    {name:'مشروع السلامة 118', dist:'حي السلامة', city:'جدة', area:240, facade:'غربية', type:'فيلا', price:1250000, total:8, avail:8, sold:0, status:'new', pct:0}
-  ];
+  var PROJECTS = [];
   var STATUS = {sale:{c:'sale',t:'قيد البيع'}, done:{c:'done',t:'مكتمل'}, new:{c:'new',t:'جديد'}};
   var fmt = function(n){ return n.toLocaleString('en-US'); };
-  var REVENUE = PROJECTS.reduce(function(s,p){ return s + p.sold*p.price; }, 0);
 
   function bldg(p){ if(p&&p.cover){ return '<span class="sq img"><img src="'+p.cover+'" alt=""></span>'; } return '<span class="sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg></span>'; }
   function statusPill(s){ var o=STATUS[s]; return '<span class="pill '+o.c+'">'+o.t+'</span>'; }
@@ -399,7 +428,6 @@
     setTxt('msTop', top?top.name.replace('مشروع ',''):'—');
     setTxt('msSale', PROJECTS.filter(function(p){return p.status==='sale';}).length);
     setTxt('msDone', PROJECTS.filter(function(p){return p.status==='done';}).length);
-    setTxt('msRevenue', fmt(REVENUE)+' ر.س');
   }
   function applyFilters(){
     document.querySelectorAll('#projectsTbody .proj-row').forEach(function(r){
@@ -409,8 +437,8 @@
     });
   }
   function renderAll(){
-    document.getElementById('overviewTbody').innerHTML = PROJECTS.slice(0,4).map(rowOverview).join('');
-    document.getElementById('projectsTbody').innerHTML = PROJECTS.map(rowFull).join('');
+    document.getElementById('overviewTbody').innerHTML = PROJECTS.length ? PROJECTS.slice(0,4).map(rowOverview).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">لا توجد مشاريع حالياً.</td></tr>';
+    document.getElementById('projectsTbody').innerHTML = PROJECTS.length ? PROJECTS.map(rowFull).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">لا توجد مشاريع حالياً. ابدأ بإضافة مشروع جديد.</td></tr>';
     computeKPIs(); applyFilters();
   }
   function normalizeProject(p){
@@ -420,9 +448,8 @@
     return p;
   }
   function setProjects(next){
-    if(!Array.isArray(next)||!next.length) return;
+    if(!Array.isArray(next)) return;
     PROJECTS=next.map(normalizeProject);
-    REVENUE=PROJECTS.reduce(function(s,p){ return s + p.sold*p.price; }, 0);
     renderAll(); syncFeaturedToHome();
   }
   renderAll();
@@ -467,8 +494,9 @@
   }
 
   // تبديل العرض
-  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية']};
+  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};
   function showView(v){
+    if(v==='users' && (!window.HOMERA_CURRENT_USER || window.HOMERA_CURRENT_USER.role!=='admin')) v='overview';
     document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
     document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
     document.getElementById('pageTitle').textContent = titles[v][0];
@@ -477,6 +505,21 @@
   }
   document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.addEventListener('click',function(){ showView(n.dataset.view); }); });
   document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click',function(){ showView(b.dataset.goto); }); });
+
+  function renderUsers(users){
+    var body=document.getElementById('usersTbody'); if(!body) return;
+    body.innerHTML=(users||[]).map(function(u){ return '<tr><td data-label="الاسم">'+(u.name||'—')+'</td><td data-label="البريد" dir="ltr">'+u.email+'</td><td data-label="الدور">'+(u.role==='admin'?'أدمن':'محرر')+'</td><td data-label="الحالة">'+(u.active?'نشط':'معطل')+'</td></tr>'; }).join('');
+  }
+  function loadUsers(){ if(window.HOMERA_CURRENT_USER && window.HOMERA_CURRENT_USER.role==='admin' && window.HOMERA_API){ window.HOMERA_API.getUsers().then(renderUsers).catch(function(err){ toast(err.message); }); } }
+  window.HOMERA_applyAccess=function(){
+    var user=window.HOMERA_CURRENT_USER;
+    if(!user) return;
+    document.querySelectorAll('[data-admin-only]').forEach(function(el){ el.hidden=user.role!=='admin'; });
+    document.getElementById('meName').textContent=user.name||user.email;
+    document.getElementById('meRole').textContent=user.role==='admin'?'أدمن':'محرر';
+    loadUsers();
+  };
+  window.HOMERA_applyAccess();
 
   // فلترة الحالة
   document.querySelectorAll('#statusChips .chip').forEach(function(c){
@@ -547,6 +590,23 @@
     toastEl.classList.add('show');
     clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove('show'); },2400);
   }
+  document.getElementById('userForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!window.HOMERA_API) return toast('API غير متاح حالياً');
+    var f=e.target;
+    window.HOMERA_API.createUser({ name:f.name.value.trim(), email:f.email.value.trim(), role:f.role.value, password:f.password.value })
+      .then(function(users){ renderUsers(users); f.reset(); toast('تمت إضافة المستخدم'); })
+      .catch(function(err){ toast(err.message); });
+  });
+  document.getElementById('passwordForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!window.HOMERA_API) return toast('API غير متاح حالياً');
+    var f=e.target;
+    if(f.newPassword.value !== f.confirmPassword.value) return toast('تأكيد كلمة المرور غير مطابق');
+    window.HOMERA_API.changePassword(f.currentPassword.value, f.newPassword.value)
+      .then(function(){ toast('تم تغيير كلمة المرور. سجل الدخول من جديد.'); setTimeout(function(){ location.reload(); },900); })
+      .catch(function(err){ toast(err.message); });
+  });
   function saveProjectToDb(p, okMsg){
     if(!window.HOMERA_API){ toast(okMsg); return; }
     window.HOMERA_API.saveProject(p).then(function(data){ setProjects(data.projects); toast(okMsg); })
@@ -556,33 +616,30 @@
   function openSell(p){
     sellTarget=p;
     document.getElementById('sellName').textContent=p.name.replace('مشروع ','');
-    document.getElementById('sellPrice').value=p.price;
     document.getElementById('sellUnitsNote').textContent='المتبقّي بعد البيع: '+(p.avail-1)+' من '+p.total+' وحدة';
     openModal('sellModal');
-    setTimeout(function(){ document.getElementById('sellPrice').focus(); },50);
   }
-  function sellUnit(p, salePrice){
+  function sellUnit(p){
     if(p.avail<=0) return;
     if(window.HOMERA_API){
       window.HOMERA_API.sellProject(p).then(function(data){
         setProjects(data.projects);
-        toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ','')+' بمبلغ '+fmt(salePrice||0)+' ر.س');
+        toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ',''));
       }).catch(function(err){ toast('تعذّر حفظ البيع في MySQL: '+err.message); });
       return;
     }
     p.avail--; p.sold++; p.pct = p.total?Math.round(p.sold/p.total*100):0;
     if(p.avail===0) p.status='done';
-    REVENUE += (salePrice||0);
     renderAll();
     if(document.getElementById('viewModal').classList.contains('open')) openView(p);
-    toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ','')+' بمبلغ '+fmt(salePrice||0)+' ر.س');
+    toast('تم تسجيل بيع وحدة — '+p.name.replace('مشروع ',''));
   }
   document.getElementById('sellClose').addEventListener('click',function(){ closeModal('sellModal'); });
   document.getElementById('sellCancel').addEventListener('click',function(){ closeModal('sellModal'); });
   document.getElementById('sellModal').addEventListener('click',function(e){ if(e.target.id==='sellModal') closeModal('sellModal'); });
   document.getElementById('sellForm').addEventListener('submit',function(e){
     e.preventDefault();
-    if(sellTarget) sellUnit(sellTarget, parseInt(this.price.value,10)||0);
+    if(sellTarget) sellUnit(sellTarget);
     closeModal('sellModal');
   });
   document.getElementById('viewClose').addEventListener('click',function(){ closeModal('viewModal'); });
@@ -674,7 +731,6 @@
     var price=parseInt(f.price.value,10)||0;
     if(editingProject){
       var p=editingProject;
-      REVENUE += (sold*price) - (p.sold*p.price);   // تعديل مساهمة المشروع في الإيراد
       p.name=f.name.value.trim(); p.dist=f.dist.value.trim(); p.city=f.city.value.trim()||'جدة';
       p.area=parseInt(f.area.value,10)||0; p.facade=f.facade.value; p.type=f.type.value; p.price=price;
       p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
@@ -683,7 +739,6 @@
       renderAll(); var okE=syncFeaturedToHome(); saveProjectToDb(p, okE ? 'تم تعديل المشروع — '+p.name.replace('مشروع ','') : 'تم التعديل لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.'); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
       return;
     }
-    REVENUE += sold * price;
     var newProject={ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
       total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
       cover:coverData, gallery:galleryData.slice() };
@@ -864,8 +919,7 @@
     <div class="mh"><h3>تأكيد بيع وحدة</h3><button class="x" id="sellClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <form id="sellForm">
       <div class="mb">
-        <p style="font-size:14px;color:var(--muted);margin-bottom:16px">سيتم تسجيل بيع وحدة واحدة من <b id="sellName" style="color:var(--text)"></b> وإضافة المبلغ إلى قيمة المبيعات.</p>
-        <div class="field"><label>سعر البيع (ر.س)</label><input name="price" id="sellPrice" type="number" min="0" required/></div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:16px">سيتم تسجيل بيع وحدة واحدة من <b id="sellName" style="color:var(--text)"></b> وتحديث أرقام الوحدات المتاحة والمباعة.</p>
         <div id="sellUnitsNote" style="font-size:13px;color:var(--muted)"></div>
       </div>
       <div class="mf-foot"><button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تأكيد البيع</button><button type="button" class="btn-ghost" id="sellCancel">إلغاء</button></div>

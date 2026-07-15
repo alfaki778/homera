@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const path = require('path');
 const { migrate: initDatabase } = require('./scripts/init-db');
 
@@ -19,6 +20,102 @@ function getAction(req) {
 async function getDb() {
   if (!migrationPromise) migrationPromise = initDatabase();
   return migrationPromise;
+}
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token || '')).digest('hex');
+}
+
+function verifyPassword(password, stored) {
+  const parts = String(stored || '').split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+  const iterations = Number(parts[1]);
+  const salt = parts[2];
+  const expected = Buffer.from(parts[3], 'base64');
+  const actual = crypto.pbkdf2Sync(String(password || ''), salt, iterations, expected.length, 'sha256');
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function hashPassword(password) {
+  const iterations = 120000;
+  const salt = crypto.randomBytes(16).toString('base64');
+  const hash = crypto.pbkdf2Sync(String(password || ''), salt, iterations, 32, 'sha256').toString('base64');
+  return ['pbkdf2', iterations, salt, hash].join('$');
+}
+
+function publicUser(row) {
+  return { id: Number(row.id), email: row.email, name: row.name || '', role: row.role, active: Number(row.active) === 1 };
+}
+
+async function loginUser(db, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  const password = String(data.password || '');
+  const [rows] = await db.query('SELECT * FROM users WHERE email=? AND active=1 LIMIT 1', [email]);
+  if (!rows.length || !verifyPassword(password, rows[0].password_hash)) {
+    const error = new Error('بيانات الدخول غير صحيحة');
+    error.status = 401;
+    throw error;
+  }
+  const token = crypto.randomBytes(32).toString('base64url');
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 12);
+  await db.query('INSERT INTO user_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)', [hashToken(token), rows[0].id, expires]);
+  return { token, user: publicUser(rows[0]) };
+}
+
+async function currentUser(db, req) {
+  const token = req.get('X-Homera-Session') || (req.body && req.body.sessionToken) || '';
+  if (!token) return null;
+  const [rows] = await db.query(
+    'SELECT u.* FROM user_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > NOW() AND u.active=1 LIMIT 1',
+    [hashToken(token)]
+  );
+  return rows[0] || null;
+}
+
+async function requireUser(db, req, roles) {
+  const user = await currentUser(db, req);
+  if (!user || (roles && !roles.includes(user.role))) {
+    const error = new Error('ليست لديك صلاحية تنفيذ هذا الإجراء');
+    error.status = user ? 403 : 401;
+    throw error;
+  }
+  return user;
+}
+
+async function listUsers(db) {
+  const [rows] = await db.query('SELECT id, email, name, role, active FROM users ORDER BY id ASC');
+  return rows.map(publicUser);
+}
+
+async function createUser(db, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  const password = String(data.password || '');
+  const role = data.role === 'admin' ? 'admin' : 'editor';
+  const name = String(data.name || '').trim();
+  if (!email || !password) {
+    const error = new Error('البريد وكلمة المرور مطلوبة');
+    error.status = 422;
+    throw error;
+  }
+  await db.query('INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)', [email, name, role, hashPassword(password)]);
+}
+
+async function changePassword(db, user, data) {
+  const currentPassword = String(data.currentPassword || '');
+  const newPassword = String(data.newPassword || '');
+  if (newPassword.length < 8) {
+    const error = new Error('كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل');
+    error.status = 422;
+    throw error;
+  }
+  const [rows] = await db.query('SELECT password_hash FROM users WHERE id=? LIMIT 1', [user.id]);
+  if (!rows.length || !verifyPassword(currentPassword, rows[0].password_hash)) {
+    const error = new Error('كلمة المرور الحالية غير صحيحة');
+    error.status = 422;
+    throw error;
+  }
+  await db.query('UPDATE users SET password_hash=? WHERE id=?', [hashPassword(newPassword), user.id]);
+  await db.query('DELETE FROM user_sessions WHERE user_id=?', [user.id]);
 }
 
 function parseJson(value, fallback) {
@@ -151,8 +248,12 @@ app.use((req, res, next) => {
 
 app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
   try {
-    const db = await migrate();
+    const db = await getDb();
     const action = getAction(req);
+    if (action === 'users') {
+      await requireUser(db, req, ['admin']);
+      return json(res, { ok: true, users: await listUsers(db) });
+    }
     if (action === 'settings') return json(res, { ok: true, settings: await getSettings(db) });
     if (action === 'projects') return json(res, { ok: true, projects: await getProjects(db) });
     return json(res, { ok: true, settings: await getSettings(db), projects: await getProjects(db) });
@@ -163,20 +264,37 @@ app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
 
 app.post(['/api/homera', '/api/homera.php'], async (req, res) => {
   try {
-    const db = await migrate();
+    const db = await getDb();
     const action = getAction(req);
 
+    if (action === 'login') return json(res, { ok: true, ...(await loginUser(db, req.body || {})) });
+
+    if (action === 'user') {
+      await requireUser(db, req, ['admin']);
+      await createUser(db, req.body.user || {});
+      return json(res, { ok: true, users: await listUsers(db) });
+    }
+
+    if (action === 'password') {
+      const user = await requireUser(db, req, ['admin', 'editor']);
+      await changePassword(db, user, req.body || {});
+      return json(res, { ok: true });
+    }
+
     if (action === 'settings') {
+      await requireUser(db, req, ['admin', 'editor']);
       await saveSettings(db, req.body.settings || {});
       return json(res, { ok: true, settings: await getSettings(db) });
     }
 
     if (action === 'project') {
+      await requireUser(db, req, ['admin', 'editor']);
       await saveProject(db, req.body.project || {});
       return json(res, { ok: true, projects: await getProjects(db) });
     }
 
     if (action === 'sell') {
+      await requireUser(db, req, ['admin', 'editor']);
       await sellProject(db, req.body || {});
       return json(res, { ok: true, projects: await getProjects(db) });
     }
