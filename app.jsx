@@ -6,7 +6,7 @@ function App() {
   const [city, setCity] = useState('جازان');
   const [switcher, setSwitcher] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
-
+  
   const go = (r, p = {}) => {
     setRoute(r); setParams(p); setSwitcher(false); setMapOpen(false);
     window.scrollTo(0, 0);
