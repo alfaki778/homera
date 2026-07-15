@@ -1,6 +1,6 @@
 /* HOMERA — MySQL API bridge with localStorage fallback */
 (function () {
-  var API_URL = 'api/homera.php';
+  var API_URL = '/api/homera';
 
   function isJsonResponse(res) {
     return (res.headers.get('content-type') || '').indexOf('application/json') > -1;
@@ -14,7 +14,7 @@
       body: JSON.stringify(payload)
     };
     return fetch(url, opts).then(function (res) {
-      if (!isJsonResponse(res)) throw new Error('API لا يعمل كـ PHP. افتح المشروع عبر Apache/XAMPP بدل السيرفر الثابت.');
+      if (!isJsonResponse(res)) throw new Error('API لا يعمل. شغّل المشروع عبر Node أو Apache/PHP.');
       return res.json().then(function (data) {
         if (!res.ok || !data.ok) throw new Error(data.error || 'تعذر الاتصال بقاعدة البيانات');
         return data;

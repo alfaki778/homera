@@ -2,7 +2,7 @@
 
 # هوميرا · Homera
 
-منصة **التطوير والتسويق العقاري** — نموذج أولي (Prototype) لواجهات موقع هوميرا ولوحة التحكم، مبني كموقع ثابت يعتمد React عبر CDN مع Babel Standalone (لا يحتاج خطوة بناء).
+منصة **التطوير والتسويق العقاري** — نموذج أولي (Prototype) لواجهات موقع هوميرا ولوحة التحكم، مبني كموقع ثابت يعتمد React عبر CDN مع Babel Standalone، مع خادم Node.js/Express لربط الواجهة بقاعدة MySQL وتشغيله على Hostinger Web Apps.
 
 ## المحتوى
 
@@ -35,7 +35,36 @@
 
 ## التشغيل محليًا
 
-المشروع يعتمد React/Babel عبر CDN، لذا يكفي تشغيل خادم محلي بسيط (لتفادي قيود CORS على ملفات الوحدات):
+### تشغيل Node.js الموصى به
+
+```bash
+npm install
+npm start
+# ثم افتح:
+# http://localhost:3000/
+```
+
+متغيرات قاعدة البيانات:
+
+```bash
+HOMERA_DB_HOST=127.0.0.1
+HOMERA_DB_PORT=3306
+HOMERA_DB_NAME=homera
+HOMERA_DB_USER=root
+HOMERA_DB_PASS=
+```
+
+على Hostinger Web Apps اجعل أمر التشغيل:
+
+```bash
+npm start
+```
+
+وأضف متغيرات قاعدة البيانات من لوحة Web Apps أو Environment Variables بنفس أسماء `.env.example`.
+
+### تشغيل ثابت فقط
+
+المشروع يعتمد React/Babel عبر CDN، لذا يمكن تشغيل خادم محلي بسيط للواجهة فقط، لكن API وقاعدة البيانات لن يعملا بهذا الوضع:
 
 </div>
 
@@ -43,8 +72,10 @@
 # من داخل مجلد المشروع
 python3 -m http.server 8000
 # ثم افتح في المتصفح:
-# http://localhost:8000/هوميرا%20-%20الرئيسية.html
+# http://localhost:8000/
 ```
+
+عند التشغيل عبر Node أو Apache أو Vercel تُستخدم روابط نظيفة مثل `/projects` و`/fadilah-117` بدلاً من إظهار أسماء ملفات `.html`.
 
 <div dir="rtl">
 

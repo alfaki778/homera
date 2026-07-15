@@ -228,6 +228,11 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
 .proj-card .meta{display:flex;gap:18px;padding:14px 24px 20px;flex-wrap:wrap;}
 .proj-card .meta span{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted);}
 .proj-card .meta svg{width:16px;height:16px;color:var(--accent-d);}
+.proj-card .card-actions{display:flex;justify-content:flex-end;padding:0 24px 24px;}
+.proj-card .details-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--gold);color:#22150A;
+  font-size:14px;font-weight:800;padding:10px 22px;border-radius:999px;transition:.18s;box-shadow:0 10px 22px rgba(199,163,107,.22);}
+.proj-card .details-btn:hover{background:var(--gold-l);transform:translateY(-2px);}
+.proj-card .details-btn svg{width:17px;height:17px;flex:none;}
 @media(max-width:900px){.proj-grid,.proj-grid.three{grid-template-columns:1fr;}}
 
 /* ============================================================

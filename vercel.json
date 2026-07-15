@@ -4,5 +4,21 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "cleanUrls": false,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/هوميرا - الرئيسية.html", "destination": "/", "permanent": true },
+    { "source": "/هوميرا - المشاريع.html", "destination": "/projects", "permanent": true },
+    { "source": "/هوميرا - مشروع الفضيلة 117.html", "destination": "/fadilah-117", "permanent": true },
+    { "source": "/هوية هوميرا.html", "destination": "/identity", "permanent": true },
+    { "source": "/hom555.html", "destination": "/dashboard", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/projects", "destination": "/هوميرا - المشاريع.html" },
+    { "source": "/project/:id", "destination": "/project-detail.html" },
+    { "source": "/fadilah-117", "destination": "/هوميرا - مشروع الفضيلة 117.html" },
+    { "source": "/identity", "destination": "/هوية هوميرا.html" },
+    { "source": "/dashboard", "destination": "/hom555.html" }
+  ]
 }

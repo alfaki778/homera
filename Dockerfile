@@ -1,11 +1,15 @@
-FROM php:8.3-apache
+FROM node:20-alpine
 
-RUN docker-php-ext-install pdo_mysql mysqli
+WORKDIR /app
 
-RUN a2enmod rewrite headers
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-COPY . /var/www/html/
+COPY . .
 
-RUN chown -R www-data:www-data /var/www/html
+ENV NODE_ENV=production
+ENV PORT=3000
 
-EXPOSE 80
+EXPOSE 3000
+
+CMD ["npm", "start"]

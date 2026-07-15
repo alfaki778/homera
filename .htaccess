@@ -1,0 +1,18 @@
+Options -MultiViews
+RewriteEngine On
+
+RewriteCond %{THE_REQUEST} \s/+(.*/)?index\.html[\s?] [NC]
+RewriteRule ^(.*/)?index\.html$ %1 [R=301,L,NE]
+
+RewriteRule ^هوميرا\ -\ الرئيسية\.html$ ./ [R=301,L,NE]
+RewriteRule ^هوميرا\ -\ المشاريع\.html$ projects [R=301,L,NE]
+RewriteRule ^هوميرا\ -\ مشروع\ الفضيلة\ 117\.html$ fadilah-117 [R=301,L,NE]
+RewriteRule ^هوية\ هوميرا\.html$ identity [R=301,L,NE]
+RewriteRule ^hom555\.html$ dashboard [R=301,L,NE]
+
+RewriteRule ^home/?$ index.html [L]
+RewriteRule ^projects/?$ هوميرا\ -\ المشاريع.html [L]
+RewriteRule ^project/([^/]+)/?$ project-detail.html [L]
+RewriteRule ^fadilah-117/?$ هوميرا\ -\ مشروع\ الفضيلة\ 117.html [L]
+RewriteRule ^identity/?$ هوية\ هوميرا.html [L]
+RewriteRule ^dashboard/?$ hom555.html [L]
