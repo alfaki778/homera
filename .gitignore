@@ -11,3 +11,8 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 yarn-error.log*
+
+# Local environment variables
+.env
+.env.*
+!.env.example

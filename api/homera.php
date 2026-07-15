@@ -67,8 +67,68 @@ function migrate($config) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    seed_settings($pdo);
     seed_projects($pdo);
     return $pdo;
+}
+
+function default_settings() {
+    return [
+        'heroVariant' => 'centered',
+        'heroEyebrow' => 'بيتك في جدة',
+        'heroTitle' => 'حياة عنوانها الرقي والراحة',
+        'heroText' => 'هوميرا شركة سعودية راسخة تتمتع بخبرة واسعة في مجالات التطوير العقاري والتسويق والاستثمار، تأسست على أسس قوية، وتقدّم حلولاً عقارية متكاملة تلبّي احتياجات السوق المحلي وتواكب تطلعات العملاء.',
+        'fontFamily' => 'Alexandria',
+        'headingWeight' => 800,
+        'accent' => 'gold',
+        'buttonShape' => 'rounded',
+        'cornerRadius' => 16,
+        'logo' => '',
+        'logoSize' => 46,
+        'heroImage' => '',
+        'aboutImage' => '',
+        'aboutEyebrow' => 'من نحن',
+        'aboutTitle' => 'نبني الثقة قبل أن نبني العقار',
+        'aboutText' => 'هوميرا هي منصة عقارية متخصصة تربط العملاء بأفضل الفرص العقارية والاستثمارية، وتوفّر تجربة متكاملة لشراء وبيع وإعادة بيع العقارات، من خلال عرض المشاريع والوحدات السكنية، وتقديم الاستشارات العقارية، وربط العملاء بالحلول التمويلية المناسبة، لمساعدتهم على اتخاذ القرار الاستثماري الصحيح وإتمام الصفقات بكل احترافية.',
+        'aboutP1' => 'خبرة راسخة في التطوير والتسويق والاستثمار العقاري.',
+        'aboutP2' => 'حلول عقارية متكاملة تلبّي احتياجات السوق المحلي.',
+        'aboutP3' => 'التزام بالجودة والمواعيد وضمان على الإنشاءات.',
+        'contactEyebrow' => 'تواصل معنا',
+        'contactTitle' => 'لنبدأ رحلتك نحو منزلك',
+        'contactText' => 'تواصل مع فريق هوميرا مباشرةً - نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
+        'contactPhone' => '+966 53 042 5505',
+        'contactAddress' => 'حي الفيصلية، جدة، السعودية',
+        'contactEmail' => 'info@homera.sa',
+        'stat1Num' => '+12', 'stat1Label' => 'سنة خبرة',
+        'stat2Num' => '+40', 'stat2Label' => 'مشروع منجز',
+        'stat3Num' => '+1500', 'stat3Label' => 'عميل سعيد',
+        'stat4Num' => '6', 'stat4Label' => 'مدن نخدمها',
+        'projFadilaImg' => '',
+        'projRoudahImg' => '',
+        'projSalamahImg' => '',
+        'projNaeemImg' => '',
+        'banners' => [],
+        'pgProjectsBanner' => '', 'pgPFadila' => '', 'pgPRoudah' => '', 'pgPSalamah' => '', 'pgPNaeem' => '', 'pgPSafa' => '', 'pgPAbhur' => '',
+        'pgFadilaBanner' => '', 'pgFadilaMain' => '', 'pgFadilaT1' => '', 'pgFadilaT2' => '', 'pgFadilaT3' => '', 'pgFadilaT4' => '', 'pgFadilaMap' => ''
+    ];
+}
+
+function seed_settings($pdo) {
+    $stmt = $pdo->prepare("INSERT IGNORE INTO settings (name, payload) VALUES ('site', ?)");
+    $stmt->execute([json_encode(default_settings(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+    repair_default_settings($pdo);
+}
+
+function repair_default_settings($pdo) {
+    $stmt = $pdo->prepare("SELECT payload FROM settings WHERE name = 'site' LIMIT 1");
+    $stmt->execute();
+    $payload = $stmt->fetchColumn();
+    $settings = $payload ? json_decode($payload, true) : [];
+    if (!is_array($settings)) $settings = [];
+    if (!empty($settings['contactPhone']) && $settings['contactPhone'] !== '+966 12 000 0000') return;
+    $settings['contactPhone'] = default_settings()['contactPhone'];
+    $up = $pdo->prepare("UPDATE settings SET payload=? WHERE name = 'site'");
+    $up->execute([json_encode($settings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
 }
 
 function seed_projects($pdo) {

@@ -1,35 +1,12 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const path = require('path');
+const { migrate: initDatabase } = require('./scripts/init-db');
 
 const app = express();
 const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
 
-const dbConfig = {
-  host: process.env.HOMERA_DB_HOST || process.env.DB_HOST || '127.0.0.1',
-  port: Number(process.env.HOMERA_DB_PORT || process.env.DB_PORT || 3306),
-  database: process.env.HOMERA_DB_NAME || process.env.DB_NAME || 'homera',
-  user: process.env.HOMERA_DB_USER || process.env.DB_USER || 'root',
-  password: process.env.HOMERA_DB_PASS || process.env.DB_PASS || '',
-  charset: 'utf8mb4_unicode_ci',
-  connectTimeout: Number(process.env.HOMERA_DB_TIMEOUT || process.env.DB_TIMEOUT || 5000),
-  waitForConnections: true,
-  connectionLimit: 10,
-  namedPlaceholders: false
-};
-
-let pool;
 let migrationPromise;
-
-const defaultProjects = [
-  ['مشروع النعيم 120', 'حي النعيم', 'جدة', 175, 'جنوبية', 'شقق', 750000, 16, 13, 'sale', 'uploads/7.jpg'],
-  ['مشروع الفضيلة 117', 'حي الفضيلة', 'جدة', 200, 'شمالية', 'فيلا', 1100000, 12, 7, 'sale', 'uploads/3.jpg'],
-  ['مشروع الروضة 116', 'حي الروضة', 'جدة', 165, 'شرقية', 'شقق', 690000, 20, 12, 'sale', 'uploads/4.jpg'],
-  ['مشروع أبحر 122', 'أبحر الشمالية', 'جدة', 185, 'غربية', 'شقق', 820000, 24, 10, 'sale', ''],
-  ['مشروع الصفا 121', 'حي الصفا', 'جدة', 210, 'شمالية', 'فيلا', 1050000, 10, 10, 'done', ''],
-  ['مشروع السلامة 118', 'حي السلامة', 'جدة', 240, 'غربية', 'فيلا', 1250000, 8, 0, 'new', 'uploads/6.jpg']
-];
 
 function json(res, data, status = 200) {
   res.status(status).json(data);
@@ -39,87 +16,9 @@ function getAction(req) {
   return req.query.action || 'bootstrap';
 }
 
-async function getPool() {
-  if (!pool) {
-    pool = mysql.createPool(dbConfig);
-  }
-  return pool;
-}
-
-async function migrate() {
-  if (migrationPromise) return migrationPromise;
-  migrationPromise = (async () => {
-    try {
-      const server = await mysql.createConnection({ ...dbConfig, database: undefined });
-      const dbName = dbConfig.database.replace(/`/g, '``');
-      await server.query('CREATE DATABASE IF NOT EXISTS `' + dbName + '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-      await server.end();
-    } catch (error) {
-      console.warn('Skipping database creation:', error.message);
-    }
-
-    const db = await getPool();
-    await db.query(`CREATE TABLE IF NOT EXISTS settings (
-      name VARCHAR(64) PRIMARY KEY,
-      payload LONGTEXT NOT NULL,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
-
-    await db.query(`CREATE TABLE IF NOT EXISTS projects (
-      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(190) NOT NULL UNIQUE,
-      dist VARCHAR(190) NOT NULL DEFAULT '',
-      city VARCHAR(120) NOT NULL DEFAULT 'جدة',
-      area INT UNSIGNED NOT NULL DEFAULT 0,
-      facade VARCHAR(80) NOT NULL DEFAULT '',
-      type VARCHAR(80) NOT NULL DEFAULT '',
-      price INT UNSIGNED NOT NULL DEFAULT 0,
-      total INT UNSIGNED NOT NULL DEFAULT 1,
-      sold INT UNSIGNED NOT NULL DEFAULT 0,
-      status VARCHAR(40) NOT NULL DEFAULT 'new',
-      cover LONGTEXT NULL,
-      gallery LONGTEXT NULL,
-      sort_order INT NOT NULL DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
-
-    await seedProjects(db);
-    await repairSeedProjects(db);
-    return db;
-  })();
+async function getDb() {
+  if (!migrationPromise) migrationPromise = initDatabase();
   return migrationPromise;
-}
-
-async function seedProjects(db) {
-  const [rows] = await db.query('SELECT COUNT(*) AS count FROM projects');
-  if (Number(rows[0].count) > 0) return;
-
-  for (const [index, project] of defaultProjects.entries()) {
-    await db.query(
-      'INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, cover, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [...project, index]
-    );
-  }
-}
-
-function hasBrokenArabic(value) {
-  return /[ÃÂØÙ�]/.test(String(value || ''));
-}
-
-async function repairSeedProjects(db) {
-  const [rows] = await db.query('SELECT id, name, dist, city, facade, type, sort_order FROM projects ORDER BY sort_order ASC, id ASC LIMIT ?', [defaultProjects.length]);
-  for (const row of rows) {
-    const index = Number(row.sort_order);
-    if (index < 0 || index >= defaultProjects.length) continue;
-    const needsRepair = [row.name, row.dist, row.city, row.facade, row.type].some(hasBrokenArabic);
-    if (!needsRepair) continue;
-    const project = defaultProjects[index];
-    await db.query(
-      'UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, cover=? WHERE id=?',
-      [...project, row.id]
-    );
-  }
 }
 
 function parseJson(value, fallback) {

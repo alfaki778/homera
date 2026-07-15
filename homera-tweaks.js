@@ -35,7 +35,7 @@
     contactEyebrow: 'تواصل معنا',
     contactTitle: 'لنبدأ رحلتك نحو منزلك',
     contactText: 'تواصل مع فريق هوميرا مباشرةً — نجيب على استفساراتك ونساعدك في اختيار عقارك المناسب.',
-    contactPhone: '+966 12 000 0000',
+    contactPhone: '+966 53 042 5505',
     contactAddress: 'حي الفيصلية، جدة، السعودية',
     contactEmail: 'info@homera.sa',
     stat1Num: '+12', stat1Label: 'سنة خبرة',
@@ -61,6 +61,7 @@
   function readTweaks() {
     var t = {};
     try { t = JSON.parse(localStorage.getItem('homera_tweaks') || '{}'); } catch (e) {}
+    if (t.contactPhone === '+966 12 000 0000') t.contactPhone = window.HOMERA_TWEAK_DEFAULTS.contactPhone;
     return Object.assign({}, window.HOMERA_TWEAK_DEFAULTS, t);
   }
 
@@ -197,8 +198,7 @@
   function setSlotImg(id, url) {
     var el = document.getElementById(id);
     if (!el) return;
-    if (url) { el.setAttribute('src', url); }
-    else { el.removeAttribute('src'); }
+    if (url) el.setAttribute('src', url);
   }
 
   // تطبيق فوري لتفادي الوميض

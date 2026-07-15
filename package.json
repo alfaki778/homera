@@ -5,7 +5,8 @@
   "description": "Homera static site and Node.js API for Hostinger Web Apps.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "db:init": "node scripts/init-db.js",
+    "start": "npm run db:init && node server.js"
   },
   "engines": {
     "node": ">=18"

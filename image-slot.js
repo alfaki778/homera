@@ -267,7 +267,9 @@
       this._subFn = () => this._render();
       // Shadow-DOM listeners live with the shadow DOM — bound once here so
       // disconnect/reconnect (e.g. React remount) doesn't stack handlers.
-      this._empty.addEventListener('click', () => this._input.click());
+      this._empty.addEventListener('click', () => {
+        if (this.hasAttribute('data-editable')) this._input.click();
+      });
       root.addEventListener('click', (e) => {
         const act = e.target && e.target.getAttribute && e.target.getAttribute('data-act');
         if (act === 'replace') { this._exitReframe(true); this._input.click(); }
@@ -445,6 +447,7 @@
     // handleEvent — one listener object for all four drag events keeps the
     // add/remove symmetric and the depth counter correct.
     handleEvent(e) {
+      if (!this.hasAttribute('data-editable')) return;
       if (e.type === 'dragenter' || e.type === 'dragover') {
         // Without preventDefault the browser never fires 'drop'.
         e.preventDefault();
@@ -467,6 +470,7 @@
     }
 
     async _ingest(file) {
+      if (!this.hasAttribute('data-editable')) return;
       this._setError(null);
       if (!file || ACCEPT.indexOf(file.type) < 0) {
         this._setError('Drop a PNG, JPEG, WebP, or AVIF image.');
@@ -601,7 +605,7 @@
       // tool, so its value isn't guaranteed canvas-originated — only accept
       // data:image/ URLs from it. The `src` attribute is author-controlled
       // (Claude wrote it into the HTML) so it passes through unchanged.
-      let stored = this.id ? getSlot(this.id) : this._local;
+      let stored = editable ? (this.id ? getSlot(this.id) : this._local) : null;
       if (stored && stored.u && !/^data:image\//i.test(stored.u)) stored = null;
       const srcAttr = this.getAttribute('src') || '';
       this._userUrl = (stored && stored.u) || null;
@@ -631,7 +635,7 @@
         this._img.style.display = 'none';
         this._img.removeAttribute('src');
         this._ghost.removeAttribute('src');
-        this._empty.style.display = 'flex';
+        this._empty.style.display = editable ? 'flex' : 'none';
         this.removeAttribute('data-filled');
       }
     }

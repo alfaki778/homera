@@ -4,12 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>هوميرا · تفاصيل المشروع</title>
+<link rel="icon" type="image/png" href="/uploads/1-logo.png"/>
+<link rel="apple-touch-icon" href="/uploads/1-logo.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/homera-site.css"/>
 <script src="/homera-api.js?v=2"></script>
-<script src="/homera-tweaks.js?v=2"></script>
+<script src="/homera-tweaks.js?v=4"></script>
 <style>
 .project-hero{position:relative;overflow:hidden;background:var(--petrol-d);color:#fff;}
 .project-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(14,51,64,.98),rgba(14,51,64,.72)),radial-gradient(circle at 18% 18%,rgba(199,163,107,.22),transparent 34%);z-index:1;}
@@ -124,7 +126,7 @@
       <div class="detail-panel contact-card">
         <div class="status-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><span id="projectStatus">متاح للاستفسار</span></div>
         <a href="#" class="btn wa" onclick="event.preventDefault();openWA();">تواصل واتساب</a>
-        <a href="tel:+966120000000" class="btn dark">اتصل الآن</a>
+        <a href="tel:+966530425505" class="btn dark">اتصل الآن</a>
       </div>
     </aside>
   </div>
@@ -146,7 +148,7 @@
         </ul></div>
       <div><h4>تواصل</h4>
         <ul class="foot-contact">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6"/></svg><span dir="ltr">+966 12 000 0000</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6"/></svg><span dir="ltr">+966 53 042 5505</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span dir="ltr">info@homera.sa</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>جدة، السعودية</span></li>
         </ul></div>
@@ -168,7 +170,7 @@ function fmt(n){ return Number(n || 0).toLocaleString('en-US'); }
 function text(id, value){ var el=document.getElementById(id); if(el) el.textContent = value; }
 function img(id, src){ var el=document.getElementById(id); if(el) el.src = src || '/uploads/3.jpg'; }
 function projectIdFromPath(){ var parts = location.pathname.split('/').filter(Boolean); return decodeURIComponent(parts[1] || parts[0] || ''); }
-function openWA(){ window.open('https://wa.me/966120000000?text=' + encodeURIComponent('مرحباً هوميرا، أرغب بالاستفسار عن ' + currentProjectName), '_blank'); }
+function openWA(){ window.open('https://wa.me/966530425505?text=' + encodeURIComponent('مرحباً هوميرا، أرغب بالاستفسار عن ' + currentProjectName), '_blank'); }
 function describe(project){ return project.name + ' في ' + project.dist + ' بمدينة ' + project.city + '، بمساحة ' + project.area + ' م² وواجهة ' + project.facade + '. مشروع مصمم ليوفر تجربة سكنية مريحة وموقعاً مناسباً بالقرب من الخدمات والطرق الرئيسية، مع متابعة مباشرة لتوفر الوحدات والاستفسارات.'; }
 function render(project){
   currentProjectName = project.name;
