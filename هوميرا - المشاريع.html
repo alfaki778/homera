@@ -8,8 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="homera-site.css"/>
-<script src="image-slot.js"></script>
-<script src="homera-tweaks.js"></script>
+<script src="image-slot.js?v=2"></script>
+<script src="homera-api.js?v=1"></script>
+<script src="homera-tweaks.js?v=2"></script>
 <style>
 /* ===== الفلترة العلوية ===== */
 .topfilter{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 8px 26px rgba(14,51,64,.06);padding:16px 18px;position:sticky;top:92px;z-index:40;}
@@ -66,9 +67,8 @@
 <!-- الترويسة -->
 <header class="topbar">
   <div class="wrap row">
-    <a href="هوميرا - الرئيسية.html" class="brandmark">
-      <span class="name">HOMERA</span>
-      <span class="tag">Real Estate Development</span>
+    <a href="هوميرا - الرئيسية.html" class="brandmark has-logo">
+      <img class="brand-logo" src="uploads/1-logo.png" alt="هوميرا"/>
     </a>
     <nav class="mainnav">
       <a href="هوميرا - الرئيسية.html">الرئيسية</a>
@@ -265,9 +265,8 @@
 <footer class="site-foot">
   <div class="wrap">
     <div class="foot-grid">
-      <div class="foot-brand">
-        <div class="name">HOMERA</div>
-        <div class="tag">Real Estate Development</div>
+      <div class="foot-brand has-logo">
+        <img class="brand-logo" src="uploads/5-logo.png" alt="هوميرا"/>
         <p>شركة سعودية للتطوير والتسويق العقاري، نقدّم مشاريع سكنية واستثمارية بمعايير جودة عالية في جدة ومدن المملكة.</p>
       </div>
       <div><h4>روابط سريعة</h4>
@@ -381,9 +380,11 @@
       document.querySelectorAll('#filters .fchip.on').forEach(function(b){b.classList.remove('on');});
       q.value=''; sortSel.value='default'; sortCards(); apply();
     });
+    window.HOMERA_initProjectFilters=function(){ cards=[].slice.call(grid.querySelectorAll('.proj-card')); order=cards.slice(); sortCards(); apply(); };
     apply();
   })();
 </script>
 
+<script src="homera-projects.js?v=1"></script>
 </body>
 </html>

@@ -1,0 +1,39 @@
+services:
+  web:
+    build: .
+    container_name: homera-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      HOMERA_DB_HOST: db
+      HOMERA_DB_PORT: 3306
+      HOMERA_DB_NAME: homera
+      HOMERA_DB_USER: homera
+      HOMERA_DB_PASS: homera_secret
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    container_name: homera-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: homera
+      MYSQL_USER: homera
+      MYSQL_PASSWORD: homera_secret
+      MYSQL_ROOT_PASSWORD: root_secret
+    volumes:
+      - homera_mysql_data:/var/lib/mysql
+      - ./api/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uhomera", "-phomera_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  homera_mysql_data:

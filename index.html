@@ -8,8 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="homera-site.css"/>
-<script src="image-slot.js"></script>
-<script src="homera-tweaks.js"></script>
+<script src="image-slot.js?v=2"></script>
+<script src="homera-api.js?v=1"></script>
+<script src="homera-tweaks.js?v=2"></script>
 <style>
 /* ===== الهيرو ===== */
 .hero{position:relative;overflow:hidden;}
@@ -132,6 +133,24 @@
 
 /* ===== التواصل ===== */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;}
+.footer-visual{padding-top:0;}
+.footer-visual-card{
+  position:relative;border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 24px 60px rgba(14,51,64,.16);background:var(--petrol-d);
+}
+.footer-visual-card image-slot{width:100%;height:340px;display:block;}
+.footer-visual-card::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(14,51,64,.08),rgba(14,51,64,.74));
+  pointer-events:none;
+}
+.footer-visual-copy{
+  position:absolute;right:28px;bottom:24px;z-index:1;max-width:520px;color:#fff;
+}
+.footer-visual-copy .eyebrow{color:var(--gold-l);}
+.footer-visual-copy .eyebrow::before{background:var(--gold-l);}
+.footer-visual-copy .sec-title{color:#fff;margin-top:10px;}
+.footer-visual-copy .sec-lead{color:rgba(255,255,255,.84);margin-top:10px;}
 .cform{display:grid;gap:16px;}
 .cform label{font-size:13.5px;font-weight:600;color:var(--petrol-d);margin-bottom:6px;display:block;}
 .cform input,.cform textarea{
@@ -195,9 +214,8 @@
 <!-- ============ الترويسة ============ -->
 <header class="topbar">
   <div class="wrap row">
-    <a href="هوميرا - الرئيسية.html" class="brandmark">
-      <span class="name">HOMERA</span>
-      <span class="tag">Real Estate Development</span>
+    <a href="هوميرا - الرئيسية.html" class="brandmark has-logo">
+      <img class="brand-logo" src="uploads/1-logo.png" alt="هوميرا"/>
     </a>
     <nav class="mainnav">
       <a href="هوميرا - الرئيسية.html" class="active">الرئيسية</a>
@@ -214,7 +232,7 @@
 <section class="hero">
   <!-- مركزي -->
   <div class="hero-centered">
-    <image-slot id="home-hero" placeholder="أفلت صورة الغلاف (مجلس / صالة)"></image-slot>
+    <image-slot id="home-hero" src="uploads/1.jpg" placeholder="أفلت صورة الغلاف (مجلس / صالة)"></image-slot>
     <div class="veil"></div>
     <div class="cnt">
       <span class="hero-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5-8 8"/><circle cx="16.5" cy="6.5" r="2.5"/><path d="M9 13l-4 4v2h2l4-4"/></svg> تملّك</span>
@@ -246,7 +264,7 @@
         </div>
         <div class="media">
           <div class="frame"></div>
-          <image-slot id="home-hero-split" placeholder="أفلت صورة العقار"></image-slot>
+            <image-slot id="home-hero-split" src="uploads/1.jpg" placeholder="أفلت صورة العقار"></image-slot>
           <div class="stat-chip"><b>+40</b><span>مشروع منجز</span></div>
         </div>
       </div>
@@ -300,7 +318,7 @@
         <a href="هوميرا - المشاريع.html" class="btn gold" style="margin-top:34px">اكتشف مشاريعنا</a>
       </div>
       <div class="about-media">
-        <image-slot id="about-img" placeholder="أفلت صورة (واجهة مشروع)"></image-slot>
+        <image-slot id="about-img" src="uploads/2.jpg" placeholder="أفلت صورة (واجهة مشروع)"></image-slot>
         <div class="badge"><b>+12</b><span>سنة من الخبرة</span></div>
       </div>
     </div>
@@ -320,25 +338,25 @@
         <div class="ctrack" id="cTrack">
           <a class="proj-card" href="هوميرا - مشروع الفضيلة 117.html">
             <div class="thumb"><span class="pill">فيلا</span>
-              <image-slot id="home-proj-fadila" placeholder="مشروع الفضيلة 117"></image-slot><div class="ov"></div></div>
+              <image-slot id="home-proj-fadila" src="uploads/3.jpg" placeholder="مشروع الفضيلة 117"></image-slot><div class="ov"></div></div>
             <div class="bar"><span class="nm">مشروع الفضيلة 117</span>
               <span class="pr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> 1,100,000</span></div>
           </a>
           <a class="proj-card" href="هوميرا - المشاريع.html">
             <div class="thumb"><span class="pill">شقق</span>
-              <image-slot id="home-proj-roudah" placeholder="مشروع الروضة 116"></image-slot><div class="ov"></div></div>
+              <image-slot id="home-proj-roudah" src="uploads/4.jpg" placeholder="مشروع الروضة 116"></image-slot><div class="ov"></div></div>
             <div class="bar"><span class="nm">مشروع الروضة 116</span>
               <span class="pr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> 690,000</span></div>
           </a>
           <a class="proj-card" href="هوميرا - المشاريع.html">
             <div class="thumb"><span class="pill">فيلا</span>
-              <image-slot id="home-proj-salamah" placeholder="مشروع السلامة 118"></image-slot><div class="ov"></div></div>
+              <image-slot id="home-proj-salamah" src="uploads/6.jpg" placeholder="مشروع السلامة 118"></image-slot><div class="ov"></div></div>
             <div class="bar"><span class="nm">مشروع السلامة 118</span>
               <span class="pr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> 1,250,000</span></div>
           </a>
           <a class="proj-card" href="هوميرا - المشاريع.html">
             <div class="thumb"><span class="pill">شقق</span>
-              <image-slot id="home-proj-naeem" placeholder="مشروع النعيم 120"></image-slot><div class="ov"></div></div>
+              <image-slot id="home-proj-naeem" src="uploads/7.jpg" placeholder="مشروع النعيم 120"></image-slot><div class="ov"></div></div>
             <div class="bar"><span class="nm">مشروع النعيم 120</span>
               <span class="pr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> 750,000</span></div>
           </a>
@@ -400,13 +418,26 @@
   </div>
 </section>
 
+<!-- ============ صورة ختامية ============ -->
+<section class="section footer-visual">
+  <div class="wrap">
+    <div class="footer-visual-card">
+      <image-slot id="home-footer-visual" src="uploads/5.jpg" placeholder="صورة ختامية"></image-slot>
+      <div class="footer-visual-copy">
+        <span class="eyebrow">قبل الفوتر</span>
+        <h2 class="sec-title">صورة ختامية تعكس روح مشاريع هوميرا</h2>
+        <p class="sec-lead">وُضعت صورة رقم 5 قبل نهاية الصفحة مباشرة، مع توزيع بقية الصور على الهيدر والبطاقات الأساسية.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ الفوتر ============ -->
 <footer class="site-foot">
   <div class="wrap">
     <div class="foot-grid">
-      <div class="foot-brand">
-        <div class="name">HOMERA</div>
-        <div class="tag">Real Estate Development</div>
+      <div class="foot-brand has-logo">
+        <img class="brand-logo" src="uploads/5-logo.png" alt="هوميرا"/>
         <p>شركة سعودية للتطوير والتسويق العقاري، نقدّم مشاريع سكنية واستثمارية بمعايير جودة عالية في جدة ومدن المملكة.</p>
       </div>
       <div>
@@ -438,6 +469,7 @@
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.16 0-.43.06-.65.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.16 1.75 2.67 4.25 3.74.59.26 1.06.41 1.42.52.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29Z"/></svg>
 </a>
 
+<script src="homera-projects.js?v=1"></script>
 <script>
   function openWA(){ window.open('https://wa.me/966120000000?text=' + encodeURIComponent('مرحباً هوميرا، أرغب بالاستفسار عن مشاريعكم'), '_blank'); }
   // كاروسيل المشاريع المختارة (تحرّك تلقائي)

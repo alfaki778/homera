@@ -98,11 +98,13 @@ a{color:inherit;text-decoration:none;}
 .brandmark{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
 /* الشعار المرفوع من لوحة التحكم */
 .brandmark img.brand-logo{height:var(--brand-logo-h,44px);width:auto;max-width:240px;object-fit:contain;display:block;}
+.brandmark.has-logo img.brand-logo{height:72px;max-width:320px;}
 .brandmark.has-logo .name,.brandmark.has-logo .tag{display:none;}
 /* إخفاء فوري للاسم النصّي عند وجود شعار (تفادي الوميض عند التحديث) */
 .tw-has-logo .brandmark .name,.tw-has-logo .brandmark .tag,
 .tw-has-logo .foot-brand .name,.tw-has-logo .foot-brand .tag{display:none;}
 .foot-brand img.brand-logo{height:calc(var(--brand-logo-h,44px) + 10px);width:auto;max-width:260px;object-fit:contain;display:block;margin-bottom:8px;}
+.foot-brand.has-logo img.brand-logo{height:86px;max-width:360px;margin-bottom:14px;}
 .foot-brand.has-logo .name,.foot-brand.has-logo .tag{display:none;}
 .brandmark .name{
   font-weight:700;letter-spacing:.22em;font-size:17px;color:#fff;
@@ -272,6 +274,8 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
   .wrap,.wrap-n{padding:0 22px;}
   .section{padding:64px 0;}
   .topbar .row{height:64px;}
+  .brandmark.has-logo img.brand-logo{height:56px;max-width:220px;}
+  .foot-brand.has-logo img.brand-logo{height:64px;max-width:260px;}
   .topbar nav{display:none;position:absolute;top:64px;right:0;left:0;background:var(--petrol-d);
     flex-direction:column;align-items:stretch;gap:0;padding:6px 22px 14px;
     border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 12px 24px rgba(0,0,0,.2);}

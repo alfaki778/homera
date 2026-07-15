@@ -177,17 +177,13 @@
   }
 
   function applyLogo(url) {
+    if (!url) return;
     ['.brandmark', '.foot-brand'].forEach(function (sel) {
       document.querySelectorAll(sel).forEach(function (host) {
         var img = host.querySelector('img.brand-logo');
-        if (url) {
-          if (!img) { img = document.createElement('img'); img.className = 'brand-logo'; img.alt = 'هوميرا'; host.insertBefore(img, host.firstChild); }
-          if (img.getAttribute('src') !== url) img.src = url;
-          host.classList.add('has-logo');
-        } else {
-          if (img) img.remove();
-          host.classList.remove('has-logo');
-        }
+        if (!img) { img = document.createElement('img'); img.className = 'brand-logo'; img.alt = 'هوميرا'; host.insertBefore(img, host.firstChild); }
+        if (img.getAttribute('src') !== url) img.src = url;
+        host.classList.add('has-logo');
       });
     });
   }
@@ -208,6 +204,11 @@
   // تطبيق فوري لتفادي الوميض
   applyTweaks(readTweaks());
   document.addEventListener('DOMContentLoaded', function () { applyTweaks(readTweaks()); });
+  if (window.HOMERA_API) {
+    window.HOMERA_API.bootstrap().then(function (data) {
+      applyTweaks(Object.assign({}, readTweaks(), data.settings || {}));
+    }).catch(function () {});
+  }
 
   window.HOMERA_applyTweaks = applyTweaks;
   window.HOMERA_readTweaks = readTweaks;
