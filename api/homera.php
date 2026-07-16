@@ -109,9 +109,9 @@ function verify_password_pbkdf2($password, $stored) {
 function default_settings() {
     return [
         'heroVariant' => 'centered',
-        'heroEyebrow' => 'بيتك في جدة',
+        'heroEyebrow' => '',
         'heroTitle' => 'حياة عنوانها الرقي والراحة',
-        'heroText' => 'هوميرا شركة سعودية راسخة تتمتع بخبرة واسعة في مجالات التطوير العقاري والتسويق والاستثمار، تأسست على أسس قوية، وتقدّم حلولاً عقارية متكاملة تلبّي احتياجات السوق المحلي وتواكب تطلعات العملاء.',
+        'heroText' => 'منصة عقارية متكاملة تجمع لك أفضل الفرص العقارية، والحلول التمويلية، والاستشارات الاحترافية؛ لتشتري، تستثمر، أو تبيع بكل ثقة وسهولة.',
         'fontFamily' => 'Alexandria',
         'headingWeight' => 800,
         'accent' => 'gold',
