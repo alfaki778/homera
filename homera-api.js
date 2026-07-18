@@ -2,6 +2,8 @@
 (function () {
   var API_URL = '/api/homera';
   var SESSION_KEY = 'homera_admin_session';
+  var bootstrapPromise = null;
+  var projectsPromise = null;
 
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; }
@@ -52,11 +54,13 @@
   }
 
   function bootstrap() {
-    return request('', null).then(function (data) {
+    if (bootstrapPromise) return bootstrapPromise;
+    bootstrapPromise = request('', null).then(function (data) {
       var settings = syncFeaturedProjects(data.settings || {}, data.projects || []);
       writeLocalSettings(settings);
       return { settings: settings, projects: data.projects || [] };
     });
+    return bootstrapPromise;
   }
 
   window.HOMERA_API = {
@@ -69,7 +73,12 @@
     changePassword: function (currentPassword, newPassword) { return request('password', { currentPassword: currentPassword, newPassword: newPassword }).then(function () { clearSession(); }); },
     getSettings: function () { return request('settings', null).then(function (data) { writeLocalSettings(data.settings || {}); return data.settings || {}; }); },
     saveSettings: function (settings) { writeLocalSettings(settings || {}); return request('settings', { settings: settings || {} }); },
-    getProjects: function () { return request('projects', null).then(function (data) { return data.projects || []; }); },
+    getProjects: function () {
+      if (bootstrapPromise) return bootstrapPromise.then(function (data) { return data.projects || []; });
+      if (projectsPromise) return projectsPromise;
+      projectsPromise = request('projects', null).then(function (data) { return data.projects || []; });
+      return projectsPromise;
+    },
     saveProject: function (project) { return request('project', { project: project }); },
     sellProject: function (project) { return request('sell', { id: project.id || 0, name: project.name || '' }); },
     readLocalSettings: readLocalSettings,

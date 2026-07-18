@@ -269,6 +269,12 @@
     }
     function apply(){
       var g=activeByGroup(), kw=(q.value||'').trim(), n=0;
+      if(!cards.length){
+        fcount.innerHTML = 'لا توجد مشاريع <small>(0 مشروع)</small>';
+        noRes.hidden = true;
+        updateBadges();
+        return;
+      }
       cards.forEach(function(c){
         var ok=true;
         for(var grp in g){ if(!matchGroup(c,grp,g[grp])){ ok=false; break; } }

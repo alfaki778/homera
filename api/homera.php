@@ -87,7 +87,6 @@ function migrate($config) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     seed_settings($pdo);
     seed_users($pdo);
-    clean_projects_once($pdo);
     seed_projects($pdo);
     return $pdo;
 }
@@ -158,14 +157,6 @@ function seed_users($pdo) {
     if ($count > 0) return;
     $stmt = $pdo->prepare('INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)');
     $stmt->execute(['sami@seem.sa', 'Sami', 'admin', hash_password_pbkdf2('Sami@123456', 'homera-default-sami-2026')]);
-}
-
-function clean_projects_once($pdo) {
-    $stmt = $pdo->prepare("SELECT name FROM settings WHERE name = 'projects_cleaned_20260715' LIMIT 1");
-    $stmt->execute();
-    if ($stmt->fetch()) return;
-    $pdo->exec('DELETE FROM projects');
-    $pdo->exec("INSERT INTO settings (name, payload) VALUES ('projects_cleaned_20260715', '{}') ON DUPLICATE KEY UPDATE payload = VALUES(payload)");
 }
 
 function repair_default_settings($pdo) {
