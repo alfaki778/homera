@@ -4,8 +4,8 @@
   function projectHref(project) { return 'project/' + encodeURIComponent(project.id || project.name || ''); }
   function urgency(project, index) {
     var avail = Number(project && project.avail);
-    if (avail <= 1) return '🔥 باقي وحدة فقط!';
-    if (avail === 2) return '🔥 باقي وحدتين!';
+    if (avail <= 1) return '🔥 متبقي وحدة فقط!';
+    if (avail === 2) return '🔥 متبقي وحدتين!';
     if (index === 0) return '🔥 فرصتك الأخيرة!';
     return '';
   }
