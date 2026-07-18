@@ -458,15 +458,7 @@
   }
   renderAll();
 
-  // ربط صورة المشروع في الإدارة بكل بطاقاته عبر الصفحات (الرئيسية + المشاريع + التفاصيل)
-  var PROJECT_SLOTS = {
-    'مشروع الفضيلة 117': ['projFadilaImg','pgPFadila','pgFadilaMain'],
-    'مشروع الروضة 116':  ['projRoudahImg','pgPRoudah'],
-    'مشروع السلامة 118': ['projSalamahImg','pgPSalamah'],
-    'مشروع النعيم 120':  ['projNaeemImg','pgPNaeem'],
-    'مشروع الصفا 121':   ['pgPSafa'],
-    'مشروع أبحر 122':    ['pgPAbhur']
-  };
+  var PROJECT_SLOTS = {};
   function syncFeaturedToHome(){
     var t={}; try{ t=JSON.parse(localStorage.getItem('homera_tweaks')||'{}'); }catch(e){}
     var changed=false;

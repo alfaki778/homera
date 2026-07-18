@@ -308,7 +308,7 @@ function change_password($pdo, $user, $data) {
 }
 
 try {
-    $pdo = migrate($config);
+    $pdo = connect_db($config);
     $action = $_GET['action'] ?? 'bootstrap';
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $data = [];

@@ -31,7 +31,7 @@
   function renderHome(projects) {
     var track = document.getElementById('cTrack');
     if (!track) return;
-    track.innerHTML = projects.length ? projects.slice(0, 3).map(homeCard).join('') : '';
+    track.innerHTML = projects.length ? projects.slice(0, 3).map(homeCard).join('') : '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:36px">لا توجد مشاريع متاحة حالياً.</div>';
   }
   function renderProjects(projects) {
     var grid = document.getElementById('grid');
@@ -40,11 +40,18 @@
     if (typeof window.HOMERA_initProjectFilters === 'function') window.HOMERA_initProjectFilters();
   }
   function init() {
-    if (!window.HOMERA_API) return;
+    if (!window.HOMERA_API) {
+      renderHome([]);
+      renderProjects([]);
+      return;
+    }
     window.HOMERA_API.getProjects().then(function (projects) {
       renderHome(projects || []);
       renderProjects(projects || []);
-    }).catch(function () {});
+    }).catch(function () {
+      renderHome([]);
+      renderProjects([]);
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

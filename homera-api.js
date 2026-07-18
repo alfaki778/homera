@@ -48,20 +48,6 @@
 
   function syncFeaturedProjects(settings, projects) {
     settings = Object.assign({}, settings || {});
-    var slots = {
-      'مشروع الفضيلة 117': ['projFadilaImg', 'pgPFadila', 'pgFadilaMain'],
-      'مشروع الروضة 116': ['projRoudahImg', 'pgPRoudah'],
-      'مشروع السلامة 118': ['projSalamahImg', 'pgPSalamah'],
-      'مشروع النعيم 120': ['projNaeemImg', 'pgPNaeem'],
-      'مشروع الصفا 121': ['pgPSafa'],
-      'مشروع أبحر 122': ['pgPAbhur']
-    };
-    (projects || []).forEach(function (project) {
-      var keys = slots[project.name];
-      if (!keys) return;
-      var image = project.cover || (project.gallery && project.gallery[0]) || '';
-      keys.forEach(function (key) { settings[key] = image; });
-    });
     return settings;
   }
 

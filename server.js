@@ -1,13 +1,13 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-const { migrate: initDatabase } = require('./scripts/init-db');
+const { createPool } = require('./scripts/init-db');
 
 const app = express();
 const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
 
-let migrationPromise;
+let dbPool;
 
 function json(res, data, status = 200) {
   res.status(status).json(data);
@@ -18,8 +18,8 @@ function getAction(req) {
 }
 
 async function getDb() {
-  if (!migrationPromise) migrationPromise = initDatabase();
-  return migrationPromise;
+  if (!dbPool) dbPool = createPool();
+  return dbPool;
 }
 
 function hashToken(token) {
@@ -237,7 +237,7 @@ app.use((req, res, next) => {
     ['/index.html', './'],
     ['/هوميرا - الرئيسية.html', './'],
     ['/هوميرا - المشاريع.html', './projects'],
-    ['/هوميرا - مشروع الفضيلة 117.html', './fadilah-117'],
+    ['/هوميرا - مشروع الفضيلة 117.html', './projects'],
     ['/هوية هوميرا.html', './identity'],
     ['/hom555.html', './dashboard']
   ]);
@@ -309,7 +309,7 @@ app.get('/', (req, res) => sendPage(res, 'index.html'));
 app.get('/home', (req, res) => sendPage(res, 'index.html'));
 app.get('/projects', (req, res) => sendPage(res, 'هوميرا - المشاريع.html'));
 app.get('/project/:id', (req, res) => sendPage(res, 'project-detail.html'));
-app.get('/fadilah-117', (req, res) => sendPage(res, 'هوميرا - مشروع الفضيلة 117.html'));
+app.get('/fadilah-117', (req, res) => res.redirect(301, './projects'));
 app.get('/identity', (req, res) => sendPage(res, 'هوية هوميرا.html'));
 app.get('/dashboard', (req, res) => sendPage(res, 'hom555.html'));
 
