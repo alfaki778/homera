@@ -2,18 +2,10 @@
 (function () {
   function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
   function projectHref(project) { return 'project/' + encodeURIComponent(project.id || project.name || ''); }
-  function urgency(project, index) {
-    var avail = Number(project && project.avail);
-    if (avail === 2) return '🔥 متبقي وحدتين!';
-    if (index === 0) return '🔥 فرصتك الأخيرة!';
-    return '';
-  }
   function homeCard(project, index) {
     var cover = project.cover || 'uploads/3.jpg';
-    var badge = urgency(project, index);
     return '<a class="proj-card" href="' + projectHref(project) + '">' +
       '<div class="thumb"><span class="pill">' + project.type + '</span>' +
-      (badge ? '<span class="urgency-pill">' + badge + '</span>' : '') +
       '<img class="project-cover" src="' + cover + '" alt="' + project.name + '" loading="lazy" decoding="async"><div class="ov"></div></div>' +
       '<div class="bar"><span class="nm">' + project.name + '</span><span class="pr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> ' + fmt(project.price) + '</span></div>' +
       '</a>';
