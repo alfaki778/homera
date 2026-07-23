@@ -131,26 +131,31 @@ function PropertyCard({ item, onBook }) {
 function ProviderCard({ item, onBook }) {
   return (
     <article className="hm-scard">
-      <div className="hm-scard-head">
-        <span className="hm-scard-ic"><Icon name={item.icon} size={26} stroke="#15495B"/></span>
-        <div style={{ flex: 1 }}>
-          <h4>{item.name}</h4>
-          <div className="hm-rcard-meta">{item.cat}</div>
-        </div>
-        <button className="hm-fav sm"><Icon name="heart" size={16}/></button>
+      <div className="hm-scard-media">
+        <Slot id={item.slot} ratio="4 / 3" radius={0} placeholder="صورة الخدمة"/>
+        <button className="hm-fav"><Icon name="heart" size={17}/></button>
+        <span className="hm-scard-rate"><Icon name="star" size={12} fill="#fff" stroke="#fff" sw={0}/> {item.rating}</span>
+        <span className="hm-scard-cat">{item.cat}</span>
       </div>
-      <div className="hm-scard-stats">
-        <Stars value={item.rating}/>
-        <span className="hm-dotsep">·</span>
-        <span className="hm-scard-jobs">{window.HOMERA.sar(item.jobs)} مهمة منجزة</span>
-        <span className="hm-dotsep">·</span>
-        <span><Icon name="pin" size={13}/> {item.city}</span>
-      </div>
-      <div className="hm-scard-foot">
-        <div className="hm-price">
-          {item.quote ? <span className="hm-quote">حسب المعاينة</span> : <span><small>يبدأ من</small> <b>{item.from}</b> ر.س</span>}
+      <div className="hm-scard-body">
+        <div className="hm-scard-head">
+          <span className="hm-scard-ic"><Icon name={item.icon} size={22} stroke="#15495B"/></span>
+          <div style={{ flex: 1 }}>
+            <h4>{item.name}</h4>
+            <div className="hm-rcard-meta"><Icon name="pin" size={13}/> {item.city}</div>
+          </div>
         </div>
-        <Btn kind="primary" size="sm" onClick={() => onBook(item)}>{item.quote ? 'اطلب عرض سعر' : 'اطلب الخدمة'}</Btn>
+        <div className="hm-scard-stats">
+          <Stars value={item.rating}/>
+          <span className="hm-dotsep">·</span>
+          <span className="hm-scard-jobs">{window.HOMERA.sar(item.jobs)} مهمة</span>
+        </div>
+        <div className="hm-scard-foot">
+          <div className="hm-price">
+            {item.quote ? <span className="hm-quote">حسب المعاينة</span> : <span><small>يبدأ من</small> <b>{item.from}</b> ر.س</span>}
+          </div>
+          <Btn kind="primary" size="sm" onClick={() => onBook(item)}>{item.quote ? 'اطلب عرض سعر' : 'اطلب الخدمة'}</Btn>
+        </div>
       </div>
     </article>
   );
@@ -216,7 +221,7 @@ function Sector({ sector, go, city, setCity, openSwitch }) {
               <Icon name="list" size={16}/> الترتيب: <b>{sortLabel}</b>
             </div>
           </div>
-          <div className={'hm-grid ' + (sector === 'services' ? 'cols2' : 'cols3')}>
+          <div className="hm-grid cols3">
             {list.map(it => sector === 'rental'
               ? <RentalCard key={it.id} item={it} onBook={i => go('done', { sector, item: i })}/>
               : sector === 'sales'
