@@ -137,6 +137,7 @@
     setText('[data-tw="contactPhone"]', t.contactPhone);
     setText('[data-tw="contactAddress"]', t.contactAddress);
     setText('[data-tw="contactEmail"]', t.contactEmail);
+    setContactLinks(t.contactPhone, t.contactEmail);
 
     // الإحصائيات
     setText('[data-tw="stat1Num"]', t.stat1Num); setText('[data-tw="stat1Label"]', t.stat1Label);
@@ -193,6 +194,13 @@
   function setText(sel, val) {
     if (val == null) return;
     document.querySelectorAll(sel).forEach(function (el) { el.textContent = val; });
+  }
+
+  function setContactLinks(phone, email) {
+    var phoneHref = 'tel:' + String(phone || '').replace(/[^\d+]/g, '');
+    var mailHref = 'mailto:' + String(email || '').trim();
+    document.querySelectorAll('a[href^="tel:"]').forEach(function (el) { el.href = phoneHref; });
+    document.querySelectorAll('a[href^="mailto:"]').forEach(function (el) { el.href = mailHref; });
   }
 
   function setSlotImg(id, url) {
