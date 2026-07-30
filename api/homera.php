@@ -190,16 +190,24 @@ function save_settings($pdo, $settings) {
     $stmt->execute([$payload]);
 }
 
-/* يضيف عمود رقم الترخيص للقواعد القديمة التي أُنشئت قبل إضافته */
-function ensure_license_column($pdo) {
-    static $checked = false;
-    if ($checked) return;
-    $checked = true;
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'");
-    $stmt->execute();
-    if ((int)$stmt->fetchColumn() === 0) {
-        $pdo->exec("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
+/* ترقية تلقائية بعد الرفع/الديبلوي: تضيف الأعمدة المستجدة إن لم تكن موجودة.
+   تُستدعى مع كل طلب (استعلام واحد خفيف) حتى لا تحتاج لتشغيل أي SQL يدوياً على الاستضافة. */
+function ensure_project_columns($pdo) {
+    static $hasLicense = null;
+    if ($hasLicense !== null) return $hasLicense;
+    $hasLicense = false;
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'");
+        $stmt->execute();
+        $hasLicense = (int)$stmt->fetchColumn() > 0;
+        if (!$hasLicense) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
+            $hasLicense = true;
+        }
+    } catch (Throwable $e) {
+        /* لو تعذّرت الترقية (صلاحيات ALTER مثلاً) نكمل بدون العمود بدل تعطيل الحفظ */
     }
+    return $hasLicense;
 }
 
 function project_row($row) {
@@ -234,22 +242,42 @@ function get_projects($pdo) {
 function save_project($pdo, $project) {
     $name = trim($project['name'] ?? '');
     if ($name === '') respond(['ok' => false, 'error' => 'اسم المشروع مطلوب'], 422);
-    ensure_license_column($pdo);
+    $hasLicense = ensure_project_columns($pdo);
     $total = max(1, (int)($project['total'] ?? 1));
     $sold = min(max(0, (int)($project['sold'] ?? 0)), $total);
     $status = $project['status'] ?? 'new';
     if ($total - $sold <= 0) $status = 'done';
-    $license = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
     $gallery = json_encode($project['gallery'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $id = (int)($project['id'] ?? 0);
+
+    $columns = [
+        'name' => $name,
+        'dist' => $project['dist'] ?? '',
+        'city' => $project['city'] ?? 'جدة',
+        'area' => (int)($project['area'] ?? 0),
+        'facade' => $project['facade'] ?? '',
+        'type' => $project['type'] ?? '',
+        'price' => (int)($project['price'] ?? 0),
+        'total' => $total,
+        'sold' => $sold,
+        'status' => $status,
+        'cover' => $project['cover'] ?? '',
+        'gallery' => $gallery,
+    ];
+    if ($hasLicense) $columns['license'] = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
+
     if ($id > 0) {
-        $stmt = $pdo->prepare('UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, license=?, cover=?, gallery=? WHERE id=?');
-        $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $license, $project['cover'] ?? '', $gallery, $id]);
+        $set = implode(', ', array_map(function ($c) { return $c . '=?'; }, array_keys($columns)));
+        $stmt = $pdo->prepare('UPDATE projects SET ' . $set . ' WHERE id=?');
+        $stmt->execute(array_merge(array_values($columns), [$id]));
         return $id;
     }
-    $nextOrder = (int)$pdo->query('SELECT COALESCE(MAX(sort_order), -1) + 1 FROM projects')->fetchColumn();
-    $stmt = $pdo->prepare('INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, license, cover, gallery, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE dist=VALUES(dist), city=VALUES(city), area=VALUES(area), facade=VALUES(facade), type=VALUES(type), price=VALUES(price), total=VALUES(total), sold=VALUES(sold), status=VALUES(status), license=VALUES(license), cover=VALUES(cover), gallery=VALUES(gallery)');
-    $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $license, $project['cover'] ?? '', $gallery, $nextOrder]);
+    $columns['sort_order'] = (int)$pdo->query('SELECT COALESCE(MAX(sort_order), -1) + 1 FROM projects')->fetchColumn();
+    $names = array_keys($columns);
+    $updatable = array_filter($names, function ($c) { return $c !== 'name' && $c !== 'sort_order'; });
+    $stmt = $pdo->prepare('INSERT INTO projects (' . implode(', ', $names) . ') VALUES (' . implode(', ', array_fill(0, count($names), '?')) . ')'
+        . ' ON DUPLICATE KEY UPDATE ' . implode(', ', array_map(function ($c) { return $c . '=VALUES(' . $c . ')'; }, $updatable)));
+    $stmt->execute(array_values($columns));
     return (int)$pdo->lastInsertId();
 }
 
@@ -316,6 +344,7 @@ function change_password($pdo, $user, $data) {
 
 try {
     $pdo = connect_db($config);
+    ensure_project_columns($pdo);
     $action = $_GET['action'] ?? 'bootstrap';
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $data = [];

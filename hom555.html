@@ -558,7 +558,7 @@
         '<div class="mv-item"><div class="k">المدينة</div><div class="v">'+(p.city||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">الواجهة</div><div class="v">'+(p.facade||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">الحالة</div><div class="v">'+s.t+'</div></div>'+
-        '<div class="mv-item"><div class="k">رقم الترخيص</div><div class="v ltr">'+(p.license||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">الترخيص</div><div class="v" style="unicode-bidi:plaintext">'+(p.license||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">إجمالي الوحدات</div><div class="v ltr">'+p.total+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المتاحة</div><div class="v ltr">'+p.avail+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المباعة</div><div class="v ltr">'+p.sold+'</div></div>'+
@@ -887,7 +887,7 @@
           <div class="field"><label>إجمالي الوحدات</label><input name="total" type="number" min="1" required placeholder="12"/></div>
         </div>
         <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
-        <div class="field"><label>رقم الترخيص</label><input name="license" dir="ltr" maxlength="120" placeholder="مثال: 1200012345"/></div>
+        <div class="field"><label>الترخيص (نص أو رقم)</label><input name="license" type="text" dir="auto" maxlength="120" placeholder="مثال: 1200012345 أو ترخيص فال 7002…"/></div>
 
         <div class="field">
           <label>الصورة الأساسية</label>

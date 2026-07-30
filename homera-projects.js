@@ -8,7 +8,7 @@
     var license = String(project.license || '').trim();
     if (!license) return '';
     return '<div class="lic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>' +
-      '<span class="k">رقم الترخيص</span><b class="v">' + esc(license) + '</b></div>';
+      '<span class="k">الترخيص:</span><b class="v">' + esc(license) + '</b></div>';
   }
   function homeCard(project, index) {
     var cover = project.cover || 'uploads/3.jpg';
