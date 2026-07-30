@@ -1,13 +1,14 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-const { createPool } = require('./scripts/init-db');
+const { createPool, ensureProjectColumns } = require('./scripts/init-db');
 
 const app = express();
 const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
 
 let dbPool;
+let dbReady;
 
 function json(res, data, status = 200) {
   res.status(status).json(data);
@@ -18,8 +19,12 @@ function getAction(req) {
 }
 
 async function getDb() {
-  if (!dbPool) dbPool = createPool();
-  return dbPool;
+  if (!dbReady) {
+    dbPool = createPool();
+    // ترقية صامتة للقواعد القديمة (عمود رقم الترخيص)
+    dbReady = ensureProjectColumns(dbPool).catch(() => {}).then(() => dbPool);
+  }
+  return dbReady;
 }
 
 function hashToken(token) {
@@ -144,6 +149,7 @@ function projectRow(row) {
     sold,
     avail: Math.max(0, total - sold),
     status: row.status,
+    license: row.license || '',
     pct: total ? Math.round((sold / total) * 100) : 0,
     cover: row.cover || '',
     gallery: Array.isArray(gallery) ? gallery : []
@@ -178,21 +184,22 @@ async function saveProject(db, project) {
   const total = Math.max(1, Number(project.total || 1));
   const sold = Math.min(Math.max(0, Number(project.sold || 0)), total);
   const status = total - sold <= 0 ? 'done' : (project.status || 'new');
+  const license = String(project.license || '').trim().slice(0, 120);
   const gallery = JSON.stringify(project.gallery || []);
   const id = Number(project.id || 0);
 
   if (id > 0) {
     await db.query(
-      'UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, cover=?, gallery=? WHERE id=?',
-      [name, project.dist || '', project.city || 'جدة', Number(project.area || 0), project.facade || '', project.type || '', Number(project.price || 0), total, sold, status, project.cover || '', gallery, id]
+      'UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, license=?, cover=?, gallery=? WHERE id=?',
+      [name, project.dist || '', project.city || 'جدة', Number(project.area || 0), project.facade || '', project.type || '', Number(project.price || 0), total, sold, status, license, project.cover || '', gallery, id]
     );
     return id;
   }
 
   const [orderRows] = await db.query('SELECT COALESCE(MAX(sort_order), -1) + 1 AS nextOrder FROM projects');
   await db.query(
-    'INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, cover, gallery, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE dist=VALUES(dist), city=VALUES(city), area=VALUES(area), facade=VALUES(facade), type=VALUES(type), price=VALUES(price), total=VALUES(total), sold=VALUES(sold), status=VALUES(status), cover=VALUES(cover), gallery=VALUES(gallery)',
-    [name, project.dist || '', project.city || 'جدة', Number(project.area || 0), project.facade || '', project.type || '', Number(project.price || 0), total, sold, status, project.cover || '', gallery, Number(orderRows[0].nextOrder || 0)]
+    'INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, license, cover, gallery, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE dist=VALUES(dist), city=VALUES(city), area=VALUES(area), facade=VALUES(facade), type=VALUES(type), price=VALUES(price), total=VALUES(total), sold=VALUES(sold), status=VALUES(status), license=VALUES(license), cover=VALUES(cover), gallery=VALUES(gallery)',
+    [name, project.dist || '', project.city || 'جدة', Number(project.area || 0), project.facade || '', project.type || '', Number(project.price || 0), total, sold, status, license, project.cover || '', gallery, Number(orderRows[0].nextOrder || 0)]
   );
 }
 

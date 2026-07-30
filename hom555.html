@@ -558,6 +558,7 @@
         '<div class="mv-item"><div class="k">المدينة</div><div class="v">'+(p.city||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">الواجهة</div><div class="v">'+(p.facade||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">الحالة</div><div class="v">'+s.t+'</div></div>'+
+        '<div class="mv-item"><div class="k">رقم الترخيص</div><div class="v ltr">'+(p.license||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">إجمالي الوحدات</div><div class="v ltr">'+p.total+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المتاحة</div><div class="v ltr">'+p.avail+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المباعة</div><div class="v ltr">'+p.sold+'</div></div>'+
@@ -711,6 +712,7 @@
     f.name.value=p.name; f.dist.value=p.dist; f.city.value=p.city||''; f.area.value=p.area||'';
     f.facade.value=p.facade||'شمالية'; f.type.value=p.type||'فيلا'; f.price.value=p.price||'';
     f.status.value=p.status||'new'; f.total.value=p.total||''; f.sold.value=p.sold||0;
+    f.license.value=p.license||'';
     coverData=p.cover||null; galleryData=(p.gallery||[]).slice();
     document.getElementById('coverInput').value=''; document.getElementById('galInput').value='';
     renderCoverPrev(); renderGalPrev();
@@ -730,6 +732,7 @@
       p.name=f.name.value.trim(); p.dist=f.dist.value.trim(); p.city=f.city.value.trim()||'جدة';
       p.area=parseInt(f.area.value,10)||0; p.facade=f.facade.value; p.type=f.type.value; p.price=price;
       p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
+      p.license=f.license.value.trim();
       p.cover=coverData; p.gallery=galleryData.slice();
       editingProject=null;
       renderAll(); var okE=syncFeaturedToHome(); saveProjectToDb(p, okE ? 'تم تعديل المشروع — '+p.name.replace('مشروع ','') : 'تم التعديل لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.'); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
@@ -737,7 +740,7 @@
     }
     var newProject={ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
       total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
-      cover:coverData, gallery:galleryData.slice() };
+      license:f.license.value.trim(), cover:coverData, gallery:galleryData.slice() };
     PROJECTS.unshift(newProject);
     renderAll(); var okA=syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
     saveProjectToDb(newProject, okA ? 'تمت إضافة المشروع' : 'تمت الإضافة لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.');
@@ -884,6 +887,7 @@
           <div class="field"><label>إجمالي الوحدات</label><input name="total" type="number" min="1" required placeholder="12"/></div>
         </div>
         <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
+        <div class="field"><label>رقم الترخيص</label><input name="license" dir="ltr" maxlength="120" placeholder="مثال: 1200012345"/></div>
 
         <div class="field">
           <label>الصورة الأساسية</label>

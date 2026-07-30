@@ -19,12 +19,23 @@ CREATE TABLE IF NOT EXISTS projects (
   total INT UNSIGNED NOT NULL DEFAULT 1,
   sold INT UNSIGNED NOT NULL DEFAULT 0,
   status VARCHAR(40) NOT NULL DEFAULT 'new',
+  license VARCHAR(120) NOT NULL DEFAULT '',
   cover LONGTEXT NULL,
   gallery LONGTEXT NULL,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ترقية قواعد البيانات القديمة: إضافة عمود رقم الترخيص إن لم يكن موجوداً
+SET @has_license := (SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license');
+SET @add_license := IF(@has_license = 0,
+  "ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status",
+  'SELECT 1');
+PREPARE add_license_stmt FROM @add_license;
+EXECUTE add_license_stmt;
+DEALLOCATE PREPARE add_license_stmt;
 
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

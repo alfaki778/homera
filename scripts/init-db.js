@@ -110,6 +110,7 @@ async function createTables(db) {
     total INT UNSIGNED NOT NULL DEFAULT 1,
     sold INT UNSIGNED NOT NULL DEFAULT 0,
     status VARCHAR(40) NOT NULL DEFAULT 'new',
+    license VARCHAR(120) NOT NULL DEFAULT '',
     cover LONGTEXT NULL,
     gallery LONGTEXT NULL,
     sort_order INT NOT NULL DEFAULT 0,
@@ -136,6 +137,15 @@ async function createTables(db) {
     INDEX (user_id),
     CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+
+// ترقية القواعد القديمة: إضافة الأعمدة المستجدة على جدول المشاريع
+async function ensureProjectColumns(db) {
+  const [rows] = await db.query(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'"
+  );
+  if (Number(rows[0].count) > 0) return;
+  await db.query("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
 }
 
 async function seedSettings(db) {
@@ -212,6 +222,7 @@ async function migrate() {
   await ensureDatabase();
   const db = createPool();
   await createTables(db);
+  await ensureProjectColumns(db);
   await seedSettings(db);
   await repairDefaultSettings(db);
   await seedUsers(db);
@@ -236,6 +247,7 @@ if (require.main === module) {
 
 module.exports = {
   createPool,
+  ensureProjectColumns,
   dbConfig,
   defaultProjects,
   defaultSettings,

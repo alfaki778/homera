@@ -61,6 +61,7 @@ function migrate($config) {
         total INT UNSIGNED NOT NULL DEFAULT 1,
         sold INT UNSIGNED NOT NULL DEFAULT 0,
         status VARCHAR(40) NOT NULL DEFAULT 'new',
+        license VARCHAR(120) NOT NULL DEFAULT '',
         cover LONGTEXT NULL,
         gallery LONGTEXT NULL,
         sort_order INT NOT NULL DEFAULT 0,
@@ -189,6 +190,18 @@ function save_settings($pdo, $settings) {
     $stmt->execute([$payload]);
 }
 
+/* يضيف عمود رقم الترخيص للقواعد القديمة التي أُنشئت قبل إضافته */
+function ensure_license_column($pdo) {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'");
+    $stmt->execute();
+    if ((int)$stmt->fetchColumn() === 0) {
+        $pdo->exec("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
+    }
+}
+
 function project_row($row) {
     $total = max(1, (int)$row['total']);
     $sold = min(max(0, (int)$row['sold']), $total);
@@ -206,6 +219,7 @@ function project_row($row) {
         'sold' => $sold,
         'avail' => max(0, $total - $sold),
         'status' => $row['status'],
+        'license' => $row['license'] ?? '',
         'pct' => $total ? (int)round($sold / $total * 100) : 0,
         'cover' => $row['cover'] ?: '',
         'gallery' => is_array($gallery) ? $gallery : [],
@@ -220,20 +234,22 @@ function get_projects($pdo) {
 function save_project($pdo, $project) {
     $name = trim($project['name'] ?? '');
     if ($name === '') respond(['ok' => false, 'error' => 'اسم المشروع مطلوب'], 422);
+    ensure_license_column($pdo);
     $total = max(1, (int)($project['total'] ?? 1));
     $sold = min(max(0, (int)($project['sold'] ?? 0)), $total);
     $status = $project['status'] ?? 'new';
     if ($total - $sold <= 0) $status = 'done';
+    $license = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
     $gallery = json_encode($project['gallery'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $id = (int)($project['id'] ?? 0);
     if ($id > 0) {
-        $stmt = $pdo->prepare('UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, cover=?, gallery=? WHERE id=?');
-        $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $project['cover'] ?? '', $gallery, $id]);
+        $stmt = $pdo->prepare('UPDATE projects SET name=?, dist=?, city=?, area=?, facade=?, type=?, price=?, total=?, sold=?, status=?, license=?, cover=?, gallery=? WHERE id=?');
+        $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $license, $project['cover'] ?? '', $gallery, $id]);
         return $id;
     }
     $nextOrder = (int)$pdo->query('SELECT COALESCE(MAX(sort_order), -1) + 1 FROM projects')->fetchColumn();
-    $stmt = $pdo->prepare('INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, cover, gallery, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE dist=VALUES(dist), city=VALUES(city), area=VALUES(area), facade=VALUES(facade), type=VALUES(type), price=VALUES(price), total=VALUES(total), sold=VALUES(sold), status=VALUES(status), cover=VALUES(cover), gallery=VALUES(gallery)');
-    $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $project['cover'] ?? '', $gallery, $nextOrder]);
+    $stmt = $pdo->prepare('INSERT INTO projects (name, dist, city, area, facade, type, price, total, sold, status, license, cover, gallery, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE dist=VALUES(dist), city=VALUES(city), area=VALUES(area), facade=VALUES(facade), type=VALUES(type), price=VALUES(price), total=VALUES(total), sold=VALUES(sold), status=VALUES(status), license=VALUES(license), cover=VALUES(cover), gallery=VALUES(gallery)');
+    $stmt->execute([$name, $project['dist'] ?? '', $project['city'] ?? 'جدة', (int)($project['area'] ?? 0), $project['facade'] ?? '', $project['type'] ?? '', (int)($project['price'] ?? 0), $total, $sold, $status, $license, $project['cover'] ?? '', $gallery, $nextOrder]);
     return (int)$pdo->lastInsertId();
 }
 

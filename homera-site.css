@@ -222,6 +222,14 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
 .proj-card .thumb .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,51,64,.12),rgba(14,51,64,.55));pointer-events:none;}
 .proj-card .thumb .pill{position:absolute;top:18px;right:18px;background:var(--gold);color:#22150A;
   font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:30px;z-index:2;}
+/* شريط رقم الترخيص — أسفل الصورة مباشرةً وبمحاذاة اليمين */
+.proj-card .lic{display:flex;align-items:center;justify-content:flex-start;gap:8px;
+  background:#F7F1E4;border-top:1px solid rgba(199,163,107,.35);border-bottom:1px solid rgba(199,163,107,.35);
+  padding:9px 24px;font-size:13px;color:var(--petrol-d);}
+.proj-card .lic svg{width:16px;height:16px;flex:none;color:var(--accent-d);}
+.proj-card .lic .k{font-weight:700;}
+.proj-card .lic .v{font-weight:800;letter-spacing:.02em;direction:ltr;unicode-bidi:isolate;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .proj-card .bar{background:var(--petrol-d);color:#fff;padding:20px 24px;display:flex;
   justify-content:space-between;align-items:center;gap:14px;min-height:80px;}
 .proj-card .bar .nm{font-size:19px;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-width:60%;}
