@@ -5,6 +5,24 @@
   var bootstrapPromise = null;
   var projectsPromise = null;
 
+  /* الردود العامة ترجع الصور كمراجع خفيفة تبدأ بـ "?action=img..." بدل base64.
+     هنا نحوّلها إلى روابط كاملة ليحمّلها المتصفح كصور عادية (كسول + مخزّن مؤقتاً). */
+  function resolveImg(value) {
+    var v = String(value == null ? '' : value);
+    return v.charAt(0) === '?' ? API_URL + v : v;
+  }
+
+  function resolveProject(project) {
+    if (!project) return project;
+    project.cover = resolveImg(project.cover);
+    if (Array.isArray(project.gallery)) project.gallery = project.gallery.map(resolveImg);
+    return project;
+  }
+
+  function resolveProjects(projects) {
+    return (projects || []).map(resolveProject);
+  }
+
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; }
   }
@@ -21,8 +39,11 @@
     return (res.headers.get('content-type') || '').indexOf('application/json') > -1;
   }
 
-  function request(action, payload) {
+  function request(action, payload, params) {
     var url = API_URL + (action ? '?action=' + encodeURIComponent(action) : '');
+    if (params) Object.keys(params).forEach(function (k, i) {
+      url += (action || i ? '&' : '?') + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    });
     var session = readSession();
     var headers = {};
     if (session && session.token) headers['X-Homera-Session'] = session.token;
@@ -58,7 +79,7 @@
     bootstrapPromise = request('', null).then(function (data) {
       var settings = syncFeaturedProjects(data.settings || {}, data.projects || []);
       writeLocalSettings(settings);
-      return { settings: settings, projects: data.projects || [] };
+      return { settings: settings, projects: resolveProjects(data.projects) };
     });
     return bootstrapPromise;
   }
@@ -73,12 +94,17 @@
     changePassword: function (currentPassword, newPassword) { return request('password', { currentPassword: currentPassword, newPassword: newPassword }).then(function () { clearSession(); }); },
     getSettings: function () { return request('settings', null).then(function (data) { writeLocalSettings(data.settings || {}); return data.settings || {}; }); },
     saveSettings: function (settings) { writeLocalSettings(settings || {}); return request('settings', { settings: settings || {} }); },
+    /* قائمة خفيفة للبطاقات — طلب مستقل لا ينتظر bootstrap (الذي يحمل أيضاً الإعدادات وصورها) */
     getProjects: function () {
-      if (bootstrapPromise) return bootstrapPromise.then(function (data) { return data.projects || []; });
       if (projectsPromise) return projectsPromise;
-      projectsPromise = request('projects', null).then(function (data) { return data.projects || []; });
+      projectsPromise = request('projects', null).then(function (data) { return resolveProjects(data.projects); });
+      projectsPromise.catch(function () { projectsPromise = null; });
       return projectsPromise;
     },
+    /* بيانات خام كاملة (صور base64) — للوحة التحكم فقط، تتطلب جلسة */
+    getProjectsFull: function () { return request('projects', null, { full: 1 }).then(function (data) { return data.projects || []; }); },
+    /* مشروع واحد بمعرضه — لصفحة التفاصيل، بدل تنزيل كل المشاريع */
+    getProject: function (id) { return request('project', null, { id: id }).then(function (data) { return resolveProject(data.project); }); },
     saveProject: function (project) { return request('project', { project: project }); },
     sellProject: function (project) { return request('sell', { id: project.id || 0, name: project.name || '' }); },
     readLocalSettings: readLocalSettings,

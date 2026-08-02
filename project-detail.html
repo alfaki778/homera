@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/homera-site.css"/>
+<link rel="stylesheet" href="/homera-site.css?v=2"/>
 <script src="/homera-api.js?v=2"></script>
 <script src="/homera-tweaks.js?v=4"></script>
 <style>
@@ -213,8 +213,8 @@ document.querySelector('.burger')?.addEventListener('click',function(e){ e.stopP
 (function(){
   var id = projectIdFromPath();
   if(!window.HOMERA_API){ showMissing(); return; }
-  window.HOMERA_API.getProjects().then(function(projects){
-    var project = (projects || []).find(function(p){ return String(p.id) === id || p.name === id; });
+  // مشروع واحد فقط بدل تنزيل كل المشاريع بصورها
+  window.HOMERA_API.getProject(id).then(function(project){
     if(!project) return showMissing();
     render(project);
   }).catch(showMissing);

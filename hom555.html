@@ -100,7 +100,8 @@
 (function(){
   var gate=document.getElementById('authGate');
   function setCurrentUser(user){ window.HOMERA_CURRENT_USER=user||null; if(window.HOMERA_applyAccess) window.HOMERA_applyAccess(); }
-  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); }
+  // جلب المشاريع يتطلب جلسة (بيانات خام)، فنعيد التحميل فور نجاح الدخول
+  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); if(window.HOMERA_reloadProjects) window.HOMERA_reloadProjects(); }
   var session=window.HOMERA_API && window.HOMERA_API.currentSession && window.HOMERA_API.currentSession();
   if(session && session.user){ hideGate(session.user); }
   document.getElementById('authForm').addEventListener('submit', function(e){
@@ -485,9 +486,12 @@
   hydrateProjectsFromStore();   // حمّل الصور المحفوظة إلى الجدول
   renderAll();                  // أعد الرسم لتظهر في الجدول
   syncFeaturedToHome();         // انشر الصور لكل بطاقات الصفحات (يصلح الصور القديمة تلقائياً)
-  if(window.HOMERA_API){
-    window.HOMERA_API.bootstrap().then(function(data){ setProjects(data.projects); }).catch(function(){});
-  }
+  // اللوحة تحتاج بيانات الصور الخام (base64) للتحرير — القائمة العامة صارت خفيفة بروابط صور
+  window.HOMERA_reloadProjects=function(){
+    if(!window.HOMERA_API) return;
+    window.HOMERA_API.getProjectsFull().then(setProjects).catch(function(){});
+  };
+  window.HOMERA_reloadProjects();
 
   // تبديل العرض
   var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};

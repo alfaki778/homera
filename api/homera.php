@@ -210,11 +210,32 @@ function ensure_project_columns($pdo) {
     return $hasLicense;
 }
 
-function project_row($row) {
+/* ==========================================================================
+   الصور: تُخزَّن في قاعدة البيانات كـ data:URL (base64). إرسالها داخل الـ JSON
+   يجعل رد المشاريع بحجم عدة ميجابايت، فيبقى القسم فارغاً حتى يكتمل التحميل
+   ثم تظهر البطاقات دفعة واحدة. الحل: يرجع الـ JSON رابطاً خفيفاً لكل صورة،
+   ويقوم المتصفح بتحميلها كصورة عادية (تحميل كسول + تخزين مؤقت + تدرّج).
+   الرابط نسبي لمسار الـ API (يبدأ بـ ?) ويكمله homera-api.js في المتصفح.
+   ========================================================================== */
+function row_version($row) {
+    return substr(md5((string)($row['updated_at'] ?? '') . '|' . (string)($row['id'] ?? '')), 0, 10);
+}
+
+function image_ref($value, $id, $key, $ver) {
+    $value = (string)$value;
+    if ($value === '') return '';
+    if (strncmp($value, 'data:', 5) !== 0) return $value; // مسار ملف عادي — يُترك كما هو
+    return '?action=img&id=' . (int)$id . '&k=' . $key . '&v=' . $ver;
+}
+
+/* $mode: full = بيانات خام للوحة التحكم | card = بطاقات بدون معرض | detail = صفحة المشروع */
+function project_row($row, $mode = 'full') {
     $total = max(1, (int)$row['total']);
     $sold = min(max(0, (int)$row['sold']), $total);
     $gallery = json_decode($row['gallery'] ?: '[]', true);
-    return [
+    if (!is_array($gallery)) $gallery = [];
+    $ver = row_version($row);
+    $out = [
         'id' => (int)$row['id'],
         'name' => $row['name'],
         'dist' => $row['dist'],
@@ -229,14 +250,108 @@ function project_row($row) {
         'status' => $row['status'],
         'license' => $row['license'] ?? '',
         'pct' => $total ? (int)round($sold / $total * 100) : 0,
-        'cover' => $row['cover'] ?: '',
-        'gallery' => is_array($gallery) ? $gallery : [],
+        'cover' => $mode === 'full' ? ($row['cover'] ?: '') : image_ref($row['cover'], $row['id'], 'cover', $ver),
     ];
+    if ($mode === 'card') return $out;
+    if ($mode === 'full') {
+        $out['gallery'] = $gallery;
+        return $out;
+    }
+    $out['gallery'] = [];
+    foreach ($gallery as $i => $img) $out['gallery'][] = image_ref($img, $row['id'], 'g' . (int)$i, $ver);
+    return $out;
 }
 
-function get_projects($pdo) {
-    $rows = $pdo->query('SELECT * FROM projects ORDER BY sort_order ASC, id ASC')->fetchAll();
-    return array_map('project_row', $rows);
+function get_projects($pdo, $mode = 'full') {
+    if ($mode === 'card') {
+        /* البطاقات لا تحتاج المعرض إطلاقاً، ولا محتوى الغلاف — فقط إشارة أنه صورة مضمّنة.
+           بهذا لا نسحب ميجابايتات من القاعدة ولا نرسلها في الرد. */
+        $sql = 'SELECT id, name, dist, city, area, facade, type, price, total, sold, status, license, updated_at,'
+            . " CASE WHEN cover LIKE 'data:%' THEN 'data:' ELSE COALESCE(cover, '') END AS cover,"
+            . " '[]' AS gallery"
+            . ' FROM projects ORDER BY sort_order ASC, id ASC';
+        $rows = $pdo->query($sql)->fetchAll();
+    } else {
+        $rows = $pdo->query('SELECT * FROM projects ORDER BY sort_order ASC, id ASC')->fetchAll();
+    }
+    return array_map(function ($row) use ($mode) { return project_row($row, $mode); }, $rows);
+}
+
+function find_project($pdo, $id, $name) {
+    $stmt = $id > 0 ? $pdo->prepare('SELECT * FROM projects WHERE id=? LIMIT 1') : $pdo->prepare('SELECT * FROM projects WHERE name=? LIMIT 1');
+    $stmt->execute([$id > 0 ? $id : $name]);
+    return $stmt->fetch();
+}
+
+/* يخدم صورة مشروع واحدة كملف ثنائي مع تخزين مؤقت طويل (الرابط يحمل بصمة التحديث) */
+function send_project_image($pdo, $id, $key) {
+    $stmt = $pdo->prepare('SELECT id, cover, gallery FROM projects WHERE id=? LIMIT 1');
+    $stmt->execute([(int)$id]);
+    $row = $stmt->fetch();
+    if (!$row) { http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); exit; }
+
+    $data = '';
+    if ($key === 'cover') {
+        $data = (string)$row['cover'];
+    } elseif (preg_match('/^g(\d+)$/', $key, $m)) {
+        $gallery = json_decode($row['gallery'] ?: '[]', true);
+        if (is_array($gallery) && isset($gallery[(int)$m[1]])) $data = (string)$gallery[(int)$m[1]];
+    }
+    if ($data === '') { http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); exit; }
+    if (strncmp($data, 'data:', 5) !== 0) { header('Location: ' . $data, true, 302); exit; }
+    if (!preg_match('#^data:([\w.+/-]+);base64,#', $data, $m)) { http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); exit; }
+
+    $bin = base64_decode(substr($data, strlen($m[0])), true);
+    if ($bin === false) { http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); exit; }
+
+    $etag = '"' . md5($data) . '"';
+    header('Content-Type: ' . $m[1]);
+    header('Cache-Control: public, max-age=31536000, immutable');
+    header('ETag: ' . $etag);
+    if (trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) { http_response_code(304); exit; }
+    header('Content-Length: ' . strlen($bin));
+    echo $bin;
+    exit;
+}
+
+/* رد JSON عام مع ETag: زيارة متكرّرة = 304 بدون إعادة تنزيل */
+function respond_cached($data) {
+    $body = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $etag = '"' . md5($body) . '"';
+    header('Cache-Control: public, max-age=0, must-revalidate');
+    header('ETag: ' . $etag);
+    if (trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) { http_response_code(304); exit; }
+    echo $body;
+    exit;
+}
+
+function is_image_ref($value) {
+    return strncmp((string)$value, '?action=img', 11) === 0;
+}
+
+/* حماية: لو أُرسل مرجع صورة (?action=img...) بدل الصورة نفسها نُبقي المخزَّن كما هو
+   حتى لا يُمحى المحتوى الأصلي بالخطأ */
+function keep_stored_images($pdo, $id, $cover, $gallery) {
+    $needsCover = is_image_ref($cover);
+    $needsGallery = false;
+    foreach ($gallery as $img) if (is_image_ref($img)) { $needsGallery = true; break; }
+    if ($id <= 0 || (!$needsCover && !$needsGallery)) return [$cover, $gallery];
+
+    $stmt = $pdo->prepare('SELECT cover, gallery FROM projects WHERE id=? LIMIT 1');
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    if (!$row) return [$cover, $gallery];
+
+    $stored = json_decode($row['gallery'] ?: '[]', true);
+    if (!is_array($stored)) $stored = [];
+    if ($needsCover) $cover = (string)($row['cover'] ?? '');
+    foreach ($gallery as $i => $img) {
+        if (!is_image_ref($img)) continue;
+        preg_match('/&k=g(\d+)/', $img, $m);
+        $key = isset($m[1]) ? (int)$m[1] : $i;
+        $gallery[$i] = isset($stored[$key]) ? (string)$stored[$key] : '';
+    }
+    return [$cover, array_values(array_filter($gallery, function ($v) { return $v !== ''; }))];
 }
 
 function save_project($pdo, $project) {
@@ -247,8 +362,11 @@ function save_project($pdo, $project) {
     $sold = min(max(0, (int)($project['sold'] ?? 0)), $total);
     $status = $project['status'] ?? 'new';
     if ($total - $sold <= 0) $status = 'done';
-    $gallery = json_encode($project['gallery'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $id = (int)($project['id'] ?? 0);
+    $rawGallery = $project['gallery'] ?? [];
+    if (!is_array($rawGallery)) $rawGallery = [];
+    list($coverValue, $galleryValue) = keep_stored_images($pdo, $id, (string)($project['cover'] ?? ''), $rawGallery);
+    $gallery = json_encode($galleryValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     $columns = [
         'name' => $name,
@@ -261,7 +379,7 @@ function save_project($pdo, $project) {
         'total' => $total,
         'sold' => $sold,
         'status' => $status,
-        'cover' => $project['cover'] ?? '',
+        'cover' => $coverValue,
         'gallery' => $gallery,
     ];
     if ($hasLicense) $columns['license'] = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
@@ -348,10 +466,20 @@ try {
     $action = $_GET['action'] ?? 'bootstrap';
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $data = [];
+        if ($action === 'img') send_project_image($pdo, (int)($_GET['id'] ?? 0), (string)($_GET['k'] ?? 'cover'));
         if ($action === 'users') { require_user($pdo, $data, ['admin']); respond(['ok' => true, 'users' => list_users($pdo)]); }
         if ($action === 'settings') respond(['ok' => true, 'settings' => get_settings($pdo)]);
-        if ($action === 'projects') respond(['ok' => true, 'projects' => get_projects($pdo)]);
-        respond(['ok' => true, 'settings' => get_settings($pdo), 'projects' => get_projects($pdo)]);
+        if ($action === 'project') {
+            $row = find_project($pdo, (int)($_GET['id'] ?? 0), trim((string)($_GET['name'] ?? $_GET['id'] ?? '')));
+            if (!$row) respond(['ok' => false, 'error' => 'المشروع غير موجود'], 404);
+            respond_cached(['ok' => true, 'project' => project_row($row, 'detail')]);
+        }
+        if ($action === 'projects') {
+            /* full=1 للوحة التحكم فقط (بيانات الصور الخام)، والعام يحصل على قائمة خفيفة */
+            if (!empty($_GET['full'])) { require_user($pdo, $data, ['admin', 'editor']); respond(['ok' => true, 'projects' => get_projects($pdo, 'full')]); }
+            respond_cached(['ok' => true, 'projects' => get_projects($pdo, 'card')]);
+        }
+        respond_cached(['ok' => true, 'settings' => get_settings($pdo), 'projects' => get_projects($pdo, 'card')]);
     }
     $data = input_json();
     if ($action === 'login') respond(['ok' => true] + login_user($pdo, $data));

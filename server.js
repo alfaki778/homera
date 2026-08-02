@@ -136,11 +136,31 @@ function parseJson(value, fallback) {
   }
 }
 
-function projectRow(row) {
+/* ==========================================================================
+   الصور مخزّنة في القاعدة كـ data:URL (base64). إرسالها داخل JSON المشاريع
+   يجعل الرد بعدة ميجابايت فتتأخر البطاقات ثم تظهر كلها دفعة واحدة.
+   الحل: الردود العامة تحمل رابطاً خفيفاً لكل صورة (?action=img&...) ويحمّلها
+   المتصفح كصورة عادية — تحميل كسول، تخزين مؤقت طويل، وظهور تدريجي.
+   ========================================================================== */
+function rowVersion(row) {
+  return crypto.createHash('md5').update(String(row.updated_at || '') + '|' + String(row.id || '')).digest('hex').slice(0, 10);
+}
+
+function imageRef(value, id, key, ver) {
+  const raw = String(value || '');
+  if (!raw) return '';
+  if (!raw.startsWith('data:')) return raw; // مسار ملف عادي — يُترك كما هو
+  return '?action=img&id=' + Number(id) + '&k=' + key + '&v=' + ver;
+}
+
+/* mode: full = بيانات خام للوحة التحكم | card = بطاقات بدون معرض | detail = صفحة المشروع */
+function projectRow(row, mode = 'full') {
   const total = Math.max(1, Number(row.total || 0));
   const sold = Math.min(Math.max(0, Number(row.sold || 0)), total);
-  const gallery = parseJson(row.gallery || '[]', []);
-  return {
+  const parsed = parseJson(row.gallery || '[]', []);
+  const gallery = Array.isArray(parsed) ? parsed : [];
+  const ver = rowVersion(row);
+  const out = {
     id: Number(row.id),
     name: row.name,
     dist: row.dist,
@@ -155,9 +175,57 @@ function projectRow(row) {
     status: row.status,
     license: row.license || '',
     pct: total ? Math.round((sold / total) * 100) : 0,
-    cover: row.cover || '',
-    gallery: Array.isArray(gallery) ? gallery : []
+    cover: mode === 'full' ? (row.cover || '') : imageRef(row.cover, row.id, 'cover', ver)
   };
+  if (mode === 'card') return out;
+  out.gallery = mode === 'full' ? gallery : gallery.map((img, i) => imageRef(img, row.id, 'g' + i, ver));
+  return out;
+}
+
+const CARD_COLUMNS =
+  'SELECT id, name, dist, city, area, facade, type, price, total, sold, status, license, updated_at,' +
+  " CASE WHEN cover LIKE 'data:%' THEN 'data:' ELSE COALESCE(cover, '') END AS cover" +
+  ' FROM projects ORDER BY sort_order ASC, id ASC';
+
+/* يخدم صورة مشروع واحدة كملف ثنائي مع تخزين مؤقت طويل (الرابط يحمل بصمة التحديث) */
+async function sendProjectImage(db, req, res, id, key) {
+  const [rows] = await db.query('SELECT id, cover, gallery FROM projects WHERE id=? LIMIT 1', [Number(id) || 0]);
+  if (!rows.length) return res.status(404).type('text/plain').send('');
+
+  let data = '';
+  if (key === 'cover') {
+    data = String(rows[0].cover || '');
+  } else {
+    const match = /^g(\d+)$/.exec(String(key || ''));
+    if (match) {
+      const parsed = parseJson(rows[0].gallery || '[]', []);
+      if (Array.isArray(parsed) && parsed[Number(match[1])]) data = String(parsed[Number(match[1])]);
+    }
+  }
+  if (!data) return res.status(404).type('text/plain').send('');
+  if (!data.startsWith('data:')) return res.redirect(302, data);
+
+  const head = /^data:([\w.+/-]+);base64,/.exec(data);
+  if (!head) return res.status(404).type('text/plain').send('');
+  const bin = Buffer.from(data.slice(head[0].length), 'base64');
+  if (!bin.length) return res.status(404).type('text/plain').send('');
+
+  res.setHeader('Content-Type', head[1]);
+  const etag = '"' + crypto.createHash('md5').update(data).digest('hex') + '"';
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.setHeader('ETag', etag);
+  if (String(req.get('If-None-Match') || '').trim() === etag) return res.status(304).end();
+  return res.send(bin);
+}
+
+/* رد JSON عام مع ETag: زيارة متكرّرة = 304 بدون إعادة تنزيل */
+function jsonCached(req, res, data) {
+  const body = JSON.stringify(data);
+  const etag = '"' + crypto.createHash('md5').update(body).digest('hex') + '"';
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.setHeader('ETag', etag);
+  if (String(req.get('If-None-Match') || '').trim() === etag) return res.status(304).end();
+  return res.type('application/json').send(body);
 }
 
 async function getSettings(db) {
@@ -172,9 +240,43 @@ async function saveSettings(db, settings) {
   );
 }
 
-async function getProjects(db) {
-  const [rows] = await db.query('SELECT * FROM projects ORDER BY sort_order ASC, id ASC');
-  return rows.map(projectRow);
+async function getProjects(db, mode = 'full') {
+  /* البطاقات لا تحتاج المعرض ولا محتوى الغلاف — فقط إشارة أنه صورة مضمّنة */
+  const [rows] = await db.query(mode === 'card' ? CARD_COLUMNS : 'SELECT * FROM projects ORDER BY sort_order ASC, id ASC');
+  return rows.map((row) => projectRow(row, mode));
+}
+
+async function findProject(db, id, name) {
+  const [rows] = Number(id) > 0
+    ? await db.query('SELECT * FROM projects WHERE id=? LIMIT 1', [Number(id)])
+    : await db.query('SELECT * FROM projects WHERE name=? LIMIT 1', [String(name || '')]);
+  return rows[0] || null;
+}
+
+function isImageRef(value) {
+  return String(value || '').startsWith('?action=img');
+}
+
+/* حماية: لو أُرسل مرجع صورة (?action=img...) بدل الصورة نفسها نُبقي المخزَّن كما هو
+   حتى لا يُمحى المحتوى الأصلي بالخطأ */
+async function keepStoredImages(db, id, cover, gallery) {
+  const needsCover = isImageRef(cover);
+  const needsGallery = gallery.some(isImageRef);
+  if (id <= 0 || (!needsCover && !needsGallery)) return [cover, gallery];
+
+  const [rows] = await db.query('SELECT cover, gallery FROM projects WHERE id=? LIMIT 1', [id]);
+  if (!rows.length) return [cover, gallery];
+  const parsed = parseJson(rows[0].gallery || '[]', []);
+  const stored = Array.isArray(parsed) ? parsed : [];
+
+  const nextCover = needsCover ? String(rows[0].cover || '') : cover;
+  const nextGallery = gallery.map((img, i) => {
+    if (!isImageRef(img)) return img;
+    const match = /&k=g(\d+)/.exec(img);
+    const key = match ? Number(match[1]) : i;
+    return stored[key] ? String(stored[key]) : '';
+  }).filter(Boolean);
+  return [nextCover, nextGallery];
 }
 
 async function saveProject(db, project) {
@@ -188,8 +290,10 @@ async function saveProject(db, project) {
   const total = Math.max(1, Number(project.total || 1));
   const sold = Math.min(Math.max(0, Number(project.sold || 0)), total);
   const status = total - sold <= 0 ? 'done' : (project.status || 'new');
-  const gallery = JSON.stringify(project.gallery || []);
   const id = Number(project.id || 0);
+  const rawGallery = Array.isArray(project.gallery) ? project.gallery : [];
+  const [coverValue, galleryValue] = await keepStoredImages(db, id, String(project.cover || ''), rawGallery);
+  const gallery = JSON.stringify(galleryValue);
 
   const columns = [
     ['name', name],
@@ -202,7 +306,7 @@ async function saveProject(db, project) {
     ['total', total],
     ['sold', sold],
     ['status', status],
-    ['cover', project.cover || ''],
+    ['cover', coverValue],
     ['gallery', gallery]
   ];
   if (hasLicenseColumn) columns.push(['license', String(project.license || '').trim().slice(0, 120)]);
@@ -282,9 +386,22 @@ app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
       await requireUser(db, req, ['admin']);
       return json(res, { ok: true, users: await listUsers(db) });
     }
+    if (action === 'img') return sendProjectImage(db, req, res, req.query.id, req.query.k || 'cover');
     if (action === 'settings') return json(res, { ok: true, settings: await getSettings(db) });
-    if (action === 'projects') return json(res, { ok: true, projects: await getProjects(db) });
-    return json(res, { ok: true, settings: await getSettings(db), projects: await getProjects(db) });
+    if (action === 'project') {
+      const row = await findProject(db, req.query.id, String(req.query.name || req.query.id || '').trim());
+      if (!row) return json(res, { ok: false, error: 'المشروع غير موجود' }, 404);
+      return jsonCached(req, res, { ok: true, project: projectRow(row, 'detail') });
+    }
+    if (action === 'projects') {
+      /* full=1 للوحة التحكم فقط (بيانات الصور الخام)، والعام يحصل على قائمة خفيفة */
+      if (req.query.full) {
+        await requireUser(db, req, ['admin', 'editor']);
+        return json(res, { ok: true, projects: await getProjects(db, 'full') });
+      }
+      return jsonCached(req, res, { ok: true, projects: await getProjects(db, 'card') });
+    }
+    return jsonCached(req, res, { ok: true, settings: await getSettings(db), projects: await getProjects(db, 'card') });
   } catch (error) {
     json(res, { ok: false, error: error.message }, error.status || 500);
   }
