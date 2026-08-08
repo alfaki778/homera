@@ -20,12 +20,52 @@ CREATE TABLE IF NOT EXISTS projects (
   sold INT UNSIGNED NOT NULL DEFAULT 0,
   status VARCHAR(40) NOT NULL DEFAULT 'new',
   license VARCHAR(120) NOT NULL DEFAULT '',
+  category VARCHAR(30) NOT NULL DEFAULT 'residential',
+  stage VARCHAR(30) NOT NULL DEFAULT 'ready',
+  rooms INT UNSIGNED NOT NULL DEFAULT 0,
+  payment VARCHAR(20) NOT NULL DEFAULT 'both',
+  old_price INT UNSIGNED NOT NULL DEFAULT 0,
+  limited_offer TINYINT(1) NOT NULL DEFAULT 0,
+  no_commission TINYINT(1) NOT NULL DEFAULT 0,
+  progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  delivery_date VARCHAR(80) NOT NULL DEFAULT '',
+  payment_plan TEXT NULL,
+  build_updates TEXT NULL,
+  video_url VARCHAR(600) NOT NULL DEFAULT '',
+  video_poster LONGTEXT NULL,
+  summary TEXT NULL,
+  models LONGTEXT NULL,
   cover LONGTEXT NULL,
   gallery LONGTEXT NULL,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- طلبات تسجيل الاهتمام القادمة من نموذج «سجّل اهتمامك»
+CREATE TABLE IF NOT EXISTS leads (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(190) NOT NULL DEFAULT '',
+  phone VARCHAR(60) NOT NULL DEFAULT '',
+  project_id INT UNSIGNED NOT NULL DEFAULT 0,
+  project_name VARCHAR(190) NOT NULL DEFAULT '',
+  property_type VARCHAR(80) NOT NULL DEFAULT '',
+  purchase_method VARCHAR(30) NOT NULL DEFAULT '',
+  needs_finance VARCHAR(10) NOT NULL DEFAULT '',
+  has_default VARCHAR(10) NOT NULL DEFAULT '',
+  budget VARCHAR(80) NOT NULL DEFAULT '',
+  city VARCHAR(120) NOT NULL DEFAULT '',
+  notes TEXT NULL,
+  details TEXT NULL,
+  source VARCHAR(255) NOT NULL DEFAULT '',
+  status VARCHAR(30) NOT NULL DEFAULT 'new',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (created_at),
+  INDEX (project_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ملاحظة: القواعد القديمة تُرقّى تلقائياً عند أول طلب على الـ API
+-- (تُضاف الأعمدة الناقصة وجدول leads دون الحاجة لتشغيل SQL يدوياً).
 
 -- ترقية قواعد البيانات القديمة: إضافة عمود رقم الترخيص إن لم يكن موجوداً
 SET @has_license := (SELECT COUNT(*) FROM information_schema.COLUMNS
@@ -63,5 +103,3 @@ INSERT IGNORE INTO settings (name, payload) VALUES
 INSERT IGNORE INTO users (email, name, role, password_hash) VALUES
 ('sami@seem.sa', 'Sami', 'admin', 'pbkdf2$120000$homera-default-sami-2026$GU1pHC1QqgIzAld0BUppg6xOcQ/WV7rU+0PYAfCghnQ=');
 
-DELETE FROM projects WHERE NOT EXISTS (SELECT 1 FROM settings WHERE name = 'projects_cleaned_20260715');
-INSERT INTO settings (name, payload) VALUES ('projects_cleaned_20260715', '{}') ON DUPLICATE KEY UPDATE payload = VALUES(payload);

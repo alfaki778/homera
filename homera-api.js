@@ -15,6 +15,7 @@
   function resolveProject(project) {
     if (!project) return project;
     project.cover = resolveImg(project.cover);
+    if (project.videoPoster) project.videoPoster = resolveImg(project.videoPoster);
     if (Array.isArray(project.gallery)) project.gallery = project.gallery.map(resolveImg);
     return project;
   }
@@ -106,6 +107,25 @@
     /* مشروع واحد بمعرضه — لصفحة التفاصيل، بدل تنزيل كل المشاريع */
     getProject: function (id) { return request('project', null, { id: id }).then(function (data) { return resolveProject(data.project); }); },
     saveProject: function (project) { return request('project', { project: project }); },
+    /* نموذج «سجّل اهتمامك» — عام بلا جلسة */
+    submitLead: function (lead) { return request('lead', { lead: lead }); },
+    getLeads: function () { return request('leads', null).then(function (data) { return data.leads || []; }); },
+    setLeadStatus: function (id, status) { return request('leadStatus', { id: id, status: status }).then(function (data) { return data.leads || []; }); },
+    /* تنزيل الطلبات كملف إكسل — يمرّ عبر fetch لأن التصدير يتطلب ترويسة الجلسة */
+    downloadLeadsCsv: function () {
+      var session = readSession();
+      var headers = session && session.token ? { 'X-Homera-Session': session.token } : {};
+      return fetch(API_URL + '?action=leads&format=csv', { headers: headers }).then(function (res) {
+        if (!res.ok) throw new Error('تعذّر تصدير الطلبات');
+        return res.blob();
+      }).then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'homera-leads.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      });
+    },
     sellProject: function (project) { return request('sell', { id: project.id || 0, name: project.name || '' }); },
     readLocalSettings: readLocalSettings,
     writeLocalSettings: writeLocalSettings,

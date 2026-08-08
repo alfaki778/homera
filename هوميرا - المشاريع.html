@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="homera-site.css?v=2"/>
+<link rel="stylesheet" href="homera-site.css?v=6"/>
 <script src="image-slot.js?v=3"></script>
-<script src="homera-api.js?v=2"></script>
+<script src="homera-api.js?v=3"></script>
 <script src="homera-tweaks.js?v=4"></script>
 <style>
 /* ===== الفلترة العلوية ===== */
@@ -75,6 +75,8 @@
     <nav class="mainnav">
       <a href="./">الرئيسية</a>
       <a href="projects" class="active">مشاريعنا</a>
+      <a href="projects?filter=deals">فرص عقارية</a>
+      <a href="#interest">سجّل اهتمامك</a>
     </nav>
     <button class="burger" aria-label="القائمة">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -100,6 +102,9 @@
       <p class="sec-lead">أحدث المشاريع السكنية والتجارية والاستثمارية في مواقع استراتيجية، صُممت لتلبي أعلى معايير الجودة</p>
     </div>
 
+    <!-- شرائح التصنيف السريع -->
+    <div class="quick-filters"></div>
+
     <!-- شريط الفلترة العلوي -->
     <div class="topfilter" id="filters">
       <div class="tf-main">
@@ -107,77 +112,15 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
           <input id="q" type="text" placeholder="ابحث باسم المشروع"/>
         </div>
-        <div class="tf-facets">
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-cat">نوع العقار <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-cat">
-              <label class="fopt"><input type="checkbox" data-group="cat" value="villa"/><span>فلل</span></label>
-              <label class="fopt"><input type="checkbox" data-group="cat" value="apart"/><span>شقق</span></label>
-            </div>
-          </div>
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-loc">الحي <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-loc">
-              <label class="fopt"><input type="checkbox" data-group="loc" value="الفضيلة"/><span>حي الفضيلة</span></label>
-              <label class="fopt"><input type="checkbox" data-group="loc" value="الروضة"/><span>حي الروضة</span></label>
-              <label class="fopt"><input type="checkbox" data-group="loc" value="السلامة"/><span>حي السلامة</span></label>
-              <label class="fopt"><input type="checkbox" data-group="loc" value="النعيم"/><span>حي النعيم</span></label>
-              <label class="fopt"><input type="checkbox" data-group="loc" value="الصفا"/><span>حي الصفا</span></label>
-              <label class="fopt"><input type="checkbox" data-group="loc" value="أبحر الشمالية"/><span>أبحر الشمالية</span></label>
-            </div>
-          </div>
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-price">السعر <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-price">
-              <label class="fopt"><input type="checkbox" data-group="price" data-min="0" data-max="800000"/><span>أقل من 800,000</span></label>
-              <label class="fopt"><input type="checkbox" data-group="price" data-min="800000" data-max="1100000"/><span>800,000 – 1,100,000</span></label>
-              <label class="fopt"><input type="checkbox" data-group="price" data-min="1100001" data-max="99999999"/><span>أكثر من 1,100,000</span></label>
-            </div>
-          </div>
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-area">المساحة <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-area">
-              <label class="fopt"><input type="checkbox" data-group="area" data-min="0" data-max="180"/><span>حتى 180 م²</span></label>
-              <label class="fopt"><input type="checkbox" data-group="area" data-min="181" data-max="220"/><span>181 – 220 م²</span></label>
-              <label class="fopt"><input type="checkbox" data-group="area" data-min="221" data-max="9999"/><span>أكثر من 220 م²</span></label>
-            </div>
-          </div>
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-rooms">الغرف <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-rooms">
-              <div class="fchips-g">
-                <button class="fchip" data-group="rooms" data-min="4" data-max="4">4</button>
-                <button class="fchip" data-group="rooms" data-min="5" data-max="5">5</button>
-                <button class="fchip" data-group="rooms" data-min="6" data-max="99">+6</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="tf-drop">
-            <button class="tf-btn" data-pop="pop-facade">الواجهة <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> <span class="tf-badge" hidden>0</span></button>
-            <div class="tf-pop" id="pop-facade">
-              <div class="fchips-g">
-                <button class="fchip" data-group="facade" data-value="شمالية">شمالية</button>
-                <button class="fchip" data-group="facade" data-value="جنوبية">جنوبية</button>
-                <button class="fchip" data-group="facade" data-value="شرقية">شرقية</button>
-                <button class="fchip" data-group="facade" data-value="غربية">غربية</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
+        <!-- تُبنى قوائم الفلترة من بيانات المشاريع المحمّلة -->
+        <div class="tf-facets"></div>
         <div class="tf-end">
           <label class="sortsel">الترتيب:
             <select id="sortSel">
-              <option value="default">الأحدث</option>
-              <option value="price-asc">السعر: من الأقل</option>
+              <option value="price-asc" selected>السعر: من الأقل</option>
               <option value="price-desc">السعر: من الأعلى</option>
               <option value="area-desc">المساحة: الأكبر</option>
+              <option value="newest">الأحدث</option>
             </select>
           </label>
         </div>
@@ -191,6 +134,18 @@
 
     <div class="proj-grid three" id="grid"></div>
     <p class="no-res" id="noRes" hidden>لا توجد مشاريع مطابقة للفلاتر المختارة.</p>
+  </div>
+</section>
+
+<!-- سجّل اهتمامك -->
+<section class="section cream" id="interest">
+  <div class="wrap-n">
+    <div class="sec-head center">
+      <span class="eyebrow">خطوة واحدة تفصلك</span>
+      <h2 class="sec-title">سجّل اهتمامك</h2>
+      <p class="sec-lead">أخبرنا بما تبحث عنه، وسيتواصل معك أحد مستشاري هوميرا لترشيح الخيار الأنسب لك.</p>
+    </div>
+    <div class="lead-panel" data-lead-form data-source="صفحة المشاريع"></div>
   </div>
 </section>
 
@@ -243,101 +198,10 @@
 <script>
   function openWA(){ window.open('https://wa.me/966530425505?text=' + encodeURIComponent('مرحباً هوميرا، أرغب بالاستفسار عن مشاريعكم'), '_blank'); }
   document.querySelector('.burger')?.addEventListener('click',function(e){ e.stopPropagation(); document.querySelector('.topbar .mainnav').classList.toggle('open'); });
-
-  (function(){
-    var grid=document.getElementById('grid');
-    var cards=[].slice.call(grid.querySelectorAll('.proj-card'));
-    var order=cards.slice();
-    var fcount=document.getElementById('fcount');
-    var noRes=document.getElementById('noRes');
-    var q=document.getElementById('q');
-    var sortSel=document.getElementById('sortSel');
-    var groups=['cat','loc','price','area','rooms','facade'];
-    var valueGroups=['cat','loc','facade'];
-
-    function activeByGroup(){
-      var g={};
-      document.querySelectorAll('#filters input[type=checkbox]:checked').forEach(function(i){
-        (g[i.dataset.group]=g[i.dataset.group]||[]).push(i);
-      });
-      document.querySelectorAll('#filters .fchip.on').forEach(function(b){
-        (g[b.dataset.group]=g[b.dataset.group]||[]).push(b);
-      });
-      return g;
-    }
-    function matchGroup(card, group, els){
-      return els.some(function(el){
-        if(valueGroups.indexOf(group)>-1){ return card.dataset[group]===(el.value||el.dataset.value); }
-        var num=+card.dataset[group];
-        return num>=+el.dataset.min && num<=+el.dataset.max;
-      });
-    }
-    function updateBadges(){
-      groups.forEach(function(gr){
-        var c=document.querySelectorAll('#pop-'+gr+' input:checked, #pop-'+gr+' .fchip.on').length;
-        var btn=document.querySelector('.tf-btn[data-pop="pop-'+gr+'"]');
-        var badge=btn.querySelector('.tf-badge');
-        btn.classList.toggle('active', c>0);
-        badge.hidden = c===0; badge.textContent = c;
-      });
-    }
-    function apply(){
-      var g=activeByGroup(), kw=(q.value||'').trim(), n=0;
-      if(!cards.length){
-        fcount.innerHTML = 'لا توجد مشاريع <small>(0 مشروع)</small>';
-        noRes.hidden = true;
-        updateBadges();
-        return;
-      }
-      cards.forEach(function(c){
-        var ok=true;
-        for(var grp in g){ if(!matchGroup(c,grp,g[grp])){ ok=false; break; } }
-        if(ok && kw){ ok = c.querySelector('.nm').textContent.indexOf(kw)>-1; }
-        c.classList.toggle('hide', !ok);
-        if(ok)n++;
-      });
-      fcount.innerHTML = (n===cards.length)
-        ? ('جميع المشاريع <small>('+n+' مشروع)</small>')
-        : (n+' <small>من '+cards.length+' مشروع</small>');
-      noRes.hidden = n>0;
-      updateBadges();
-    }
-    function sortCards(){
-      var v=sortSel.value, arr=order.slice();
-      if(v==='price-asc') arr.sort(function(a,b){return +a.dataset.price-+b.dataset.price;});
-      else if(v==='price-desc') arr.sort(function(a,b){return +b.dataset.price-+a.dataset.price;});
-      else if(v==='area-desc') arr.sort(function(a,b){return +b.dataset.area-+a.dataset.area;});
-      arr.forEach(function(c){ grid.appendChild(c); });
-    }
-
-    // القوائم المنسدلة
-    document.querySelectorAll('.tf-btn').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var drop=btn.parentElement, isOpen=drop.classList.contains('open');
-        document.querySelectorAll('.tf-drop.open').forEach(function(d){d.classList.remove('open');});
-        if(!isOpen) drop.classList.add('open');
-      });
-    });
-    document.querySelectorAll('.tf-pop').forEach(function(p){ p.addEventListener('click',function(e){e.stopPropagation();}); });
-    document.addEventListener('click',function(){ document.querySelectorAll('.tf-drop.open').forEach(function(d){d.classList.remove('open');}); });
-
-    document.querySelectorAll('#filters .fchip').forEach(function(b){
-      b.addEventListener('click',function(){ b.classList.toggle('on'); apply(); });
-    });
-    document.querySelectorAll('#filters input[type=checkbox]').forEach(function(i){ i.addEventListener('change',apply); });
-    q.addEventListener('input',apply);
-    sortSel.addEventListener('change',sortCards);
-    document.getElementById('clearBtn').addEventListener('click',function(){
-      document.querySelectorAll('#filters input[type=checkbox]').forEach(function(i){i.checked=false;});
-      document.querySelectorAll('#filters .fchip.on').forEach(function(b){b.classList.remove('on');});
-      q.value=''; sortSel.value='default'; sortCards(); apply();
-    });
-    window.HOMERA_initProjectFilters=function(){ cards=[].slice.call(grid.querySelectorAll('.proj-card')); order=cards.slice(); sortCards(); apply(); };
-    apply();
-  })();
 </script>
 
-<script src="homera-projects.js?v=3"></script>
+<script src="homera-filters.js?v=2"></script>
+<script src="homera-projects.js?v=4"></script>
+<script src="homera-lead.js?v=1"></script>
 </body>
 </html>

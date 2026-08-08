@@ -111,11 +111,47 @@ async function createTables(db) {
     sold INT UNSIGNED NOT NULL DEFAULT 0,
     status VARCHAR(40) NOT NULL DEFAULT 'new',
     license VARCHAR(120) NOT NULL DEFAULT '',
+    category VARCHAR(30) NOT NULL DEFAULT 'residential',
+    stage VARCHAR(30) NOT NULL DEFAULT 'ready',
+    rooms INT UNSIGNED NOT NULL DEFAULT 0,
+    payment VARCHAR(20) NOT NULL DEFAULT 'both',
+    old_price INT UNSIGNED NOT NULL DEFAULT 0,
+    limited_offer TINYINT(1) NOT NULL DEFAULT 0,
+    no_commission TINYINT(1) NOT NULL DEFAULT 0,
+    progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    delivery_date VARCHAR(80) NOT NULL DEFAULT '',
+    payment_plan TEXT NULL,
+    build_updates TEXT NULL,
+    video_url VARCHAR(600) NOT NULL DEFAULT '',
+    video_poster LONGTEXT NULL,
+    summary TEXT NULL,
+    models LONGTEXT NULL,
     cover LONGTEXT NULL,
     gallery LONGTEXT NULL,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS leads (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(190) NOT NULL DEFAULT '',
+    phone VARCHAR(60) NOT NULL DEFAULT '',
+    project_id INT UNSIGNED NOT NULL DEFAULT 0,
+    project_name VARCHAR(190) NOT NULL DEFAULT '',
+    property_type VARCHAR(80) NOT NULL DEFAULT '',
+    purchase_method VARCHAR(30) NOT NULL DEFAULT '',
+    needs_finance VARCHAR(10) NOT NULL DEFAULT '',
+    has_default VARCHAR(10) NOT NULL DEFAULT '',
+    budget VARCHAR(80) NOT NULL DEFAULT '',
+    city VARCHAR(120) NOT NULL DEFAULT '',
+    notes TEXT NULL,
+    details TEXT NULL,
+    source VARCHAR(255) NOT NULL DEFAULT '',
+    status VARCHAR(30) NOT NULL DEFAULT 'new',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (created_at),
+    INDEX (project_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
   await db.query(`CREATE TABLE IF NOT EXISTS users (
@@ -139,13 +175,58 @@ async function createTables(db) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 }
 
-// ترقية القواعد القديمة: إضافة الأعمدة المستجدة على جدول المشاريع
+/* الأعمدة المستجدة على جدول المشاريع — تُضاف تلقائياً للقواعد القديمة */
+const PROJECT_COLUMNS = [
+  ['license', "VARCHAR(120) NOT NULL DEFAULT ''"],
+  ['category', "VARCHAR(30) NOT NULL DEFAULT 'residential'"],
+  ['stage', "VARCHAR(30) NOT NULL DEFAULT 'ready'"],
+  ['rooms', 'INT UNSIGNED NOT NULL DEFAULT 0'],
+  ['payment', "VARCHAR(20) NOT NULL DEFAULT 'both'"],
+  ['old_price', 'INT UNSIGNED NOT NULL DEFAULT 0'],
+  ['limited_offer', 'TINYINT(1) NOT NULL DEFAULT 0'],
+  ['no_commission', 'TINYINT(1) NOT NULL DEFAULT 0'],
+  ['progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+  ['delivery_date', "VARCHAR(80) NOT NULL DEFAULT ''"],
+  ['payment_plan', 'TEXT NULL'],
+  ['build_updates', 'TEXT NULL'],
+  ['video_url', "VARCHAR(600) NOT NULL DEFAULT ''"],
+  ['video_poster', 'LONGTEXT NULL'],
+  ['summary', 'TEXT NULL'],
+  ['models', 'LONGTEXT NULL']
+];
+
+// ترقية القواعد القديمة: إضافة الأعمدة المستجدة وجدول طلبات الاهتمام
 async function ensureProjectColumns(db) {
   const [rows] = await db.query(
-    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'"
+    "SELECT COLUMN_NAME AS name FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects'"
   );
-  if (Number(rows[0].count) > 0) return;
-  await db.query("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
+  const existing = new Set(rows.map((row) => String(row.name)));
+  for (const [name, definition] of PROJECT_COLUMNS) {
+    if (existing.has(name)) continue;
+    await db.query('ALTER TABLE projects ADD COLUMN ' + name + ' ' + definition);
+    existing.add(name);
+  }
+  await db.query(`CREATE TABLE IF NOT EXISTS leads (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(190) NOT NULL DEFAULT '',
+    phone VARCHAR(60) NOT NULL DEFAULT '',
+    project_id INT UNSIGNED NOT NULL DEFAULT 0,
+    project_name VARCHAR(190) NOT NULL DEFAULT '',
+    property_type VARCHAR(80) NOT NULL DEFAULT '',
+    purchase_method VARCHAR(30) NOT NULL DEFAULT '',
+    needs_finance VARCHAR(10) NOT NULL DEFAULT '',
+    has_default VARCHAR(10) NOT NULL DEFAULT '',
+    budget VARCHAR(80) NOT NULL DEFAULT '',
+    city VARCHAR(120) NOT NULL DEFAULT '',
+    notes TEXT NULL,
+    details TEXT NULL,
+    source VARCHAR(255) NOT NULL DEFAULT '',
+    status VARCHAR(30) NOT NULL DEFAULT 'new',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (created_at),
+    INDEX (project_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  return existing; // أعمدة جدول المشاريع بعد الترقية
 }
 
 async function seedSettings(db) {
@@ -176,13 +257,6 @@ async function seedUsers(db) {
     'INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)',
     [DEFAULT_ADMIN_EMAIL, 'Sami', 'admin', hashPassword(DEFAULT_ADMIN_PASSWORD, 'homera-default-sami-2026')]
   );
-}
-
-async function cleanProjectsOnce(db) {
-  const [rows] = await db.query("SELECT name FROM settings WHERE name = 'projects_cleaned_20260715' LIMIT 1");
-  if (rows.length) return;
-  await db.query('DELETE FROM projects');
-  await db.query("INSERT INTO settings (name, payload) VALUES ('projects_cleaned_20260715', '{}') ON DUPLICATE KEY UPDATE payload=VALUES(payload)");
 }
 
 async function seedProjects(db) {
@@ -226,7 +300,6 @@ async function migrate() {
   await seedSettings(db);
   await repairDefaultSettings(db);
   await seedUsers(db);
-  await cleanProjectsOnce(db);
   await seedProjects(db);
   await repairSeedProjects(db);
   return db;

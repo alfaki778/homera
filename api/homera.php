@@ -68,6 +68,7 @@ function migrate($config) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    ensure_project_columns($pdo);
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(190) NOT NULL UNIQUE,
@@ -190,24 +191,67 @@ function save_settings($pdo, $settings) {
     $stmt->execute([$payload]);
 }
 
-/* ترقية تلقائية بعد الرفع/الديبلوي: تضيف الأعمدة المستجدة إن لم تكن موجودة.
+/* الأعمدة المستجدة على جدول المشاريع */
+function project_extra_columns() {
+    return [
+        'license' => "VARCHAR(120) NOT NULL DEFAULT ''",
+        'category' => "VARCHAR(30) NOT NULL DEFAULT 'residential'",
+        'stage' => "VARCHAR(30) NOT NULL DEFAULT 'ready'",
+        'rooms' => 'INT UNSIGNED NOT NULL DEFAULT 0',
+        'payment' => "VARCHAR(20) NOT NULL DEFAULT 'both'",
+        'old_price' => 'INT UNSIGNED NOT NULL DEFAULT 0',
+        'limited_offer' => 'TINYINT(1) NOT NULL DEFAULT 0',
+        'no_commission' => 'TINYINT(1) NOT NULL DEFAULT 0',
+        'progress' => 'TINYINT UNSIGNED NOT NULL DEFAULT 0',
+        'delivery_date' => "VARCHAR(80) NOT NULL DEFAULT ''",
+        'payment_plan' => 'TEXT NULL',
+        'build_updates' => 'TEXT NULL',
+        'video_url' => "VARCHAR(600) NOT NULL DEFAULT ''",
+        'video_poster' => 'LONGTEXT NULL',
+        'summary' => 'TEXT NULL',
+        'models' => 'LONGTEXT NULL',
+    ];
+}
+
+/* ترقية تلقائية بعد الرفع/الديبلوي: تضيف الأعمدة المستجدة وجدول الطلبات إن لم تكن موجودة.
    تُستدعى مع كل طلب (استعلام واحد خفيف) حتى لا تحتاج لتشغيل أي SQL يدوياً على الاستضافة. */
 function ensure_project_columns($pdo) {
-    static $hasLicense = null;
-    if ($hasLicense !== null) return $hasLicense;
-    $hasLicense = false;
+    static $ready = null;
+    if ($ready !== null) return $ready;
+    $ready = false;
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects' AND COLUMN_NAME = 'license'");
+        $stmt = $pdo->prepare("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'projects'");
         $stmt->execute();
-        $hasLicense = (int)$stmt->fetchColumn() > 0;
-        if (!$hasLicense) {
-            $pdo->exec("ALTER TABLE projects ADD COLUMN license VARCHAR(120) NOT NULL DEFAULT '' AFTER status");
-            $hasLicense = true;
+        $existing = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        foreach (project_extra_columns() as $name => $definition) {
+            if (in_array($name, $existing, true)) continue;
+            $pdo->exec('ALTER TABLE projects ADD COLUMN ' . $name . ' ' . $definition);
         }
+        $pdo->exec("CREATE TABLE IF NOT EXISTS leads (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(190) NOT NULL DEFAULT '',
+            phone VARCHAR(60) NOT NULL DEFAULT '',
+            project_id INT UNSIGNED NOT NULL DEFAULT 0,
+            project_name VARCHAR(190) NOT NULL DEFAULT '',
+            property_type VARCHAR(80) NOT NULL DEFAULT '',
+            purchase_method VARCHAR(30) NOT NULL DEFAULT '',
+            needs_finance VARCHAR(10) NOT NULL DEFAULT '',
+            has_default VARCHAR(10) NOT NULL DEFAULT '',
+            budget VARCHAR(80) NOT NULL DEFAULT '',
+            city VARCHAR(120) NOT NULL DEFAULT '',
+            notes TEXT NULL,
+            details TEXT NULL,
+            source VARCHAR(255) NOT NULL DEFAULT '',
+            status VARCHAR(30) NOT NULL DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX (created_at),
+            INDEX (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $ready = true;
     } catch (Throwable $e) {
-        /* لو تعذّرت الترقية (صلاحيات ALTER مثلاً) نكمل بدون العمود بدل تعطيل الحفظ */
+        /* لو تعذّرت الترقية (صلاحيات ALTER مثلاً) نكمل بدون الأعمدة بدل تعطيل الحفظ */
     }
-    return $hasLicense;
+    return $ready;
 }
 
 /* ==========================================================================
@@ -228,6 +272,53 @@ function image_ref($value, $id, $key, $ver) {
     return '?action=img&id=' . (int)$id . '&k=' . $key . '&v=' . $ver;
 }
 
+/* نماذج المشروع (نموذج A / B / C) — مخزّنة JSON داخل عمود models */
+function normalize_model($item) {
+    if (!is_array($item)) $item = [];
+    $price = max(0, (int)($item['price'] ?? 0));
+    $oldPrice = max(0, (int)($item['oldPrice'] ?? 0));
+    $mode = $item['priceMode'] ?? 'total';
+    return [
+        'name' => mb_substr((string)($item['name'] ?? ''), 0, 120),
+        'unit' => mb_substr((string)($item['unit'] ?? ''), 0, 120),
+        'area' => max(0, (int)($item['area'] ?? 0)),
+        'rooms' => max(0, (int)($item['rooms'] ?? 0)),
+        'price' => $price,
+        'oldPrice' => $oldPrice > $price ? $oldPrice : 0,
+        'priceMode' => in_array($mode, ['total', 'from', 'meter', 'ask'], true) ? $mode : 'total',
+        'status' => mb_substr((string)($item['status'] ?? ''), 0, 60),
+        'note' => mb_substr((string)($item['note'] ?? ''), 0, 400),
+    ];
+}
+
+function read_models($value) {
+    $parsed = is_array($value) ? $value : json_decode((string)($value ?: '[]'), true);
+    if (!is_array($parsed)) return [];
+    $out = [];
+    foreach ($parsed as $item) {
+        $model = normalize_model($item);
+        if ($model['name'] !== '' || $model['price'] > 0 || $model['area'] > 0) $out[] = $model;
+    }
+    return $out;
+}
+
+/* أقل سعر متاح داخل المشروع — يظهر على البطاقة «تبدأ الأسعار من …» */
+function starting_price($models, $basePrice) {
+    $prices = [];
+    foreach ($models as $model) if ((int)$model['price'] > 0) $prices[] = (int)$model['price'];
+    $base = (int)$basePrice;
+    if (!count($prices)) return $base;
+    $min = min($prices);
+    return $base > 0 ? min($min, $base) : $min;
+}
+
+function split_lines($value) {
+    $lines = preg_split('/\r?\n/', (string)$value);
+    $out = [];
+    foreach ($lines as $line) { $line = trim($line); if ($line !== '') $out[] = $line; }
+    return $out;
+}
+
 /* $mode: full = بيانات خام للوحة التحكم | card = بطاقات بدون معرض | detail = صفحة المشروع */
 function project_row($row, $mode = 'full') {
     $total = max(1, (int)$row['total']);
@@ -235,6 +326,10 @@ function project_row($row, $mode = 'full') {
     $gallery = json_decode($row['gallery'] ?: '[]', true);
     if (!is_array($gallery)) $gallery = [];
     $ver = row_version($row);
+    $models = read_models($row['models'] ?? '[]');
+    $price = (int)$row['price'];
+    $priceFrom = starting_price($models, $price);
+    $oldPrice = (int)($row['old_price'] ?? 0);
     $out = [
         'id' => (int)$row['id'],
         'name' => $row['name'],
@@ -243,22 +338,42 @@ function project_row($row, $mode = 'full') {
         'area' => (int)$row['area'],
         'facade' => $row['facade'],
         'type' => $row['type'],
-        'price' => (int)$row['price'],
+        'price' => $price,
+        'priceFrom' => $priceFrom,
+        'oldPrice' => $oldPrice > $priceFrom ? $oldPrice : 0,
+        'discountPct' => ($oldPrice > $priceFrom && $oldPrice > 0) ? (int)round(($oldPrice - $priceFrom) / $oldPrice * 100) : 0,
         'total' => $total,
         'sold' => $sold,
         'avail' => max(0, $total - $sold),
         'status' => $row['status'],
         'license' => $row['license'] ?? '',
+        'category' => $row['category'] ?? 'residential',
+        'stage' => $row['stage'] ?? 'ready',
+        'rooms' => (int)($row['rooms'] ?? 0),
+        'payment' => $row['payment'] ?? 'both',
+        'limitedOffer' => (int)($row['limited_offer'] ?? 0) === 1,
+        'noCommission' => (int)($row['no_commission'] ?? 0) === 1,
+        'progress' => min(100, max(0, (int)($row['progress'] ?? 0))),
+        'deliveryDate' => $row['delivery_date'] ?? '',
+        'modelsCount' => count($models),
         'pct' => $total ? (int)round($sold / $total * 100) : 0,
         'cover' => $mode === 'full' ? ($row['cover'] ?: '') : image_ref($row['cover'], $row['id'], 'cover', $ver),
     ];
     if ($mode === 'card') return $out;
+    $out['models'] = $models;
+    $out['summary'] = $row['summary'] ?? '';
+    $out['videoUrl'] = $row['video_url'] ?? '';
+    $out['paymentPlan'] = $row['payment_plan'] ?? '';
     if ($mode === 'full') {
         $out['gallery'] = $gallery;
+        $out['videoPoster'] = $row['video_poster'] ?: '';
+        $out['buildUpdates'] = $row['build_updates'] ?? '';
         return $out;
     }
     $out['gallery'] = [];
     foreach ($gallery as $i => $img) $out['gallery'][] = image_ref($img, $row['id'], 'g' . (int)$i, $ver);
+    $out['videoPoster'] = image_ref($row['video_poster'] ?? '', $row['id'], 'vp', $ver);
+    $out['buildUpdates'] = split_lines($row['build_updates'] ?? '');
     return $out;
 }
 
@@ -267,6 +382,7 @@ function get_projects($pdo, $mode = 'full') {
         /* البطاقات لا تحتاج المعرض إطلاقاً، ولا محتوى الغلاف — فقط إشارة أنه صورة مضمّنة.
            بهذا لا نسحب ميجابايتات من القاعدة ولا نرسلها في الرد. */
         $sql = 'SELECT id, name, dist, city, area, facade, type, price, total, sold, status, license, updated_at,'
+            . ' category, stage, rooms, payment, old_price, limited_offer, no_commission, progress, delivery_date, models,'
             . " CASE WHEN cover LIKE 'data:%' THEN 'data:' ELSE COALESCE(cover, '') END AS cover,"
             . " '[]' AS gallery"
             . ' FROM projects ORDER BY sort_order ASC, id ASC';
@@ -285,7 +401,7 @@ function find_project($pdo, $id, $name) {
 
 /* يخدم صورة مشروع واحدة كملف ثنائي مع تخزين مؤقت طويل (الرابط يحمل بصمة التحديث) */
 function send_project_image($pdo, $id, $key) {
-    $stmt = $pdo->prepare('SELECT id, cover, gallery FROM projects WHERE id=? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, cover, gallery, video_poster FROM projects WHERE id=? LIMIT 1');
     $stmt->execute([(int)$id]);
     $row = $stmt->fetch();
     if (!$row) { http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); exit; }
@@ -293,6 +409,8 @@ function send_project_image($pdo, $id, $key) {
     $data = '';
     if ($key === 'cover') {
         $data = (string)$row['cover'];
+    } elseif ($key === 'vp') {
+        $data = (string)($row['video_poster'] ?? '');
     } elseif (preg_match('/^g(\d+)$/', $key, $m)) {
         $gallery = json_decode($row['gallery'] ?: '[]', true);
         if (is_array($gallery) && isset($gallery[(int)$m[1]])) $data = (string)$gallery[(int)$m[1]];
@@ -331,33 +449,35 @@ function is_image_ref($value) {
 
 /* حماية: لو أُرسل مرجع صورة (?action=img...) بدل الصورة نفسها نُبقي المخزَّن كما هو
    حتى لا يُمحى المحتوى الأصلي بالخطأ */
-function keep_stored_images($pdo, $id, $cover, $gallery) {
+function keep_stored_images($pdo, $id, $cover, $gallery, $poster = '') {
     $needsCover = is_image_ref($cover);
+    $needsPoster = is_image_ref($poster);
     $needsGallery = false;
     foreach ($gallery as $img) if (is_image_ref($img)) { $needsGallery = true; break; }
-    if ($id <= 0 || (!$needsCover && !$needsGallery)) return [$cover, $gallery];
+    if ($id <= 0 || (!$needsCover && !$needsGallery && !$needsPoster)) return [$cover, $gallery, $poster];
 
-    $stmt = $pdo->prepare('SELECT cover, gallery FROM projects WHERE id=? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT cover, gallery, video_poster FROM projects WHERE id=? LIMIT 1');
     $stmt->execute([$id]);
     $row = $stmt->fetch();
-    if (!$row) return [$cover, $gallery];
+    if (!$row) return [$cover, $gallery, $poster];
 
     $stored = json_decode($row['gallery'] ?: '[]', true);
     if (!is_array($stored)) $stored = [];
     if ($needsCover) $cover = (string)($row['cover'] ?? '');
+    if ($needsPoster) $poster = (string)($row['video_poster'] ?? '');
     foreach ($gallery as $i => $img) {
         if (!is_image_ref($img)) continue;
         preg_match('/&k=g(\d+)/', $img, $m);
         $key = isset($m[1]) ? (int)$m[1] : $i;
         $gallery[$i] = isset($stored[$key]) ? (string)$stored[$key] : '';
     }
-    return [$cover, array_values(array_filter($gallery, function ($v) { return $v !== ''; }))];
+    return [$cover, array_values(array_filter($gallery, function ($v) { return $v !== ''; })), $poster];
 }
 
 function save_project($pdo, $project) {
     $name = trim($project['name'] ?? '');
     if ($name === '') respond(['ok' => false, 'error' => 'اسم المشروع مطلوب'], 422);
-    $hasLicense = ensure_project_columns($pdo);
+    $hasExtras = ensure_project_columns($pdo);
     $total = max(1, (int)($project['total'] ?? 1));
     $sold = min(max(0, (int)($project['sold'] ?? 0)), $total);
     $status = $project['status'] ?? 'new';
@@ -365,8 +485,10 @@ function save_project($pdo, $project) {
     $id = (int)($project['id'] ?? 0);
     $rawGallery = $project['gallery'] ?? [];
     if (!is_array($rawGallery)) $rawGallery = [];
-    list($coverValue, $galleryValue) = keep_stored_images($pdo, $id, (string)($project['cover'] ?? ''), $rawGallery);
+    list($coverValue, $galleryValue, $posterValue) =
+        keep_stored_images($pdo, $id, (string)($project['cover'] ?? ''), $rawGallery, (string)($project['videoPoster'] ?? ''));
     $gallery = json_encode($galleryValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $models = read_models($project['models'] ?? []);
 
     $columns = [
         'name' => $name,
@@ -382,7 +504,27 @@ function save_project($pdo, $project) {
         'cover' => $coverValue,
         'gallery' => $gallery,
     ];
-    if ($hasLicense) $columns['license'] = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
+    if ($hasExtras) {
+        $category = (string)($project['category'] ?? '');
+        $stage = (string)($project['stage'] ?? '');
+        $payment = (string)($project['payment'] ?? '');
+        $columns['license'] = mb_substr(trim((string)($project['license'] ?? '')), 0, 120);
+        $columns['category'] = in_array($category, ['residential', 'commercial', 'investment'], true) ? $category : 'residential';
+        $columns['stage'] = in_array($stage, ['ready', 'under_construction', 'resale'], true) ? $stage : 'ready';
+        $columns['rooms'] = max(0, (int)($project['rooms'] ?? 0));
+        $columns['payment'] = in_array($payment, ['cash', 'bank', 'both'], true) ? $payment : 'both';
+        $columns['old_price'] = max(0, (int)($project['oldPrice'] ?? 0));
+        $columns['limited_offer'] = !empty($project['limitedOffer']) ? 1 : 0;
+        $columns['no_commission'] = !empty($project['noCommission']) ? 1 : 0;
+        $columns['progress'] = min(100, max(0, (int)($project['progress'] ?? 0)));
+        $columns['delivery_date'] = mb_substr(trim((string)($project['deliveryDate'] ?? '')), 0, 80);
+        $columns['payment_plan'] = mb_substr((string)($project['paymentPlan'] ?? ''), 0, 4000);
+        $columns['build_updates'] = mb_substr((string)($project['buildUpdates'] ?? ''), 0, 4000);
+        $columns['video_url'] = mb_substr(trim((string)($project['videoUrl'] ?? '')), 0, 600);
+        $columns['video_poster'] = $posterValue;
+        $columns['summary'] = mb_substr((string)($project['summary'] ?? ''), 0, 4000);
+        $columns['models'] = json_encode($models, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
 
     if ($id > 0) {
         $set = implode(', ', array_map(function ($c) { return $c . '=?'; }, array_keys($columns)));
@@ -397,6 +539,86 @@ function save_project($pdo, $project) {
         . ' ON DUPLICATE KEY UPDATE ' . implode(', ', array_map(function ($c) { return $c . '=VALUES(' . $c . ')'; }, $updatable)));
     $stmt->execute(array_values($columns));
     return (int)$pdo->lastInsertId();
+}
+
+/* ==========================================================================
+   طلبات تسجيل الاهتمام (Leads)
+   ========================================================================== */
+function lead_labels() {
+    return ['cash' => 'كاش', 'bank' => 'تمويل بنكي', 'undecided' => 'غير محدد', 'yes' => 'نعم', 'no' => 'لا'];
+}
+
+function lead_row($row) {
+    return [
+        'id' => (int)$row['id'],
+        'name' => $row['name'],
+        'phone' => $row['phone'],
+        'projectId' => (int)$row['project_id'],
+        'projectName' => $row['project_name'],
+        'propertyType' => $row['property_type'],
+        'purchaseMethod' => $row['purchase_method'],
+        'needsFinance' => $row['needs_finance'],
+        'hasDefault' => $row['has_default'],
+        'budget' => $row['budget'],
+        'city' => $row['city'],
+        'notes' => $row['notes'] ?? '',
+        'details' => $row['details'] ?? '',
+        'source' => $row['source'],
+        'status' => $row['status'],
+        'createdAt' => $row['created_at'],
+    ];
+}
+
+function save_lead($pdo, $data) {
+    $name = mb_substr(trim((string)($data['name'] ?? '')), 0, 190);
+    $phone = mb_substr(trim((string)($data['phone'] ?? '')), 0, 60);
+    if ($name === '' || $phone === '') respond(['ok' => false, 'error' => 'الاسم ورقم الجوال مطلوبان'], 422);
+    $method = (string)($data['purchaseMethod'] ?? '');
+    $finance = (string)($data['needsFinance'] ?? '');
+    $default = (string)($data['hasDefault'] ?? '');
+    $stmt = $pdo->prepare('INSERT INTO leads (name, phone, project_id, project_name, property_type, purchase_method,'
+        . ' needs_finance, has_default, budget, city, notes, details, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([
+        $name,
+        $phone,
+        max(0, (int)($data['projectId'] ?? 0)),
+        mb_substr(trim((string)($data['projectName'] ?? '')), 0, 190),
+        mb_substr(trim((string)($data['propertyType'] ?? '')), 0, 80),
+        in_array($method, ['cash', 'bank', 'undecided'], true) ? $method : 'undecided',
+        in_array($finance, ['yes', 'no'], true) ? $finance : '',
+        in_array($default, ['yes', 'no'], true) ? $default : '',
+        mb_substr(trim((string)($data['budget'] ?? '')), 0, 80),
+        mb_substr(trim((string)($data['city'] ?? '')), 0, 120),
+        mb_substr((string)($data['notes'] ?? ''), 0, 2000),
+        mb_substr((string)($data['details'] ?? ''), 0, 4000),
+        mb_substr(trim((string)($data['source'] ?? '')), 0, 255),
+    ]);
+}
+
+function list_leads($pdo) {
+    return array_map('lead_row', $pdo->query('SELECT * FROM leads ORDER BY id DESC LIMIT 1000')->fetchAll());
+}
+
+function csv_cell($value) {
+    return '"' . str_replace('"', '""', (string)$value) . '"';
+}
+
+/* تصدير إلى إكسل: BOM في المقدمة ليقرأ إكسل العربية بشكل صحيح */
+function leads_csv($leads) {
+    $labels = lead_labels();
+    $head = ['المعرف', 'التاريخ', 'الاسم', 'الجوال', 'المشروع', 'نوع العقار', 'طريقة الشراء',
+        'يحتاج تمويل', 'لديه تعثرات', 'الميزانية', 'المدينة', 'ملاحظات', 'وصف إضافي', 'مصدر العميل', 'الحالة'];
+    $lines = [implode(',', array_map('csv_cell', $head))];
+    foreach ($leads as $lead) {
+        $lines[] = implode(',', array_map('csv_cell', [
+            $lead['id'], $lead['createdAt'], $lead['name'], $lead['phone'], $lead['projectName'], $lead['propertyType'],
+            $labels[$lead['purchaseMethod']] ?? $lead['purchaseMethod'],
+            $labels[$lead['needsFinance']] ?? '',
+            $labels[$lead['hasDefault']] ?? '',
+            $lead['budget'], $lead['city'], $lead['notes'], $lead['details'], $lead['source'], $lead['status'],
+        ]));
+    }
+    return "\xEF\xBB\xBF" . implode("\r\n", $lines);
 }
 
 function public_user($row) {
@@ -468,6 +690,17 @@ try {
         $data = [];
         if ($action === 'img') send_project_image($pdo, (int)($_GET['id'] ?? 0), (string)($_GET['k'] ?? 'cover'));
         if ($action === 'users') { require_user($pdo, $data, ['admin']); respond(['ok' => true, 'users' => list_users($pdo)]); }
+        if ($action === 'leads') {
+            require_user($pdo, $data, ['admin', 'editor']);
+            $leads = list_leads($pdo);
+            if (($_GET['format'] ?? '') === 'csv') {
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="homera-leads.csv"');
+                echo leads_csv($leads);
+                exit;
+            }
+            respond(['ok' => true, 'leads' => $leads]);
+        }
         if ($action === 'settings') respond(['ok' => true, 'settings' => get_settings($pdo)]);
         if ($action === 'project') {
             $row = find_project($pdo, (int)($_GET['id'] ?? 0), trim((string)($_GET['name'] ?? $_GET['id'] ?? '')));
@@ -483,6 +716,15 @@ try {
     }
     $data = input_json();
     if ($action === 'login') respond(['ok' => true] + login_user($pdo, $data));
+    /* عام بلا جلسة — نموذج «سجّل اهتمامك» في الواجهة */
+    if ($action === 'lead') { save_lead($pdo, $data['lead'] ?? []); respond(['ok' => true]); }
+    if ($action === 'leadStatus') {
+        require_user($pdo, $data, ['admin', 'editor']);
+        $status = (string)($data['status'] ?? 'new');
+        if (!in_array($status, ['new', 'contacted', 'closed'], true)) $status = 'new';
+        $pdo->prepare('UPDATE leads SET status=? WHERE id=?')->execute([$status, (int)($data['id'] ?? 0)]);
+        respond(['ok' => true, 'leads' => list_leads($pdo)]);
+    }
     if ($action === 'user') { require_user($pdo, $data, ['admin']); create_user($pdo, $data['user'] ?? []); respond(['ok' => true, 'users' => list_users($pdo)]); }
     if ($action === 'password') { $user = require_user($pdo, $data, ['admin', 'editor']); change_password($pdo, $user, $data); respond(['ok' => true]); }
     if ($action === 'settings') {

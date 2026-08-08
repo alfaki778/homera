@@ -8,9 +8,12 @@ const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
 
 let dbPool;
-let dbReady;
-// يصبح false فقط لو تعذّرت ترقية المخطط على الاستضافة، فنتخطّى العمود بدل تعطيل الحفظ
-let hasLicenseColumn = true;
+// أعمدة جدول المشاريع كما هي فعلياً في القاعدة (null = لم تُعرف بعد)
+let projectColumns = null;
+let migrationDone = false;
+// يصبح false لو تعذّرت ترقية المخطط على الاستضافة، فنتخطّى الأعمدة الجديدة بدل تعطيل الحفظ
+let hasExtraColumns = true;
+function hasColumn(name) { return projectColumns ? projectColumns.has(name) : false; }
 
 function json(res, data, status = 200) {
   res.status(status).json(data);
@@ -21,14 +24,21 @@ function getAction(req) {
 }
 
 async function getDb() {
-  if (!dbReady) {
-    dbPool = createPool();
-    // ترقية صامتة للقواعد القديمة (عمود الترخيص) — مرة واحدة عند إقلاع الخادم
-    dbReady = ensureProjectColumns(dbPool)
-      .then(() => { hasLicenseColumn = true; return dbPool; })
-      .catch(() => { hasLicenseColumn = false; return dbPool; });
+  if (!dbPool) dbPool = createPool();
+  if (!migrationDone) {
+    migrationDone = true;
+    // ترقية صامتة للقواعد القديمة (الأعمدة المستجدة + جدول الطلبات) عند أول اتصال
+    try {
+      projectColumns = await ensureProjectColumns(dbPool);
+      hasExtraColumns = true;
+    } catch (error) {
+      // لا نُثبّت الفشل: نعيد المحاولة مع الطلب التالي، ونعمل مؤقتاً بالأعمدة الأساسية فقط
+      migrationDone = false;
+      projectColumns = null;
+      hasExtraColumns = false;
+    }
   }
-  return dbReady;
+  return dbPool;
 }
 
 function hashToken(token) {
@@ -153,6 +163,42 @@ function imageRef(value, id, key, ver) {
   return '?action=img&id=' + Number(id) + '&k=' + key + '&v=' + ver;
 }
 
+/* نماذج المشروع (نموذج A / B / C) — مخزّنة JSON داخل عمود models */
+function normalizeModel(item) {
+  const model = item && typeof item === 'object' ? item : {};
+  const price = Math.max(0, Number(model.price || 0));
+  const oldPrice = Math.max(0, Number(model.oldPrice || 0));
+  return {
+    name: String(model.name || '').slice(0, 120),
+    unit: String(model.unit || '').slice(0, 120),
+    area: Math.max(0, Number(model.area || 0)),
+    rooms: Math.max(0, Number(model.rooms || 0)),
+    price,
+    oldPrice: oldPrice > price ? oldPrice : 0,
+    priceMode: ['total', 'from', 'meter', 'ask'].indexOf(model.priceMode) > -1 ? model.priceMode : 'total',
+    status: String(model.status || '').slice(0, 60),
+    note: String(model.note || '').slice(0, 400)
+  };
+}
+
+function readModels(value) {
+  const parsed = parseJson(value || '[]', []);
+  return Array.isArray(parsed) ? parsed.map(normalizeModel).filter((m) => m.name || m.price || m.area) : [];
+}
+
+/* أقل سعر متاح داخل المشروع — يظهر على البطاقة «تبدأ الأسعار من …» */
+function startingPrice(models, basePrice) {
+  const prices = models.map((m) => Number(m.price || 0)).filter((p) => p > 0);
+  const base = Number(basePrice || 0);
+  if (!prices.length) return base;
+  const min = Math.min.apply(null, prices);
+  return base > 0 ? Math.min(min, base) : min;
+}
+
+function splitLines(value) {
+  return String(value || '').split('\n').map((line) => line.trim()).filter(Boolean);
+}
+
 /* mode: full = بيانات خام للوحة التحكم | card = بطاقات بدون معرض | detail = صفحة المشروع */
 function projectRow(row, mode = 'full') {
   const total = Math.max(1, Number(row.total || 0));
@@ -160,6 +206,10 @@ function projectRow(row, mode = 'full') {
   const parsed = parseJson(row.gallery || '[]', []);
   const gallery = Array.isArray(parsed) ? parsed : [];
   const ver = rowVersion(row);
+  const models = readModels(row.models);
+  const price = Number(row.price || 0);
+  const priceFrom = startingPrice(models, price);
+  const oldPrice = Number(row.old_price || 0);
   const out = {
     id: Number(row.id),
     name: row.name,
@@ -168,33 +218,57 @@ function projectRow(row, mode = 'full') {
     area: Number(row.area || 0),
     facade: row.facade,
     type: row.type,
-    price: Number(row.price || 0),
+    price,
+    priceFrom,
+    oldPrice: oldPrice > priceFrom ? oldPrice : 0,
+    discountPct: oldPrice > priceFrom && oldPrice > 0 ? Math.round(((oldPrice - priceFrom) / oldPrice) * 100) : 0,
     total,
     sold,
     avail: Math.max(0, total - sold),
     status: row.status,
     license: row.license || '',
+    category: row.category || 'residential',
+    stage: row.stage || 'ready',
+    rooms: Number(row.rooms || 0),
+    payment: row.payment || 'both',
+    limitedOffer: Number(row.limited_offer || 0) === 1,
+    noCommission: Number(row.no_commission || 0) === 1,
+    progress: Math.min(100, Math.max(0, Number(row.progress || 0))),
+    deliveryDate: row.delivery_date || '',
+    modelsCount: models.length,
     pct: total ? Math.round((sold / total) * 100) : 0,
     cover: mode === 'full' ? (row.cover || '') : imageRef(row.cover, row.id, 'cover', ver)
   };
   if (mode === 'card') return out;
   out.gallery = mode === 'full' ? gallery : gallery.map((img, i) => imageRef(img, row.id, 'g' + i, ver));
+  out.models = models;
+  out.summary = row.summary || '';
+  out.videoUrl = row.video_url || '';
+  out.videoPoster = mode === 'full' ? (row.video_poster || '') : imageRef(row.video_poster, row.id, 'vp', ver);
+  out.paymentPlan = row.payment_plan || '';
+  out.buildUpdates = mode === 'full' ? (row.build_updates || '') : splitLines(row.build_updates);
   return out;
 }
 
-const CARD_COLUMNS =
-  'SELECT id, name, dist, city, area, facade, type, price, total, sold, status, license, updated_at,' +
-  " CASE WHEN cover LIKE 'data:%' THEN 'data:' ELSE COALESCE(cover, '') END AS cover" +
-  ' FROM projects ORDER BY sort_order ASC, id ASC';
+const CARD_BASE_COLUMNS = ['id', 'name', 'dist', 'city', 'area', 'facade', 'type', 'price', 'total', 'sold', 'status', 'updated_at'];
+const CARD_OPTIONAL_COLUMNS = ['license', 'category', 'stage', 'rooms', 'payment', 'old_price', 'limited_offer', 'no_commission', 'progress', 'delivery_date', 'models'];
+function cardColumnsSql() {
+  const cols = CARD_BASE_COLUMNS.concat(CARD_OPTIONAL_COLUMNS.filter(hasColumn));
+  return 'SELECT ' + cols.join(', ') +
+    ", CASE WHEN cover LIKE 'data:%' THEN 'data:' ELSE COALESCE(cover, '') END AS cover" +
+    ' FROM projects ORDER BY sort_order ASC, id ASC';
+}
 
 /* يخدم صورة مشروع واحدة كملف ثنائي مع تخزين مؤقت طويل (الرابط يحمل بصمة التحديث) */
 async function sendProjectImage(db, req, res, id, key) {
-  const [rows] = await db.query('SELECT id, cover, gallery FROM projects WHERE id=? LIMIT 1', [Number(id) || 0]);
+  const [rows] = await db.query('SELECT * FROM projects WHERE id=? LIMIT 1', [Number(id) || 0]);
   if (!rows.length) return res.status(404).type('text/plain').send('');
 
   let data = '';
   if (key === 'cover') {
     data = String(rows[0].cover || '');
+  } else if (key === 'vp') {
+    data = String(rows[0].video_poster || '');
   } else {
     const match = /^g(\d+)$/.exec(String(key || ''));
     if (match) {
@@ -242,7 +316,7 @@ async function saveSettings(db, settings) {
 
 async function getProjects(db, mode = 'full') {
   /* البطاقات لا تحتاج المعرض ولا محتوى الغلاف — فقط إشارة أنه صورة مضمّنة */
-  const [rows] = await db.query(mode === 'card' ? CARD_COLUMNS : 'SELECT * FROM projects ORDER BY sort_order ASC, id ASC');
+  const [rows] = await db.query(mode === 'card' ? cardColumnsSql() : 'SELECT * FROM projects ORDER BY sort_order ASC, id ASC');
   return rows.map((row) => projectRow(row, mode));
 }
 
@@ -259,24 +333,26 @@ function isImageRef(value) {
 
 /* حماية: لو أُرسل مرجع صورة (?action=img...) بدل الصورة نفسها نُبقي المخزَّن كما هو
    حتى لا يُمحى المحتوى الأصلي بالخطأ */
-async function keepStoredImages(db, id, cover, gallery) {
+async function keepStoredImages(db, id, cover, gallery, poster) {
   const needsCover = isImageRef(cover);
+  const needsPoster = isImageRef(poster);
   const needsGallery = gallery.some(isImageRef);
-  if (id <= 0 || (!needsCover && !needsGallery)) return [cover, gallery];
+  if (id <= 0 || (!needsCover && !needsGallery && !needsPoster)) return [cover, gallery, poster];
 
-  const [rows] = await db.query('SELECT cover, gallery FROM projects WHERE id=? LIMIT 1', [id]);
-  if (!rows.length) return [cover, gallery];
+  const [rows] = await db.query('SELECT * FROM projects WHERE id=? LIMIT 1', [id]);
+  if (!rows.length) return [cover, gallery, poster];
   const parsed = parseJson(rows[0].gallery || '[]', []);
   const stored = Array.isArray(parsed) ? parsed : [];
 
   const nextCover = needsCover ? String(rows[0].cover || '') : cover;
+  const nextPoster = needsPoster ? String(rows[0].video_poster || '') : poster;
   const nextGallery = gallery.map((img, i) => {
     if (!isImageRef(img)) return img;
     const match = /&k=g(\d+)/.exec(img);
     const key = match ? Number(match[1]) : i;
     return stored[key] ? String(stored[key]) : '';
   }).filter(Boolean);
-  return [nextCover, nextGallery];
+  return [nextCover, nextGallery, nextPoster];
 }
 
 async function saveProject(db, project) {
@@ -292,8 +368,10 @@ async function saveProject(db, project) {
   const status = total - sold <= 0 ? 'done' : (project.status || 'new');
   const id = Number(project.id || 0);
   const rawGallery = Array.isArray(project.gallery) ? project.gallery : [];
-  const [coverValue, galleryValue] = await keepStoredImages(db, id, String(project.cover || ''), rawGallery);
+  const [coverValue, galleryValue, posterValue] =
+    await keepStoredImages(db, id, String(project.cover || ''), rawGallery, String(project.videoPoster || ''));
   const gallery = JSON.stringify(galleryValue);
+  const models = readModels(Array.isArray(project.models) ? JSON.stringify(project.models) : project.models);
 
   const columns = [
     ['name', name],
@@ -309,7 +387,27 @@ async function saveProject(db, project) {
     ['cover', coverValue],
     ['gallery', gallery]
   ];
-  if (hasLicenseColumn) columns.push(['license', String(project.license || '').trim().slice(0, 120)]);
+  if (hasExtraColumns) {
+    const categories = ['residential', 'commercial', 'investment'];
+    const stages = ['ready', 'under_construction', 'resale'];
+    const payments = ['cash', 'bank', 'both'];
+    columns.push(['license', String(project.license || '').trim().slice(0, 120)]);
+    columns.push(['category', categories.indexOf(project.category) > -1 ? project.category : 'residential']);
+    columns.push(['stage', stages.indexOf(project.stage) > -1 ? project.stage : 'ready']);
+    columns.push(['rooms', Math.max(0, Number(project.rooms || 0))]);
+    columns.push(['payment', payments.indexOf(project.payment) > -1 ? project.payment : 'both']);
+    columns.push(['old_price', Math.max(0, Number(project.oldPrice || 0))]);
+    columns.push(['limited_offer', project.limitedOffer ? 1 : 0]);
+    columns.push(['no_commission', project.noCommission ? 1 : 0]);
+    columns.push(['progress', Math.min(100, Math.max(0, Number(project.progress || 0)))]);
+    columns.push(['delivery_date', String(project.deliveryDate || '').trim().slice(0, 80)]);
+    columns.push(['payment_plan', String(project.paymentPlan || '').slice(0, 4000)]);
+    columns.push(['build_updates', String(project.buildUpdates || '').slice(0, 4000)]);
+    columns.push(['video_url', String(project.videoUrl || '').trim().slice(0, 600)]);
+    columns.push(['video_poster', posterValue]);
+    columns.push(['summary', String(project.summary || '').slice(0, 4000)]);
+    columns.push(['models', JSON.stringify(models)]);
+  }
 
   if (id > 0) {
     await db.query(
@@ -346,6 +444,109 @@ async function sellProject(db, data) {
   const sold = Math.min(total, Number(row.sold || 0) + 1);
   const status = sold >= total ? 'done' : row.status;
   await db.query('UPDATE projects SET sold=?, status=? WHERE id=?', [sold, status, Number(row.id)]);
+}
+
+/* ==========================================================================
+   طلبات تسجيل الاهتمام (Leads) — تُستقبل من الصفحة الرئيسية وصفحات المشاريع
+   ========================================================================== */
+const LEAD_LABELS = {
+  cash: 'كاش',
+  bank: 'تمويل بنكي',
+  undecided: 'غير محدد',
+  yes: 'نعم',
+  no: 'لا'
+};
+
+function leadRow(row) {
+  return {
+    id: Number(row.id),
+    name: row.name || '',
+    phone: row.phone || '',
+    projectId: Number(row.project_id || 0),
+    projectName: row.project_name || '',
+    propertyType: row.property_type || '',
+    purchaseMethod: row.purchase_method || '',
+    needsFinance: row.needs_finance || '',
+    hasDefault: row.has_default || '',
+    budget: row.budget || '',
+    city: row.city || '',
+    notes: row.notes || '',
+    details: row.details || '',
+    source: row.source || '',
+    status: row.status || 'new',
+    createdAt: row.created_at
+  };
+}
+
+async function saveLead(db, data) {
+  const name = String(data.name || '').trim().slice(0, 190);
+  const phone = String(data.phone || '').trim().slice(0, 60);
+  if (!name || !phone) {
+    const error = new Error('الاسم ورقم الجوال مطلوبان');
+    error.status = 422;
+    throw error;
+  }
+  const methods = ['cash', 'bank', 'undecided'];
+  const yesNo = ['yes', 'no'];
+  const values = [
+    name,
+    phone,
+    Math.max(0, Number(data.projectId || 0)),
+    String(data.projectName || '').trim().slice(0, 190),
+    String(data.propertyType || '').trim().slice(0, 80),
+    methods.indexOf(data.purchaseMethod) > -1 ? data.purchaseMethod : 'undecided',
+    yesNo.indexOf(data.needsFinance) > -1 ? data.needsFinance : '',
+    yesNo.indexOf(data.hasDefault) > -1 ? data.hasDefault : '',
+    String(data.budget || '').trim().slice(0, 80),
+    String(data.city || '').trim().slice(0, 120),
+    String(data.notes || '').slice(0, 2000),
+    String(data.details || '').slice(0, 4000),
+    String(data.source || '').trim().slice(0, 255)
+  ];
+  await db.query(
+    'INSERT INTO leads (name, phone, project_id, project_name, property_type, purchase_method, needs_finance,' +
+      ' has_default, budget, city, notes, details, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    values
+  );
+}
+
+async function listLeads(db) {
+  const [rows] = await db.query('SELECT * FROM leads ORDER BY id DESC LIMIT 1000');
+  return rows.map(leadRow);
+}
+
+async function setLeadStatus(db, data) {
+  const statuses = ['new', 'contacted', 'closed'];
+  const status = statuses.indexOf(data.status) > -1 ? data.status : 'new';
+  await db.query('UPDATE leads SET status=? WHERE id=?', [status, Number(data.id || 0)]);
+}
+
+function csvCell(value) {
+  return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"';
+}
+
+/* تصدير إلى إكسل: BOM في المقدمة ليقرأ إكسل العربية بشكل صحيح */
+function leadsCsv(leads) {
+  const head = ['المعرف', 'التاريخ', 'الاسم', 'الجوال', 'المشروع', 'نوع العقار', 'طريقة الشراء',
+    'يحتاج تمويل', 'لديه تعثرات', 'الميزانية', 'المدينة', 'ملاحظات', 'وصف إضافي', 'مصدر العميل', 'الحالة'];
+  const lines = leads.map((lead) => [
+    lead.id,
+    lead.createdAt ? new Date(lead.createdAt).toISOString().slice(0, 19).replace('T', ' ') : '',
+    lead.name,
+    lead.phone,
+    lead.projectName,
+    lead.propertyType,
+    LEAD_LABELS[lead.purchaseMethod] || lead.purchaseMethod,
+    LEAD_LABELS[lead.needsFinance] || '',
+    LEAD_LABELS[lead.hasDefault] || '',
+    lead.budget,
+    lead.city,
+    lead.notes,
+    lead.details,
+    lead.source,
+    lead.status
+  ].map(csvCell).join(','));
+  return '﻿' + [head.map(csvCell).join(',')].concat(lines).join('\r\n');
 }
 
 function sendPage(res, fileName) {
@@ -387,6 +588,16 @@ app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
       return json(res, { ok: true, users: await listUsers(db) });
     }
     if (action === 'img') return sendProjectImage(db, req, res, req.query.id, req.query.k || 'cover');
+    if (action === 'leads') {
+      await requireUser(db, req, ['admin', 'editor']);
+      const leads = await listLeads(db);
+      if (String(req.query.format || '') === 'csv') {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="homera-leads.csv"');
+        return res.send(leadsCsv(leads));
+      }
+      return json(res, { ok: true, leads });
+    }
     if (action === 'settings') return json(res, { ok: true, settings: await getSettings(db) });
     if (action === 'project') {
       const row = await findProject(db, req.query.id, String(req.query.name || req.query.id || '').trim());
@@ -413,6 +624,18 @@ app.post(['/api/homera', '/api/homera.php'], async (req, res) => {
     const action = getAction(req);
 
     if (action === 'login') return json(res, { ok: true, ...(await loginUser(db, req.body || {})) });
+
+    /* عام بلا جلسة — نموذج «سجّل اهتمامك» في الواجهة */
+    if (action === 'lead') {
+      await saveLead(db, req.body.lead || {});
+      return json(res, { ok: true });
+    }
+
+    if (action === 'leadStatus') {
+      await requireUser(db, req, ['admin', 'editor']);
+      await setLeadStatus(db, req.body || {});
+      return json(res, { ok: true, leads: await listLeads(db) });
+    }
 
     if (action === 'user') {
       await requireUser(db, req, ['admin']);

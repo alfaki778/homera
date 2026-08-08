@@ -71,12 +71,37 @@
   font-family:inherit;font-size:14px;cursor:pointer;transition:.15s;}
 .logout-btn:hover{color:#c0392b;border-color:#c0392b;}
 .logout-btn svg{width:18px;height:18px;}
+/* ===== محرّر النماذج داخل المشروع (نموذج A / B / C) ===== */
+.models-editor{display:grid;gap:12px;}
+.model-row{border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(0,0,0,.015);position:relative;}
+.model-row .mr-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.model-row .mr-head b{font-size:13.5px;color:var(--text);}
+.model-row .mr-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;font-weight:700;padding:4px 8px;border-radius:8px;}
+.model-row .mr-del:hover{color:#c0392b;background:var(--warn-bg);}
+.model-row .frow{gap:10px;}
+.model-row .field{margin-bottom:10px;}
+.model-row .field:last-child{margin-bottom:0;}
+.add-model{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);
+  border-radius:12px;padding:12px;background:none;color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
+.add-model:hover{border-color:var(--accent);color:var(--accent-d);}
+.add-model svg{width:17px;height:17px;}
+.form-sep{margin:22px 0 14px;padding-top:16px;border-top:1px solid var(--border);font-size:14px;font-weight:800;color:var(--text);}
+.switch-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
+.switch-row input{width:18px;height:18px;accent-color:var(--accent-d);cursor:pointer;flex:none;}
+.switch-row label{font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;margin:0;}
+/* ===== طلبات الاهتمام ===== */
+.lead-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.lead-tools .spacer{flex:1;}
+.tbl .lead-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tbl .lead-tags span{font-size:11.5px;font-weight:700;background:var(--warn-bg);color:var(--muted);padding:3px 9px;border-radius:20px;}
+.tbl .lead-note{font-size:12.5px;color:var(--muted);line-height:1.7;max-width:320px;white-space:pre-line;}
+.lead-status{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);border-radius:8px;padding:6px 9px;background:var(--surface);color:var(--text);cursor:pointer;}
 /* شعار الموقع داخل الشريط الجانبي للوحة التحكم */
 .side .brand img.brand-logo{height:40px;width:auto;max-width:180px;object-fit:contain;display:block;}
 .side .brand.has-logo .name,.side .brand.has-logo .tag{display:none;}
 .tw-has-logo .side .brand .name,.tw-has-logo .side .brand .tag{display:none;}
 </style>
-<script src="homera-api.js?v=2"></script>
+<script src="homera-api.js?v=3"></script>
 <script src="dash-tweaks.js?v=3"></script>
 </head>
 <body>
@@ -101,7 +126,7 @@
   var gate=document.getElementById('authGate');
   function setCurrentUser(user){ window.HOMERA_CURRENT_USER=user||null; if(window.HOMERA_applyAccess) window.HOMERA_applyAccess(); }
   // جلب المشاريع يتطلب جلسة (بيانات خام)، فنعيد التحميل فور نجاح الدخول
-  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); if(window.HOMERA_reloadProjects) window.HOMERA_reloadProjects(); }
+  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); if(window.HOMERA_reloadProjects) window.HOMERA_reloadProjects(); if(window.HOMERA_reloadLeads) window.HOMERA_reloadLeads(); }
   var session=window.HOMERA_API && window.HOMERA_API.currentSession && window.HOMERA_API.currentSession();
   if(session && session.user){ hideGate(session.user); }
   document.getElementById('authForm').addEventListener('submit', function(e){
@@ -139,6 +164,11 @@
     <div class="navitem" data-view="projects">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>
       المشاريع
+    </div>
+    <div class="navitem" data-view="leads">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v13H7l-3 3z"/><path d="M8 9h8M8 13h5"/></svg>
+      طلبات الاهتمام
+      <span class="ext" id="leadsCount" hidden></span>
     </div>
     <div class="navitem" data-view="landing">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
@@ -220,13 +250,18 @@
           </div>
 
           <div class="card aside-card">
-            <span class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg> الاستفسارات تُدار خارجياً</span>
-            <p>يتم استقبال استفسارات العملاء عبر واتساب والموقع مباشرةً. اضغط لفتح محادثات العملاء.</p>
-            <button class="btn-wa" onclick="openWA()">
+            <span class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg> طلبات العملاء</span>
+            <p>تصل طلبات «سجّل اهتمامك» من الموقع إلى قسم طلبات الاهتمام، مع إمكانية تصديرها إلى إكسل.</p>
+            <button class="btn-primary" data-goto="leads" style="width:100%;justify-content:center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v13H7l-3 3z"/><path d="M8 9h8M8 13h5"/></svg>
+              عرض طلبات الاهتمام
+            </button>
+            <button class="btn-wa" onclick="openWA()" style="margin-top:10px">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Z"/></svg>
-              فتح الاستفسارات (واتساب)
+              محادثات واتساب
             </button>
             <div style="margin-top:20px">
+              <div class="mini-stat"><span class="k">طلبات اهتمام جديدة</span><span class="v" id="msLeads">—</span></div>
               <div class="mini-stat"><span class="k">نسبة البيع الإجمالية</span><span class="v" id="msOverall">—</span></div>
               <div class="mini-stat"><span class="k">أعلى مشروع مبيعاً</span><span class="v" id="msTop" style="direction:rtl">—</span></div>
               <div class="mini-stat"><span class="k">مشاريع قيد البيع</span><span class="v" id="msSale">—</span></div>
@@ -251,6 +286,26 @@
           <table class="tbl"><thead><tr>
             <th>المشروع</th><th>الحي</th><th>النوع</th><th>السعر</th><th>الوحدات (متاح/مباع)</th><th>الحالة</th><th>نسبة البيع</th><th></th>
           </tr></thead><tbody id="projectsTbody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ===== طلبات الاهتمام ===== -->
+      <section class="view" id="view-leads">
+        <div class="lead-tools">
+          <div class="chips" id="leadChips">
+            <button class="chip on" data-lead-status="all">الكل</button>
+            <button class="chip" data-lead-status="new">جديد</button>
+            <button class="chip" data-lead-status="contacted">تم التواصل</button>
+            <button class="chip" data-lead-status="closed">مغلق</button>
+          </div>
+          <span class="spacer"></span>
+          <button class="btn-ghost" id="leadsRefresh">تحديث</button>
+          <button class="btn-primary" id="leadsExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg> تصدير إلى إكسل</button>
+        </div>
+        <div class="card">
+          <table class="tbl"><thead><tr>
+            <th>العميل</th><th>المشروع</th><th>الطلب</th><th>الميزانية</th><th>التفاصيل</th><th>المصدر</th><th>الحالة</th>
+          </tr></thead><tbody id="leadsTbody"></tbody></table>
         </div>
       </section>
 
@@ -396,12 +451,25 @@
 
   function bldg(p){ if(p&&p.cover){ return '<span class="sq img"><img src="'+p.cover+'" alt=""></span>'; } return '<span class="sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg></span>'; }
   function statusPill(s){ var o=STATUS[s]; return '<span class="pill '+o.c+'">'+o.t+'</span>'; }
+  /* السعر المعروض في الموقع = أقل سعر بين نماذج المشروع */
+  function startPrice(p){
+    var prices=(p.models||[]).map(function(m){ return Number(m.price||0); }).filter(function(v){ return v>0; });
+    var base=Number(p.price||0);
+    if(!prices.length) return base;
+    var min=Math.min.apply(null,prices);
+    return base>0 ? Math.min(min,base) : min;
+  }
+  function priceCell(p){
+    var value=startPrice(p);
+    return '<span class="price">'+(value?fmt(value)+' ر.س':'عند الطلب')+'</span>'+
+      (p.oldPrice>value ? '<div style="font-size:12px;color:#c0392b;text-decoration:line-through;direction:ltr;text-align:right">'+fmt(p.oldPrice)+'</div>' : '');
+  }
   function prog(p){ return '<div class="prog"><div class="bar"><i style="width:'+p+'%"></i></div><span class="pct">'+p+'%</span></div>'; }
 
   function rowOverview(p){
     return '<tr>'+
       '<td data-label="المشروع"><div class="proj">'+bldg(p)+'<div><b>'+p.name+'</b><span>'+p.dist+' · '+p.type+'</span></div></div></td>'+
-      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="السعر">'+priceCell(p)+'</td>'+
       '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح / '+p.total+'</span></span></td>'+
       '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
       '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
@@ -412,7 +480,7 @@
       '<td data-label="المشروع"><div class="proj">'+bldg(p)+'<div><b>'+p.name+'</b><span>'+p.type+'</span></div></div></td>'+
       '<td data-label="الحي">'+p.dist+'</td>'+
       '<td data-label="النوع">'+p.type+'</td>'+
-      '<td data-label="السعر"><span class="price">'+fmt(p.price)+' ر.س</span></td>'+
+      '<td data-label="السعر">'+priceCell(p)+'</td>'+
       '<td data-label="الوحدات"><span class="units"><b>'+p.avail+'</b> <span>متاح · '+p.sold+' مباع</span></span></td>'+
       '<td data-label="الحالة">'+statusPill(p.status)+'</td>'+
       '<td data-label="نسبة البيع">'+prog(p.pct)+'</td>'+
@@ -450,6 +518,7 @@
     var total=Math.max(1,parseInt(p.total,10)||1), sold=Math.min(Math.max(0,parseInt(p.sold,10)||0),total);
     p.total=total; p.sold=sold; p.avail=typeof p.avail==='number'?p.avail:total-sold; p.pct=total?Math.round(sold/total*100):0;
     p.gallery=Array.isArray(p.gallery)?p.gallery:[];
+    p.models=Array.isArray(p.models)?p.models:[];
     return p;
   }
   function setProjects(next){
@@ -494,9 +563,10 @@
   window.HOMERA_reloadProjects();
 
   // تبديل العرض
-  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};
+  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], leads:['طلبات الاهتمام','العملاء الذين سجّلوا اهتمامهم عبر الموقع'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};
   function showView(v){
     if(v==='users' && (!window.HOMERA_CURRENT_USER || window.HOMERA_CURRENT_USER.role!=='admin')) v='overview';
+    if(v==='leads' && window.HOMERA_reloadLeads) window.HOMERA_reloadLeads();
     document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
     document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
     document.getElementById('pageTitle').textContent = titles[v][0];
@@ -518,6 +588,7 @@
     document.getElementById('meName').textContent=user.name||user.email;
     document.getElementById('meRole').textContent=user.role==='admin'?'أدمن':'محرر';
     loadUsers();
+    if(window.HOMERA_reloadLeads) window.HOMERA_reloadLeads();
   };
   window.HOMERA_applyAccess();
 
@@ -545,6 +616,22 @@
   function openModal(id){ document.getElementById(id).classList.add('open'); }
   function closeModal(id){ document.getElementById(id).classList.remove('open'); }
   var bIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg>';
+  var VIEW_LABELS={
+    category:{residential:'سكني', commercial:'تجاري', investment:'استثماري'},
+    stage:{ready:'جاهز', under_construction:'تحت الإنشاء', resale:'إعادة بيع'},
+    payment:{cash:'كاش', bank:'تمويل بنكي', both:'كاش أو تمويل'},
+    mode:{total:'السعر الإجمالي', from:'يبدأ من', meter:'سعر المتر', ask:'عند الطلب'}
+  };
+  function modelsHtml(p){
+    if(!p.models || !p.models.length) return '';
+    return '<div class="mv-gallery"><div class="k">النماذج ('+p.models.length+')</div>'+
+      p.models.map(function(m){
+        var bits=[m.unit && ('الوحدة: '+m.unit), m.area && (m.area+' م²'), m.rooms && (m.rooms+' غرف'),
+          m.status, VIEW_LABELS.mode[m.priceMode||'total']].filter(Boolean).join(' · ');
+        return '<div class="mini-stat"><span class="k">'+esc(m.name||'نموذج')+'<br><small style="opacity:.75">'+esc(bits)+'</small></span>'+
+          '<span class="v ltr">'+(m.price?fmt(m.price)+' ر.س':'—')+'</span></div>';
+      }).join('')+'</div>';
+  }
   function openView(p){
     var s=STATUS[p.status];
     var galHtml = (p.gallery && p.gallery.length)
@@ -563,12 +650,21 @@
         '<div class="mv-item"><div class="k">الواجهة</div><div class="v">'+(p.facade||'—')+'</div></div>'+
         '<div class="mv-item"><div class="k">الحالة</div><div class="v">'+s.t+'</div></div>'+
         '<div class="mv-item"><div class="k">الترخيص</div><div class="v" style="unicode-bidi:plaintext">'+(p.license||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">التصنيف</div><div class="v">'+(VIEW_LABELS.category[p.category]||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">مرحلة المشروع</div><div class="v">'+(VIEW_LABELS.stage[p.stage]||'—')+'</div></div>'+
+        '<div class="mv-item"><div class="k">طريقة الدفع</div><div class="v">'+(VIEW_LABELS.payment[p.payment]||'—')+'</div></div>'+
+        (p.oldPrice ? '<div class="mv-item"><div class="k">السعر قبل الخصم</div><div class="v ltr">'+fmt(p.oldPrice)+' ر.س</div></div>' : '')+
+        (p.stage==='under_construction' ? '<div class="mv-item"><div class="k">نسبة الإنجاز</div><div class="v ltr">'+(p.progress||0)+'%</div></div>'+
+          '<div class="mv-item"><div class="k">التسليم المتوقع</div><div class="v">'+(p.deliveryDate||'—')+'</div></div>' : '')+
+        (p.noCommission ? '<div class="mv-item full"><div class="k">العمولة</div><div class="v">المالك يتحمّل العمولة — تظهر عبارة «بدون عمولة»</div></div>' : '')+
+        (p.videoUrl ? '<div class="mv-item full"><div class="k">فيديو المشروع</div><div class="v" style="word-break:break-all;font-size:12.5px" dir="ltr">'+esc(p.videoUrl)+'</div></div>' : '')+
         '<div class="mv-item"><div class="k">إجمالي الوحدات</div><div class="v ltr">'+p.total+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المتاحة</div><div class="v ltr">'+p.avail+'</div></div>'+
         '<div class="mv-item"><div class="k">الوحدات المباعة</div><div class="v ltr">'+p.sold+'</div></div>'+
         '<div class="mv-item"><div class="k">نسبة البيع</div><div class="v ltr">'+p.pct+'%</div></div>'+
         '<div class="mv-item full"><div class="k">التقدّم</div><div class="v">'+prog(p.pct)+'</div></div>'+
       '</div>'+
+      modelsHtml(p)+
       galHtml+
       '<button class="btn-primary" id="modalSell" style="margin-top:18px;width:100%;justify-content:center"'+(p.avail<=0?' disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>'+(p.avail<=0?'نفدت الوحدات':'تسجيل بيع وحدة')+'</button>';
     openModal('viewModal');
@@ -647,7 +743,7 @@
   document.getElementById('viewModal').addEventListener('click',function(e){ if(e.target.id==='viewModal') closeModal('viewModal'); });
 
   // ===== رفع الصور (أساسية + فرعية) =====
-  var coverData=null, galleryData=[];
+  var coverData=null, galleryData=[], posterData=null;
   // يقرأ الصورة ويصغّرها/يضغطها لتقليل الحجم وتفادي امتلاء التخزين
   function readFile(file){
     return new Promise(function(res){
@@ -688,7 +784,79 @@
       return '<div class="thumb"><img src="'+d+'" alt=""><button type="button" class="th-x" data-gi="'+i+'" aria-label="حذف">×</button></div>';
     }).join('');
   }
-  function resetUploads(){ coverData=null; galleryData=[]; document.getElementById('coverInput').value=''; document.getElementById('galInput').value=''; renderCoverPrev(); renderGalPrev(); }
+  function renderPosterPrev(){
+    document.getElementById('posterPrev').innerHTML = posterData
+      ? '<div class="thumb"><img src="'+posterData+'" alt=""><button type="button" class="th-x" data-poster aria-label="حذف">×</button></div>' : '';
+  }
+  function resetUploads(){
+    coverData=null; galleryData=[]; posterData=null;
+    document.getElementById('coverInput').value=''; document.getElementById('galInput').value=''; document.getElementById('posterInput').value='';
+    renderCoverPrev(); renderGalPrev(); renderPosterPrev(); setModels([]);
+  }
+  document.getElementById('posterInput').addEventListener('change', function(){
+    var file=this.files && this.files[0]; if(!file) return;
+    readFile(file).then(function(d){ posterData=d; renderPosterPrev(); });
+  });
+  document.getElementById('posterPrev').addEventListener('click', function(e){
+    if(!e.target.closest('[data-poster]')) return;
+    posterData=null; document.getElementById('posterInput').value=''; renderPosterPrev();
+  });
+
+  /* ===== محرّر النماذج (نموذج A / B / C) ===== */
+  var MODELS=[];
+  function modelRowHtml(m,i){
+    var modes=[['total','السعر الإجمالي'],['from','يبدأ من'],['meter','سعر المتر'],['ask','السعر عند الطلب']];
+    return '<div class="model-row" data-mi="'+i+'">'+
+      '<div class="mr-head"><b>نموذج '+(i+1)+'</b><button type="button" class="mr-del" data-del="'+i+'">حذف</button></div>'+
+      '<div class="frow">'+
+        '<div class="field"><label>اسم النموذج</label><input data-mf="name" value="'+esc(m.name)+'" placeholder="نموذج A"/></div>'+
+        '<div class="field"><label>الوحدة</label><input data-mf="unit" value="'+esc(m.unit)+'" placeholder="وحدة 101"/></div>'+
+      '</div>'+
+      '<div class="frow">'+
+        '<div class="field"><label>المساحة (م²)</label><input data-mf="area" type="number" min="0" value="'+(m.area||'')+'"/></div>'+
+        '<div class="field"><label>عدد الغرف</label><input data-mf="rooms" type="number" min="0" value="'+(m.rooms||'')+'"/></div>'+
+      '</div>'+
+      '<div class="frow">'+
+        '<div class="field"><label>السعر (ر.س)</label><input data-mf="price" type="number" min="0" value="'+(m.price||'')+'"/></div>'+
+        '<div class="field"><label>السعر قبل الخصم</label><input data-mf="oldPrice" type="number" min="0" value="'+(m.oldPrice||'')+'"/></div>'+
+      '</div>'+
+      '<div class="frow">'+
+        '<div class="field"><label>طريقة عرض السعر</label><select data-mf="priceMode">'+
+          modes.map(function(o){ return '<option value="'+o[0]+'"'+(m.priceMode===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div class="field"><label>حالة النموذج</label><input data-mf="status" value="'+esc(m.status)+'" placeholder="متاح / محجوز / مباع"/></div>'+
+      '</div>'+
+      '<div class="field"><label>ملاحظة</label><input data-mf="note" value="'+esc(m.note)+'" placeholder="تفاصيل إضافية عن النموذج"/></div>'+
+    '</div>';
+  }
+  function renderModels(){
+    document.getElementById('modelsEditor').innerHTML = MODELS.map(modelRowHtml).join('');
+  }
+  function setModels(list){ MODELS=(list||[]).map(function(m){ return Object.assign({priceMode:'total'}, m); }); renderModels(); }
+  /* نقرأ القيم من الحقول قبل أي إعادة رسم حتى لا يضيع ما كُتب */
+  function readModels(){
+    var rows=document.querySelectorAll('#modelsEditor .model-row');
+    MODELS=[].map.call(rows, function(row){
+      var m={};
+      row.querySelectorAll('[data-mf]').forEach(function(input){
+        var key=input.dataset.mf;
+        m[key]= (input.type==='number') ? (parseInt(input.value,10)||0) : input.value.trim();
+      });
+      return m;
+    }).filter(function(m){ return m.name || m.price || m.area; });
+    return MODELS;
+  }
+  document.getElementById('addModelBtn').addEventListener('click', function(){
+    readModels();
+    MODELS.push({name:'', unit:'', area:0, rooms:0, price:0, oldPrice:0, priceMode:'total', status:'', note:''});
+    renderModels();
+  });
+  document.getElementById('modelsEditor').addEventListener('click', function(e){
+    var del=e.target.closest('[data-del]'); if(!del) return;
+    readModels();
+    MODELS.splice(parseInt(del.dataset.del,10),1);
+    renderModels();
+  });
   document.getElementById('coverInput').addEventListener('change', function(){
     var file=this.files && this.files[0]; if(!file) return;
     readFile(file).then(function(d){ coverData=d; renderCoverPrev(); });
@@ -706,6 +874,69 @@
     galleryData.splice(parseInt(b.dataset.gi,10),1); renderGalPrev();
   });
 
+  /* ===== طلبات الاهتمام ===== */
+  var LEADS=[], leadFilter='all';
+  var LEAD_TXT={cash:'كاش', bank:'تمويل بنكي', undecided:'غير محدد', yes:'نعم', no:'لا'};
+  var LEAD_STATE={new:'جديد', contacted:'تم التواصل', closed:'مغلق'};
+  function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function leadDate(value){
+    if(!value) return '—';
+    var d=new Date(value);
+    return isNaN(d) ? String(value) : d.toLocaleDateString('ar-EG',{year:'numeric',month:'short',day:'numeric'});
+  }
+  function leadRowHtml(lead){
+    var tags=[];
+    if(lead.propertyType) tags.push(lead.propertyType);
+    if(lead.purchaseMethod) tags.push(LEAD_TXT[lead.purchaseMethod]||lead.purchaseMethod);
+    if(lead.needsFinance) tags.push('تمويل: '+(LEAD_TXT[lead.needsFinance]||''));
+    if(lead.hasDefault) tags.push('تعثرات: '+(LEAD_TXT[lead.hasDefault]||''));
+    var notes=[lead.notes, lead.details].filter(Boolean).join('\n');
+    return '<tr class="lead-row" data-status="'+lead.status+'">'+
+      '<td data-label="العميل"><div class="proj"><div><b>'+esc(lead.name)+'</b><span dir="ltr">'+esc(lead.phone)+'</span></div></div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-top:4px">'+leadDate(lead.createdAt)+'</div></td>'+
+      '<td data-label="المشروع">'+esc(lead.projectName||'غير محدد')+
+        (lead.city?'<div style="font-size:12px;color:var(--muted)">'+esc(lead.city)+'</div>':'')+'</td>'+
+      '<td data-label="الطلب"><div class="lead-tags">'+tags.map(function(t){return '<span>'+esc(t)+'</span>';}).join('')+'</div></td>'+
+      '<td data-label="الميزانية">'+esc(lead.budget||'—')+'</td>'+
+      '<td data-label="التفاصيل"><div class="lead-note">'+esc(notes||'—')+'</div></td>'+
+      '<td data-label="المصدر"><span style="font-size:12.5px;color:var(--muted)">'+esc(lead.source||'—')+'</span></td>'+
+      '<td data-label="الحالة"><select class="lead-status" data-id="'+lead.id+'">'+
+        Object.keys(LEAD_STATE).map(function(k){ return '<option value="'+k+'"'+(lead.status===k?' selected':'')+'>'+LEAD_STATE[k]+'</option>'; }).join('')+
+      '</select></td>'+
+    '</tr>';
+  }
+  function renderLeads(){
+    var body=document.getElementById('leadsTbody');
+    var list=LEADS.filter(function(l){ return leadFilter==='all' || l.status===leadFilter; });
+    body.innerHTML = list.length ? list.map(leadRowHtml).join('')
+      : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">لا توجد طلبات مطابقة.</td></tr>';
+    var fresh=LEADS.filter(function(l){ return l.status==='new'; }).length;
+    var badge=document.getElementById('leadsCount');
+    badge.hidden = fresh===0; badge.textContent = fresh;
+    setTxt('msLeads', fresh + ' من ' + LEADS.length);
+  }
+  window.HOMERA_reloadLeads=function(){
+    if(!window.HOMERA_API || !window.HOMERA_CURRENT_USER) return;
+    window.HOMERA_API.getLeads().then(function(leads){ LEADS=leads||[]; renderLeads(); })
+      .catch(function(err){ toast(err.message); });
+  };
+  document.querySelectorAll('#leadChips .chip').forEach(function(chip){
+    chip.addEventListener('click',function(){
+      document.querySelectorAll('#leadChips .chip').forEach(function(c){ c.classList.remove('on'); });
+      chip.classList.add('on'); leadFilter=chip.dataset.leadStatus; renderLeads();
+    });
+  });
+  document.getElementById('leadsTbody').addEventListener('change',function(e){
+    var sel=e.target.closest('.lead-status'); if(!sel) return;
+    window.HOMERA_API.setLeadStatus(Number(sel.dataset.id), sel.value)
+      .then(function(leads){ LEADS=leads||[]; renderLeads(); toast('تم تحديث حالة الطلب'); })
+      .catch(function(err){ toast(err.message); });
+  });
+  document.getElementById('leadsRefresh').addEventListener('click', function(){ window.HOMERA_reloadLeads(); });
+  document.getElementById('leadsExport').addEventListener('click', function(){
+    window.HOMERA_API.downloadLeadsCsv().catch(function(err){ toast(err.message); });
+  });
+
   // ===== إضافة / تعديل مشروع =====
   var editingProject=null;
   var addFormEl=document.getElementById('addForm');
@@ -716,10 +947,17 @@
     f.name.value=p.name; f.dist.value=p.dist; f.city.value=p.city||''; f.area.value=p.area||'';
     f.facade.value=p.facade||'شمالية'; f.type.value=p.type||'فيلا'; f.price.value=p.price||'';
     f.status.value=p.status||'new'; f.total.value=p.total||''; f.sold.value=p.sold||0;
-    f.license.value=p.license||'';
-    coverData=p.cover||null; galleryData=(p.gallery||[]).slice();
-    document.getElementById('coverInput').value=''; document.getElementById('galInput').value='';
-    renderCoverPrev(); renderGalPrev();
+    f.license.value=p.license||''; f.rooms.value=p.rooms||'';
+    f.category.value=p.category||'residential'; f.stage.value=p.stage||'ready'; f.payment.value=p.payment||'both';
+    f.summary.value=p.summary||'';
+    f.oldPrice.value=p.oldPrice||''; f.limitedOffer.checked=!!p.limitedOffer; f.noCommission.checked=!!p.noCommission;
+    f.progress.value=p.progress||''; f.deliveryDate.value=p.deliveryDate||'';
+    f.paymentPlan.value=p.paymentPlan||''; f.buildUpdates.value=p.buildUpdates||'';
+    f.videoUrl.value=p.videoUrl||'';
+    coverData=p.cover||null; galleryData=(p.gallery||[]).slice(); posterData=p.videoPoster||null;
+    setModels(p.models||[]);
+    document.getElementById('coverInput').value=''; document.getElementById('galInput').value=''; document.getElementById('posterInput').value='';
+    renderCoverPrev(); renderGalPrev(); renderPosterPrev();
     openModal('addModal');
   }
   document.getElementById('addBtn').addEventListener('click',function(){ editingProject=null; document.getElementById('addTitle').textContent='إضافة مشروع'; addFormEl.reset(); resetUploads(); openModal('addModal'); });
@@ -731,6 +969,20 @@
     var f=e.target;
     var total=Math.max(1,parseInt(f.total.value,10)||0), sold=Math.min(Math.max(0,parseInt(f.sold.value,10)||0),total);
     var price=parseInt(f.price.value,10)||0;
+    var models=readModels();
+    /* الحقول المشتركة بين الإضافة والتعديل */
+    var extras={
+      rooms:parseInt(f.rooms.value,10)||0,
+      category:f.category.value, stage:f.stage.value, payment:f.payment.value,
+      summary:f.summary.value.trim(),
+      oldPrice:parseInt(f.oldPrice.value,10)||0,
+      limitedOffer:f.limitedOffer.checked, noCommission:f.noCommission.checked,
+      progress:Math.min(100,Math.max(0,parseInt(f.progress.value,10)||0)),
+      deliveryDate:f.deliveryDate.value.trim(),
+      paymentPlan:f.paymentPlan.value.trim(), buildUpdates:f.buildUpdates.value.trim(),
+      videoUrl:f.videoUrl.value.trim(), videoPoster:posterData||'',
+      models:models
+    };
     if(editingProject){
       var p=editingProject;
       p.name=f.name.value.trim(); p.dist=f.dist.value.trim(); p.city=f.city.value.trim()||'جدة';
@@ -738,13 +990,14 @@
       p.total=total; p.sold=sold; p.avail=total-sold; p.status=f.status.value; p.pct=total?Math.round(sold/total*100):0;
       p.license=f.license.value.trim();
       p.cover=coverData; p.gallery=galleryData.slice();
+      Object.assign(p, extras);
       editingProject=null;
       renderAll(); var okE=syncFeaturedToHome(); saveProjectToDb(p, okE ? 'تم تعديل المشروع — '+p.name.replace('مشروع ','') : 'تم التعديل لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.'); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
       return;
     }
-    var newProject={ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:parseInt(f.price.value,10)||0,
+    var newProject=Object.assign({ name:f.name.value.trim(), dist:f.dist.value.trim(), city:f.city.value.trim()||'جدة', area:parseInt(f.area.value,10)||0, facade:f.facade.value, type:f.type.value, price:price,
       total:total, avail:total-sold, sold:sold, status:f.status.value, pct: total?Math.round(sold/total*100):0,
-      license:f.license.value.trim(), cover:coverData, gallery:galleryData.slice() };
+      license:f.license.value.trim(), cover:coverData, gallery:galleryData.slice() }, extras);
     PROJECTS.unshift(newProject);
     renderAll(); var okA=syncFeaturedToHome(); f.reset(); resetUploads(); closeModal('addModal'); showView('projects');
     saveProjectToDb(newProject, okA ? 'تمت إضافة المشروع' : 'تمت الإضافة لكن تعذّر عرض الصورة على الرئيسية — المساحة ممتلئة، احذف بعض الصور.');
@@ -890,8 +1143,56 @@
           <div class="field"><label>الحالة</label><select name="status"><option value="new">جديد</option><option value="sale">قيد البيع</option><option value="done">مكتمل</option></select></div>
           <div class="field"><label>إجمالي الوحدات</label><input name="total" type="number" min="1" required placeholder="12"/></div>
         </div>
-        <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
+        <div class="frow">
+          <div class="field"><label>الوحدات المباعة</label><input name="sold" type="number" min="0" required placeholder="0"/></div>
+          <div class="field"><label>عدد الغرف</label><input name="rooms" type="number" min="0" max="99" placeholder="4"/></div>
+        </div>
         <div class="field"><label>الترخيص (نص أو رقم)</label><input name="license" type="text" dir="auto" maxlength="120" placeholder="مثال: 1200012345 أو ترخيص فال 7002…"/></div>
+
+        <div class="form-sep">التصنيف والعرض</div>
+        <div class="frow">
+          <div class="field"><label>التصنيف</label>
+            <select name="category"><option value="residential">سكني</option><option value="commercial">تجاري</option><option value="investment">استثماري</option></select></div>
+          <div class="field"><label>حالة المشروع</label>
+            <select name="stage"><option value="ready">جاهز</option><option value="under_construction">تحت الإنشاء</option><option value="resale">إعادة بيع</option></select></div>
+        </div>
+        <div class="field"><label>طريقة الدفع المتاحة</label>
+          <select name="payment"><option value="both">كاش أو تمويل بنكي</option><option value="cash">كاش فقط</option><option value="bank">تمويل بنكي</option></select></div>
+        <div class="field"><label>نبذة عن المشروع (تظهر في صفحة التفاصيل)</label>
+          <textarea name="summary" rows="3" placeholder="وصف تسويقي مختصر للمشروع…"></textarea></div>
+
+        <div class="form-sep">الخصم والعروض</div>
+        <div class="field"><label>السعر قبل الخصم (ر.س) — اتركه فارغاً إن لم يوجد خصم</label>
+          <input name="oldPrice" type="number" min="0" placeholder="0"/></div>
+        <div class="switch-row"><input type="checkbox" id="limitedOffer" name="limitedOffer"/><label for="limitedOffer">إظهار عبارة «فرصة محدودة» على البطاقة</label></div>
+        <div class="switch-row"><input type="checkbox" id="noCommission" name="noCommission"/><label for="noCommission">المالك يتحمّل العمولة — إظهار «امتلك عقارك دون دفع عمولة»</label></div>
+
+        <div class="form-sep">مشروع تحت الإنشاء</div>
+        <div class="frow">
+          <div class="field"><label>نسبة الإنجاز (%)</label><input name="progress" type="number" min="0" max="100" placeholder="65"/></div>
+          <div class="field"><label>تاريخ التسليم المتوقع</label><input name="deliveryDate" type="text" maxlength="80" placeholder="مثال: الربع الأول 2027"/></div>
+        </div>
+        <div class="field"><label>خطط السداد المتاحة</label>
+          <textarea name="paymentPlan" rows="3" placeholder="مثال: 20% دفعة أولى — 50% أثناء التنفيذ — 30% عند التسليم"></textarea></div>
+        <div class="field"><label>تحديثات مراحل البناء (سطر لكل تحديث)</label>
+          <textarea name="buildUpdates" rows="3" placeholder="اكتمال أعمال الأساسات&#10;بدء أعمال الهيكل الخرساني"></textarea></div>
+
+        <div class="form-sep">النماذج والوحدات</div>
+        <div class="models-editor" id="modelsEditor"></div>
+        <button type="button" class="add-model" id="addModelBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة نموذج</button>
+
+        <div class="form-sep">الفيديو والصور</div>
+        <div class="field"><label>رابط فيديو المشروع (YouTube · Vimeo · Google Drive · رابط مباشر)</label>
+          <input name="videoUrl" type="url" dir="ltr" maxlength="600" placeholder="https://www.youtube.com/watch?v=…"/></div>
+        <div class="field">
+          <label>صورة غلاف الفيديو</label>
+          <label class="uploader" for="posterInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span>اضغط لاختيار غلاف الفيديو</span>
+          </label>
+          <input type="file" id="posterInput" accept="image/*" hidden/>
+          <div class="thumbs" id="posterPrev"></div>
+        </div>
 
         <div class="field">
           <label>الصورة الأساسية</label>
