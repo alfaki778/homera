@@ -15,7 +15,7 @@
 <script src="homera-tweaks.js?v=4"></script>
 <style>
 /* ===== الفلترة العلوية ===== */
-.topfilter{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 8px 26px rgba(14,51,64,.06);padding:16px 18px;position:sticky;top:92px;z-index:40;}
+.topfilter{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 8px 26px rgba(14,51,64,.06);padding:16px 18px;position:relative;z-index:40;}
 .tf-main{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .tf-search{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:0 12px;flex:1 1 220px;min-width:180px;}
 .tf-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(199,163,107,.14);}
@@ -58,7 +58,6 @@
 .no-res{text-align:center;color:var(--muted);font-size:16px;padding:60px 0;}
 .proj-card.hide{display:none;}
 @media(max-width:820px){
-  .topfilter{position:static;}
   .tf-end{margin-inline-start:0;width:100%;}
   .tf-pop{right:auto;left:0;}
 }
