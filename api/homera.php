@@ -752,6 +752,18 @@ try {
         $up->execute([$sold, $status, (int)$row['id']]);
         respond(['ok' => true, 'projects' => get_projects($pdo)]);
     }
+    /* حذف مشروع نهائياً — للأدمن فقط، وطلبات الاهتمام تبقى محفوظة */
+    if ($action === 'deleteProject') {
+        require_user($pdo, $data, ['admin']);
+        $id = (int)($data['id'] ?? 0);
+        $name = trim((string)($data['name'] ?? ''));
+        $stmt = $id > 0 ? $pdo->prepare('SELECT id FROM projects WHERE id=?') : $pdo->prepare('SELECT id FROM projects WHERE name=?');
+        $stmt->execute([$id > 0 ? $id : $name]);
+        $row = $stmt->fetch();
+        if (!$row) respond(['ok' => false, 'error' => 'المشروع غير موجود'], 404);
+        $pdo->prepare('DELETE FROM projects WHERE id=?')->execute([(int)$row['id']]);
+        respond(['ok' => true, 'projects' => get_projects($pdo)]);
+    }
     respond(['ok' => false, 'error' => 'إجراء غير معروف'], 400);
 } catch (Throwable $e) {
     respond(['ok' => false, 'error' => $e->getMessage()], 500);

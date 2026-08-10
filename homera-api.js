@@ -127,6 +127,13 @@
       });
     },
     sellProject: function (project) { return request('sell', { id: project.id || 0, name: project.name || '' }); },
+    /* حذف نهائي — يتطلب صلاحية أدمن، ويبطل ذاكرة قائمة البطاقات */
+    deleteProject: function (project) {
+      return request('deleteProject', { id: project.id || 0, name: project.name || '' }).then(function (data) {
+        projectsPromise = null;
+        return data;
+      });
+    },
     readLocalSettings: readLocalSettings,
     writeLocalSettings: writeLocalSettings,
     syncFeaturedProjects: syncFeaturedProjects

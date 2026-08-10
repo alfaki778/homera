@@ -10,6 +10,7 @@
   --ok:#1F8A5B; --ok-bg:rgba(31,138,91,.12);
   --warn:#C08A2D; --warn-bg:rgba(199,163,107,.16);
   --info:#2A6F9E; --info-bg:rgba(42,111,158,.12);
+  --danger:#C0392B; --danger-bg:rgba(192,57,43,.10);
   --dash-radius:16px;
   --row-pad:15px;
   --shadow:0 1px 3px rgba(20,32,42,.06),0 8px 24px rgba(20,32,42,.05);
@@ -211,6 +212,12 @@ a{color:inherit;text-decoration:none;}
 .mf-foot .btn-primary{margin:0;}
 .btn-primary:disabled,.rowbtn:disabled{opacity:.4;cursor:not-allowed;}
 .sell-btn:hover:not(:disabled){color:var(--ok);border-color:var(--ok);}
+.del-btn:hover:not(:disabled){color:var(--danger);border-color:var(--danger);background:var(--danger-bg);}
+.btn-danger{display:flex;align-items:center;gap:8px;background:var(--danger);border:1px solid var(--danger);color:#fff;
+  font-family:inherit;font-weight:700;font-size:14px;padding:12px 22px;border-radius:11px;cursor:pointer;transition:.15s;}
+.btn-danger:hover:not(:disabled){filter:brightness(1.08);}
+.btn-danger:disabled{opacity:.55;cursor:not-allowed;}
+.btn-danger svg{width:17px;height:17px;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(18px);z-index:300;
   background:var(--petrol-d);color:#fff;font-size:14px;font-weight:600;padding:13px 22px;border-radius:12px;
   box-shadow:0 14px 34px rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:.25s;display:flex;align-items:center;gap:9px;}

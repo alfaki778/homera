@@ -446,6 +446,23 @@ async function sellProject(db, data) {
   await db.query('UPDATE projects SET sold=?, status=? WHERE id=?', [sold, status, Number(row.id)]);
 }
 
+/* حذف مشروع نهائياً — طلبات الاهتمام تبقى محفوظة (تحمل اسم المشروع في صفّها) */
+async function deleteProject(db, data) {
+  const id = Number(data.id || 0);
+  const name = String(data.name || '').trim();
+  const [rows] = id > 0
+    ? await db.query('SELECT id FROM projects WHERE id=?', [id])
+    : await db.query('SELECT id FROM projects WHERE name=?', [name]);
+
+  if (!rows.length) {
+    const error = new Error('المشروع غير موجود');
+    error.status = 404;
+    throw error;
+  }
+
+  await db.query('DELETE FROM projects WHERE id=?', [Number(rows[0].id)]);
+}
+
 /* ==========================================================================
    طلبات تسجيل الاهتمام (Leads) — تُستقبل من الصفحة الرئيسية وصفحات المشاريع
    ========================================================================== */
@@ -664,6 +681,13 @@ app.post(['/api/homera', '/api/homera.php'], async (req, res) => {
     if (action === 'sell') {
       await requireUser(db, req, ['admin', 'editor']);
       await sellProject(db, req.body || {});
+      return json(res, { ok: true, projects: await getProjects(db) });
+    }
+
+    /* الحذف نهائي — للأدمن فقط */
+    if (action === 'deleteProject') {
+      await requireUser(db, req, ['admin']);
+      await deleteProject(db, req.body || {});
       return json(res, { ok: true, projects: await getProjects(db) });
     }
 
