@@ -159,6 +159,35 @@
     return pa - pb;
   }
 
+  /* الأقسام المشروطة (فرص عقارية / تحت الإنشاء) تصل مخفيّة في HTML وتُكشف بعد
+     وصول البيانات، فلو دخل الزائر برابط #deals لم يجد المتصفح الهدف وقت التحميل
+     ولم يمرّر الصفحة — نمرّر يدوياً بعد الكشف مع خصم ارتفاع الترويسة اللاصقة */
+  function scrollToHashTarget() {
+    var id = decodeURIComponent((location.hash || '').slice(1));
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el || el.hidden) return;
+    if (window.pageYOffset > 4) return; // المتصفح أو المستخدم مرّر الصفحة أصلاً
+
+    var cancelled = false;
+    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) {
+      window.addEventListener(ev, function () { cancelled = true; }, { once: true, passive: true });
+    });
+    /* الهدف مطلق (لا يعتمد على موضع التمرير الحالي) فتكرار المحاذاة آمن —
+       نعيدها بعد تحميل الصور لأن ارتفاعات ما قبل القسم تتغيّر فيزيح الهدف */
+    function align() {
+      if (cancelled) return;
+      var head = document.querySelector('.topbar');
+      var offset = (head ? head.getBoundingClientRect().height : 0) + 8;
+      var top = Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - offset);
+      if (Math.abs(top - window.pageYOffset) < 2) return;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    }
+    align();
+    window.addEventListener('load', align);
+    setTimeout(align, 700);
+  }
+
   function render(projects) {
     // الترتيب الافتراضي: من الأقل سعراً إلى الأعلى
     var sorted = (projects || []).slice().sort(byPriceAsc);
@@ -174,6 +203,7 @@
       if (typeof window.HOMERA_initProjectFilters === 'function') window.HOMERA_initProjectFilters();
     }
     document.dispatchEvent(new CustomEvent('homera:projects', { detail: sorted }));
+    scrollToHashTarget();
   }
 
   function showSkeletons() {
