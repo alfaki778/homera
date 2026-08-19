@@ -704,6 +704,7 @@ app.get('/project/:id', (req, res) => sendPage(res, 'project-detail.html'));
 app.get('/fadilah-117', (req, res) => res.redirect(301, './projects'));
 app.get('/identity', (req, res) => sendPage(res, 'هوية هوميرا.html'));
 app.get('/dashboard', (req, res) => sendPage(res, 'hom555.html'));
+app.get(['/homera', '/links'], (req, res) => sendPage(res, 'homera-links.html')); // صفحة الروابط (نمط linktree)
 
 app.use(express.static(rootDir, { index: false, extensions: false }));
 
