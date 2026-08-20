@@ -52,17 +52,19 @@ body::after{width:520px;height:520px;bottom:-220px;inset-inline-end:-160px;backg
 
 .stack{width:100%;max-width:460px;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
 
-/* ===== الهوية ===== */
-.avatar{
-  width:118px;height:118px;border-radius:50%;
-  background:#fff;
-  display:grid;place-items:center;
-  padding:11px;
-  box-shadow:0 0 0 3px rgba(199,163,107,.85), 0 18px 40px rgba(0,0,0,.38);
-  overflow:hidden;
+/* ===== الهوية =====
+   شعار هوميرا كريمي فاتح بخلفية شفافة، فيظهر بأوضح صورة على الخلفية الداكنة
+   مباشرة — بلا دائرة تقصّه وتصغّره */
+.avatar{width:100%;display:grid;place-items:center;}
+.avatar img{
+  width:min(228px,62vw);
+  max-height:172px;
+  object-fit:contain;
+  display:block;
+  border-radius:12px; /* يفيد فقط لو رُفع شعار بخلفية مصمتة من اللوحة */
+  filter:drop-shadow(0 14px 32px rgba(0,0,0,.45));
 }
-.avatar img{width:100%;height:100%;object-fit:contain;display:block;}
-h1{font-size:28px;font-weight:800;margin-top:20px;letter-spacing:.2px;}
+h1{font-size:25px;font-weight:800;margin-top:22px;letter-spacing:.2px;}
 .handle{margin-top:7px;font-size:14px;color:var(--gold-l);font-weight:600;direction:ltr;}
 .bio{margin-top:14px;font-size:15.5px;line-height:1.9;color:#CBD9DA;text-align:center;max-width:400px;}
 
@@ -99,8 +101,8 @@ h1{font-size:28px;font-weight:800;margin-top:20px;letter-spacing:.2px;}
 .foot{margin-top:34px;text-align:center;font-size:12.5px;color:#8FA3A6;line-height:2;}
 
 @media (max-width:400px){
-  .avatar{width:100px;height:100px;}
-  h1{font-size:24px;}
+  .avatar img{max-height:148px;}
+  h1{font-size:22px;}
   .bio{font-size:14.5px;}
   .wa-btn{font-size:16px;padding:17px 15px;gap:11px;}
 }
@@ -116,7 +118,7 @@ h1{font-size:28px;font-weight:800;margin-top:20px;letter-spacing:.2px;}
 
   <!-- الشعار: يُستبدل تلقائياً بشعار لوحة التحكم إن رُفع واحد -->
   <div class="avatar brandmark">
-    <img class="brand-logo" src="/uploads/1-logo.png" alt="هوميرا"/>
+    <img class="brand-logo" src="/uploads/5-logo.png" alt="هوميرا"/>
   </div>
 
   <h1>هوميرا</h1>
