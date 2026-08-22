@@ -231,6 +231,7 @@ function projectRow(row, mode = 'full') {
     stage: row.stage || 'ready',
     rooms: Number(row.rooms || 0),
     payment: row.payment || 'both',
+    featured: Number(row.featured || 0) === 1,
     limitedOffer: Number(row.limited_offer || 0) === 1,
     noCommission: Number(row.no_commission || 0) === 1,
     progress: Math.min(100, Math.max(0, Number(row.progress || 0))),
@@ -251,7 +252,7 @@ function projectRow(row, mode = 'full') {
 }
 
 const CARD_BASE_COLUMNS = ['id', 'name', 'dist', 'city', 'area', 'facade', 'type', 'price', 'total', 'sold', 'status', 'updated_at'];
-const CARD_OPTIONAL_COLUMNS = ['license', 'category', 'stage', 'rooms', 'payment', 'old_price', 'limited_offer', 'no_commission', 'progress', 'delivery_date', 'models'];
+const CARD_OPTIONAL_COLUMNS = ['license', 'category', 'stage', 'rooms', 'payment', 'old_price', 'featured', 'limited_offer', 'no_commission', 'progress', 'delivery_date', 'models'];
 function cardColumnsSql() {
   const cols = CARD_BASE_COLUMNS.concat(CARD_OPTIONAL_COLUMNS.filter(hasColumn));
   return 'SELECT ' + cols.join(', ') +
@@ -397,6 +398,7 @@ async function saveProject(db, project) {
     columns.push(['rooms', Math.max(0, Number(project.rooms || 0))]);
     columns.push(['payment', payments.indexOf(project.payment) > -1 ? project.payment : 'both']);
     columns.push(['old_price', Math.max(0, Number(project.oldPrice || 0))]);
+    columns.push(['featured', project.featured ? 1 : 0]);
     columns.push(['limited_offer', project.limitedOffer ? 1 : 0]);
     columns.push(['no_commission', project.noCommission ? 1 : 0]);
     columns.push(['progress', Math.min(100, Math.max(0, Number(project.progress || 0)))]);
@@ -424,6 +426,27 @@ async function saveProject(db, project) {
       ' ON DUPLICATE KEY UPDATE ' + insertColumns.filter((c) => c[0] !== 'name' && c[0] !== 'sort_order').map((c) => c[0] + '=VALUES(' + c[0] + ')').join(', '),
     insertColumns.map((c) => c[1])
   );
+}
+
+/* تثبيت/إلغاء تثبيت مشروع على الواجهة الرئيسية */
+async function featureProject(db, data) {
+  if (!hasColumn('featured')) {
+    const error = new Error('تعذّرت ترقية قاعدة البيانات — أعد تشغيل الخادم ثم حاول مجدداً');
+    error.status = 503;
+    throw error;
+  }
+  const id = Number(data.id || 0);
+  if (id <= 0) {
+    const error = new Error('المشروع غير موجود');
+    error.status = 404;
+    throw error;
+  }
+  const [result] = await db.query('UPDATE projects SET featured=? WHERE id=?', [data.featured ? 1 : 0, id]);
+  if (!result.affectedRows) {
+    const error = new Error('المشروع غير موجود');
+    error.status = 404;
+    throw error;
+  }
 }
 
 async function sellProject(db, data) {
@@ -675,6 +698,12 @@ app.post(['/api/homera', '/api/homera.php'], async (req, res) => {
     if (action === 'project') {
       await requireUser(db, req, ['admin', 'editor']);
       await saveProject(db, req.body.project || {});
+      return json(res, { ok: true, projects: await getProjects(db) });
+    }
+
+    if (action === 'feature') {
+      await requireUser(db, req, ['admin', 'editor']);
+      await featureProject(db, req.body || {});
       return json(res, { ok: true, projects: await getProjects(db) });
     }
 

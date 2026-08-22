@@ -126,6 +126,7 @@ async function createTables(db) {
     video_poster LONGTEXT NULL,
     summary TEXT NULL,
     models LONGTEXT NULL,
+    featured TINYINT(1) NOT NULL DEFAULT 0,
     cover LONGTEXT NULL,
     gallery LONGTEXT NULL,
     sort_order INT NOT NULL DEFAULT 0,
@@ -192,7 +193,8 @@ const PROJECT_COLUMNS = [
   ['video_url', "VARCHAR(600) NOT NULL DEFAULT ''"],
   ['video_poster', 'LONGTEXT NULL'],
   ['summary', 'TEXT NULL'],
-  ['models', 'LONGTEXT NULL']
+  ['models', 'LONGTEXT NULL'],
+  ['featured', 'TINYINT(1) NOT NULL DEFAULT 0']
 ];
 
 // ترقية القواعد القديمة: إضافة الأعمدة المستجدة وجدول طلبات الاهتمام

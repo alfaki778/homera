@@ -141,6 +141,7 @@
       window.HOMERA_API.submitLead(lead).then(function () {
         form.style.display = 'none';
         done.classList.add('show');
+        document.dispatchEvent(new CustomEvent('homera:lead-sent', { detail: lead }));
         done.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }).catch(function (err) {
         submitBtn.disabled = false;
@@ -150,8 +151,96 @@
     });
   }
 
+  /* ============ النافذة المنبثقة بعد 10 ثوانٍ ============
+     تُعرض لزائر الموقع مرة واحدة: من يرسل النموذج لا تظهر له مجدداً،
+     ومن يغلقها لا تُزعجه بقية الجلسة. */
+  var POPUP_DELAY = 10000;
+  var DONE_KEY = 'homera_lead_done';
+  var SEEN_KEY = 'homera_lead_seen';
+
+  function store(kind, key, value) {
+    try {
+      var box = kind === 'local' ? localStorage : sessionStorage;
+      if (value === undefined) return box.getItem(key);
+      box.setItem(key, value);
+    } catch (e) { return null; }
+  }
+
+  function alreadyHandled() {
+    return store('local', DONE_KEY) === '1' || store('session', SEEN_KEY) === '1';
+  }
+
+  function typingInLeadForm() {
+    var el = document.activeElement;
+    return !!(el && el.closest && el.closest('.lead-form'));
+  }
+
+  function buildPopup() {
+    var wrap = document.createElement('div');
+    wrap.className = 'lead-modal';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.setAttribute('aria-label', 'سجّل اهتمامك');
+    wrap.innerHTML =
+      '<div class="lead-modal-panel">' +
+        '<button type="button" class="lead-modal-close" aria-label="إغلاق">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
+        '</button>' +
+        '<div class="lead-modal-head">' +
+          '<span class="eyebrow">نساعدك في اختيار عقارك</span>' +
+          '<h3>سجّل اهتمامك</h3>' +
+          '<p>اترك بياناتك ويتواصل معك أحد مستشاري هوميرا لاقتراح الخيار الأنسب لك.</p>' +
+        '</div>' +
+        '<div class="lead-modal-body" data-source="نافذة منبثقة"></div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    build(wrap.querySelector('.lead-modal-body'));
+    return wrap;
+  }
+
+  function initPopup() {
+    if (alreadyHandled()) return;
+    var wrap = null;
+    var timer = setTimeout(open, POPUP_DELAY);
+
+    function close() {
+      if (!wrap) return;
+      wrap.classList.remove('open');
+      document.body.classList.remove('lead-modal-on');
+      store('session', SEEN_KEY, '1');
+      document.removeEventListener('keydown', onKey);
+    }
+
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    function open() {
+      if (alreadyHandled()) return;
+      // لا نقاطع زائراً يملأ النموذج المعروض داخل الصفحة
+      if (typingInLeadForm()) { timer = setTimeout(open, POPUP_DELAY); return; }
+      wrap = buildPopup();
+      // إطار واحد قبل إضافة open ليعمل انتقال الظهور
+      requestAnimationFrame(function () {
+        wrap.classList.add('open');
+        document.body.classList.add('lead-modal-on');
+      });
+      wrap.querySelector('.lead-modal-close').addEventListener('click', close);
+      wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+      document.addEventListener('keydown', onKey);
+      var input = wrap.querySelector('input[name="name"]');
+      if (input) input.focus({ preventScroll: true });
+    }
+
+    document.addEventListener('homera:lead-sent', function () {
+      store('local', DONE_KEY, '1');
+      store('session', SEEN_KEY, '1');
+      clearTimeout(timer);
+      if (wrap && wrap.classList.contains('open')) setTimeout(close, 2600);
+    });
+  }
+
   function init() {
     document.querySelectorAll('[data-lead-form]').forEach(build);
+    initPopup();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -107,6 +107,7 @@
     /* مشروع واحد بمعرضه — لصفحة التفاصيل، بدل تنزيل كل المشاريع */
     getProject: function (id) { return request('project', null, { id: id }).then(function (data) { return resolveProject(data.project); }); },
     saveProject: function (project) { return request('project', { project: project }); },
+    featureProject: function (id, featured) { return request('feature', { id: id, featured: !!featured }).then(function (data) { return data.projects || []; }); },
     /* نموذج «سجّل اهتمامك» — عام بلا جلسة */
     submitLead: function (lead) { return request('lead', { lead: lead }); },
     getLeads: function () { return request('leads', null).then(function (data) { return data.leads || []; }); },

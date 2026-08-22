@@ -62,6 +62,7 @@ function migrate($config) {
         sold INT UNSIGNED NOT NULL DEFAULT 0,
         status VARCHAR(40) NOT NULL DEFAULT 'new',
         license VARCHAR(120) NOT NULL DEFAULT '',
+        featured TINYINT(1) NOT NULL DEFAULT 0,
         cover LONGTEXT NULL,
         gallery LONGTEXT NULL,
         sort_order INT NOT NULL DEFAULT 0,
@@ -210,6 +211,7 @@ function project_extra_columns() {
         'video_poster' => 'LONGTEXT NULL',
         'summary' => 'TEXT NULL',
         'models' => 'LONGTEXT NULL',
+        'featured' => 'TINYINT(1) NOT NULL DEFAULT 0',
     ];
 }
 
@@ -351,6 +353,7 @@ function project_row($row, $mode = 'full') {
         'stage' => $row['stage'] ?? 'ready',
         'rooms' => (int)($row['rooms'] ?? 0),
         'payment' => $row['payment'] ?? 'both',
+        'featured' => (int)($row['featured'] ?? 0) === 1,
         'limitedOffer' => (int)($row['limited_offer'] ?? 0) === 1,
         'noCommission' => (int)($row['no_commission'] ?? 0) === 1,
         'progress' => min(100, max(0, (int)($row['progress'] ?? 0))),
@@ -514,6 +517,7 @@ function save_project($pdo, $project) {
         $columns['rooms'] = max(0, (int)($project['rooms'] ?? 0));
         $columns['payment'] = in_array($payment, ['cash', 'bank', 'both'], true) ? $payment : 'both';
         $columns['old_price'] = max(0, (int)($project['oldPrice'] ?? 0));
+        $columns['featured'] = !empty($project['featured']) ? 1 : 0;
         $columns['limited_offer'] = !empty($project['limitedOffer']) ? 1 : 0;
         $columns['no_commission'] = !empty($project['noCommission']) ? 1 : 0;
         $columns['progress'] = min(100, max(0, (int)($project['progress'] ?? 0)));
@@ -737,6 +741,21 @@ try {
         save_project($pdo, $data['project'] ?? []);
         respond(['ok' => true, 'projects' => get_projects($pdo)]);
     }
+    if ($action === 'feature') {
+        require_user($pdo, $data, ['admin', 'editor']);
+        ensure_project_columns($pdo);
+        $id = (int)($data['id'] ?? 0);
+        if ($id <= 0) respond(['ok' => false, 'error' => 'المشروع غير موجود'], 404);
+        $up = $pdo->prepare('UPDATE projects SET featured=? WHERE id=?');
+        $up->execute([!empty($data['featured']) ? 1 : 0, $id]);
+        if (!$up->rowCount()) {
+            $chk = $pdo->prepare('SELECT id FROM projects WHERE id=? LIMIT 1');
+            $chk->execute([$id]);
+            if (!$chk->fetchColumn()) respond(['ok' => false, 'error' => 'المشروع غير موجود'], 404);
+        }
+        respond(['ok' => true, 'projects' => get_projects($pdo)]);
+    }
+
     if ($action === 'sell') {
         require_user($pdo, $data, ['admin', 'editor']);
         $id = (int)($data['id'] ?? 0);

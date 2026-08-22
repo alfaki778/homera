@@ -193,7 +193,11 @@
     var sorted = (projects || []).slice().sort(byPriceAsc);
     window.HOMERA_PROJECTS = sorted;
 
-    renderSection('cTrack', sorted, homeCard, 3);
+    /* المشاريع المثبّتة من لوحة التحكم تتصدّر بطاقات الواجهة الرئيسية */
+    var featuredFirst = sorted.slice().sort(function (a, b) {
+      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    });
+    renderSection('cTrack', featuredFirst, homeCard, 3);
     renderSection('dealsTrack', sorted.filter(function (p) { return p.discountPct > 0 || p.limitedOffer; }), homeCard, 3);
     renderSection('buildTrack', sorted.filter(function (p) { return p.stage === 'under_construction'; }), homeCard, 3);
 

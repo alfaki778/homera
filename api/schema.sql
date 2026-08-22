@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS projects (
   video_poster LONGTEXT NULL,
   summary TEXT NULL,
   models LONGTEXT NULL,
+  featured TINYINT(1) NOT NULL DEFAULT 0,
   cover LONGTEXT NULL,
   gallery LONGTEXT NULL,
   sort_order INT NOT NULL DEFAULT 0,
