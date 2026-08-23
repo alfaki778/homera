@@ -650,6 +650,45 @@ async function saveSale(db, data, agent) {
   return Number(result.insertId || 0);
 }
 
+/* الوحدات المباعة المعروضة للزوار — بيانات الوحدة والمشروع فقط.
+   لا يُرسل أي حقل من حقول المشتري إلى الواجهة العامة. */
+const PUBLIC_SOLD_STATUSES = ['contracted', 'completed'];
+
+function soldUnitRow(row) {
+  const models = readModels(row.models);
+  const model = models.find((m) => m.name === row.model_name) || null;
+  const ver = rowVersion({ updated_at: row.project_updated_at, id: row.project_id });
+  return {
+    id: Number(row.id),
+    projectId: Number(row.project_id || 0),
+    projectName: row.project_name || '',
+    modelName: row.model_name || '',
+    unitNo: row.unit_no || '',
+    price: Number(row.price || 0),
+    soldAt: saleDateText(row.sale_date || row.created_at),
+    city: row.city || '',
+    dist: row.dist || '',
+    type: row.type || '',
+    category: row.category || 'residential',
+    area: Number((model && model.area) || row.project_area || 0),
+    rooms: Number((model && model.rooms) || row.project_rooms || 0),
+    cover: imageRef(row.cover, row.project_id, 'cover', ver)
+  };
+}
+
+async function listSoldUnits(db) {
+  const [rows] = await db.query(
+    'SELECT s.id, s.project_id, s.project_name, s.model_name, s.unit_no, s.price, s.sale_date, s.created_at,' +
+      ' p.city, p.dist, p.type, p.category, p.models, p.cover, p.area AS project_area, p.rooms AS project_rooms,' +
+      ' p.updated_at AS project_updated_at' +
+      ' FROM sales s LEFT JOIN projects p ON p.id = s.project_id' +
+      ' WHERE s.status IN (?, ?)' +
+      ' ORDER BY COALESCE(s.sale_date, DATE(s.created_at)) DESC, s.id DESC LIMIT 60',
+    PUBLIC_SOLD_STATUSES
+  );
+  return rows.map(soldUnitRow);
+}
+
 async function listSales(db) {
   const [rows] = await db.query('SELECT * FROM sales ORDER BY id DESC LIMIT 1000');
   return rows.map(saleRow);
@@ -746,6 +785,10 @@ app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
         return res.send(leadsCsv(leads));
       }
       return json(res, { ok: true, leads });
+    }
+    if (action === 'soldUnits') {
+      /* عام بلا جلسة — لا يحمل أي بيانات مشتري */
+      return jsonCached(req, res, { ok: true, units: await listSoldUnits(db) });
     }
     if (action === 'sales') {
       await requireUser(db, req, ['admin', 'editor']);

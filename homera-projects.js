@@ -188,6 +188,62 @@
     setTimeout(align, 700);
   }
 
+
+  /* ===== بطاقة وحدة مباعة =====
+     تعرض بيانات الوحدة وصورة المشروع فقط — بلا أي بيانات عن المشتري. */
+  var SOLD_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+  function soldWhen(value) {
+    var raw = String(value || '');
+    var parts = raw.slice(0, 10).split('-');
+    if (parts.length !== 3) return '';
+    var m = Number(parts[1]);
+    if (!m || m < 1 || m > 12) return '';
+    return SOLD_MONTHS[m - 1] + ' ' + parts[0];
+  }
+
+  function soldFacts(unit) {
+    var items = [];
+    if (unit.area) items.push(['<path d="M3 21h18M4 21V10l8-6 8 6v11"/>', fmt(unit.area) + ' م²']);
+    if (unit.rooms) items.push(['<path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M7 10V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/>', unit.rooms + ' غرف']);
+    if (unit.dist || unit.city) items.push(['<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', [unit.dist, unit.city].filter(Boolean).join('، ')]);
+    if (!items.length) return '';
+    return '<div class="meta">' + items.map(function (it) {
+      return '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' + it[0] + '</svg> ' + esc(it[1]) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function soldCard(unit, index) {
+    var cover = unit.cover || PLACEHOLDER;
+    var unitLine = [unit.modelName, unit.unitNo].filter(Boolean).join(' · ');
+    var when = soldWhen(unit.soldAt);
+    return '<article class="sold-card">' +
+      '<div class="thumb">' +
+        '<img class="project-cover" src="' + esc(cover) + '" alt="' + esc(unit.projectName) + '"' + imgAttrs(index, 3) + '>' +
+        '<div class="ov"></div>' +
+        '<span class="sold-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تم البيع</span>' +
+        (unit.type ? '<span class="pill">' + esc(unit.type) + '</span>' : '') +
+      '</div>' +
+      '<div class="sold-body">' +
+        '<h4>' + esc(unit.projectName) + '</h4>' +
+        (unitLine ? '<div class="sold-unit">' + esc(unitLine) + '</div>' : '') +
+        soldFacts(unit) +
+        '<div class="sold-foot">' +
+          (unit.price ? '<span class="sold-price"><small>سعر البيع</small><b>' + fmt(unit.price) + ' ريال</b></span>' : '<span class="sold-price"><small>سعر البيع</small><b>غير معلن</b></span>') +
+          (when ? '<span class="sold-when"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' + esc(when) + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function renderSoldUnits() {
+    var track = document.getElementById('soldTrack');
+    if (!track || !window.HOMERA_API || !window.HOMERA_API.getSoldUnits) return;
+    window.HOMERA_API.getSoldUnits().then(function (units) {
+      renderSection('soldTrack', units || [], soldCard, 6);
+    }).catch(function () { /* القسم يبقى مخفيّاً إن تعذّر الجلب */ });
+  }
+
   function render(projects) {
     // الترتيب الافتراضي: من الأقل سعراً إلى الأعلى
     var sorted = (projects || []).slice().sort(byPriceAsc);
@@ -227,6 +283,8 @@
 
   // نبدأ الطلب فوراً دون انتظار DOMContentLoaded حتى لا يتأخر ظهور المشاريع
   if (window.HOMERA_API) window.HOMERA_API.getProjects().catch(function () {});
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  function initAll() { init(); renderSoldUnits(); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+  else initAll();
 })();

@@ -625,6 +625,41 @@ function sale_row($row) {
     ];
 }
 
+/* الوحدات المباعة المعروضة للزوار — دون أي بيانات مشتري */
+function sold_unit_row($row) {
+    $models = read_models($row['models'] ?? '[]');
+    $model = null;
+    foreach ($models as $m) { if (($m['name'] ?? '') === ($row['model_name'] ?? '')) { $model = $m; break; } }
+    $ver = row_version(['updated_at' => $row['project_updated_at'] ?? '', 'id' => $row['project_id']]);
+    return [
+        'id' => (int)$row['id'],
+        'projectId' => (int)$row['project_id'],
+        'projectName' => $row['project_name'] ?? '',
+        'modelName' => $row['model_name'] ?? '',
+        'unitNo' => $row['unit_no'] ?? '',
+        'price' => (int)$row['price'],
+        'soldAt' => substr((string)($row['sale_date'] ?: $row['created_at']), 0, 10),
+        'city' => $row['city'] ?? '',
+        'dist' => $row['dist'] ?? '',
+        'type' => $row['type'] ?? '',
+        'category' => $row['category'] ?? 'residential',
+        'area' => (int)(($model['area'] ?? 0) ?: ($row['project_area'] ?? 0)),
+        'rooms' => (int)(($model['rooms'] ?? 0) ?: ($row['project_rooms'] ?? 0)),
+        'cover' => image_ref($row['cover'] ?? '', (int)$row['project_id'], 'cover', $ver),
+    ];
+}
+
+function list_sold_units($pdo) {
+    $sql = 'SELECT s.id, s.project_id, s.project_name, s.model_name, s.unit_no, s.price, s.sale_date, s.created_at,'
+        . ' p.city, p.dist, p.type, p.category, p.models, p.cover, p.area AS project_area, p.rooms AS project_rooms,'
+        . ' p.updated_at AS project_updated_at'
+        . ' FROM sales s LEFT JOIN projects p ON p.id = s.project_id'
+        . " WHERE s.status IN ('contracted', 'completed')"
+        . ' ORDER BY COALESCE(s.sale_date, DATE(s.created_at)) DESC, s.id DESC LIMIT 60';
+    $rows = $pdo->query($sql)->fetchAll();
+    return array_map('sold_unit_row', $rows);
+}
+
 function list_sales($pdo) {
     $rows = $pdo->query('SELECT * FROM sales ORDER BY id DESC LIMIT 1000')->fetchAll();
     return array_map('sale_row', $rows);
@@ -803,6 +838,10 @@ try {
                 exit;
             }
             respond(['ok' => true, 'leads' => $leads]);
+        }
+        if ($action === 'soldUnits') {
+            ensure_project_columns($pdo);
+            respond(['ok' => true, 'units' => list_sold_units($pdo)]);
         }
         if ($action === 'sales') {
             require_user($pdo, $data, ['admin', 'editor']);
