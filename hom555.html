@@ -86,6 +86,18 @@
 .add-model:hover{border-color:var(--accent);color:var(--accent-d);}
 .add-model svg{width:17px;height:17px;}
 .form-sep{margin:22px 0 14px;padding-top:16px;border-top:1px solid var(--border);font-size:14px;font-weight:800;color:var(--text);}
+/* ===== المبيعات ===== */
+.hint{display:block;font-size:12.5px;color:var(--muted);line-height:1.8;margin-top:6px;}
+.sales-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:18px;}
+.sales-stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
+.sales-stat .k{font-size:12.5px;color:var(--muted);font-weight:700;}
+.sales-stat .v{font-size:23px;font-weight:800;color:var(--text);margin-top:6px;letter-spacing:-.01em;}
+.sales-stat .v small{font-size:13px;font-weight:700;color:var(--muted);margin-inline-start:4px;}
+.sale-status{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);border-radius:8px;
+  padding:6px 9px;background:var(--surface);color:var(--text);cursor:pointer;}
+.tbl .sale-buyer b{display:block;}
+.tbl .sale-buyer span{font-size:12.5px;color:var(--muted);}
+.tbl .sale-sub{font-size:12.5px;color:var(--muted);}
 .switch-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
 .switch-row input{width:18px;height:18px;accent-color:var(--accent-d);cursor:pointer;flex:none;}
 .switch-row label{font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;margin:0;}
@@ -126,7 +138,7 @@
   var gate=document.getElementById('authGate');
   function setCurrentUser(user){ window.HOMERA_CURRENT_USER=user||null; if(window.HOMERA_applyAccess) window.HOMERA_applyAccess(); }
   // جلب المشاريع يتطلب جلسة (بيانات خام)، فنعيد التحميل فور نجاح الدخول
-  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); if(window.HOMERA_reloadProjects) window.HOMERA_reloadProjects(); if(window.HOMERA_reloadLeads) window.HOMERA_reloadLeads(); }
+  function hideGate(user){ setCurrentUser(user); gate.classList.add('hide'); if(window.HOMERA_reloadProjects) window.HOMERA_reloadProjects(); if(window.HOMERA_reloadLeads) window.HOMERA_reloadLeads(); if(window.HOMERA_reloadSales) window.HOMERA_reloadSales(); }
   var session=window.HOMERA_API && window.HOMERA_API.currentSession && window.HOMERA_API.currentSession();
   if(session && session.user){ hideGate(session.user); }
   document.getElementById('authForm').addEventListener('submit', function(e){
@@ -169,6 +181,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v13H7l-3 3z"/><path d="M8 9h8M8 13h5"/></svg>
       طلبات الاهتمام
       <span class="ext" id="leadsCount" hidden></span>
+    </div>
+    <div class="navitem" data-view="sales">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h7.8a2 2 0 0 0 2-1.6L20 8H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/></svg>
+      المبيعات
+      <span class="ext" id="salesCount" hidden></span>
     </div>
     <div class="navitem" data-view="landing">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
@@ -306,6 +323,28 @@
           <table class="tbl"><thead><tr>
             <th>العميل</th><th>المشروع</th><th>الطلب</th><th>الميزانية</th><th>التفاصيل</th><th>المصدر</th><th>الحالة</th>
           </tr></thead><tbody id="leadsTbody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ===== المبيعات ===== -->
+      <section class="view" id="view-sales">
+        <div class="sales-stats" id="salesStats"></div>
+        <div class="lead-tools">
+          <div class="chips" id="saleChips">
+            <button class="chip on" data-sale-status="all">الكل</button>
+            <button class="chip" data-sale-status="reserved">حجز</button>
+            <button class="chip" data-sale-status="contracted">عقد موقّع</button>
+            <button class="chip" data-sale-status="completed">مكتملة</button>
+            <button class="chip" data-sale-status="cancelled">ملغاة</button>
+          </div>
+          <span class="spacer"></span>
+          <button class="btn-ghost" id="salesRefresh">تحديث</button>
+          <button class="btn-primary" id="addSaleBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة عملية بيع</button>
+        </div>
+        <div class="card">
+          <table class="tbl"><thead><tr>
+            <th>المشتري</th><th>المشروع / الوحدة</th><th>السعر</th><th>الدفع</th><th>التاريخ</th><th>سجّلها</th><th>الحالة</th><th></th>
+          </tr></thead><tbody id="salesTbody"></tbody></table>
         </div>
       </section>
 
@@ -580,10 +619,11 @@
   window.HOMERA_reloadProjects();
 
   // تبديل العرض
-  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], leads:['طلبات الاهتمام','العملاء الذين سجّلوا اهتمامهم عبر الموقع'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};
+  var titles = {overview:['نظرة عامة','ملخّص أداء مشاريع هوميرا'], projects:['المشاريع','إدارة محفظة مشاريع هوميرا'], leads:['طلبات الاهتمام','العملاء الذين سجّلوا اهتمامهم عبر الموقع'], sales:['المبيعات','تسجيل عمليات البيع ومتابعة حالتها'], landing:['الصفحة الرئيسية','تعديل محتوى وصور الصفحة الرئيسية'], password:['تغيير كلمة المرور','تحديث كلمة مرور حسابك'], users:['المستخدمون','إدارة حسابات وصلاحيات لوحة التحكم']};
   function showView(v){
     if(v==='users' && (!window.HOMERA_CURRENT_USER || window.HOMERA_CURRENT_USER.role!=='admin')) v='overview';
     if(v==='leads' && window.HOMERA_reloadLeads) window.HOMERA_reloadLeads();
+    if(v==='sales' && window.HOMERA_reloadSales) window.HOMERA_reloadSales();
     document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
     document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
     document.getElementById('pageTitle').textContent = titles[v][0];
@@ -607,6 +647,7 @@
     renderAll();  // إعادة رسم الجدول لتظهر أزرار الأدمن (الحذف) بعد معرفة الدور
     loadUsers();
     if(window.HOMERA_reloadLeads) window.HOMERA_reloadLeads();
+    if(window.HOMERA_reloadSales) window.HOMERA_reloadSales();
   };
   window.HOMERA_applyAccess();
 
@@ -949,6 +990,232 @@
     galleryData.splice(parseInt(b.dataset.gi,10),1); renderGalPrev();
   });
 
+
+  /* ===== المبيعات ===== */
+  var SALES=[], saleFilter='all', editingSale=null;
+  var SALE_STATE={reserved:'حجز', contracted:'عقد موقّع', completed:'مكتملة', cancelled:'ملغاة'};
+  var SALE_PAY={cash:'كاش', bank:'تمويل بنكي', installments:'أقساط'};
+
+  function saleDateTxt(value){
+    if(!value) return '—';
+    var d=new Date(value);
+    if(isNaN(d)) return String(value);
+    return d.toLocaleDateString('ar-EG',{year:'numeric',month:'short',day:'numeric'});
+  }
+
+  /* سعر النموذج المختار، وإلا سعر المشروع — يُعبّأ تلقائياً ويظل قابلاً للتعديل */
+  function autoPrice(project, modelName){
+    if(!project) return 0;
+    var models=Array.isArray(project.models)?project.models:[];
+    if(modelName){
+      var hit=models.find(function(m){ return m.name===modelName; });
+      if(hit && Number(hit.price)>0) return Number(hit.price);
+    }
+    return Number(project.priceFrom||project.price||0);
+  }
+
+  function fillSaleProjects(selectedId){
+    var sel=document.getElementById('saleProject');
+    if(!sel) return;
+    sel.innerHTML='<option value="">— اختر المشروع —</option>'+PROJECTS.map(function(p){
+      return '<option value="'+Number(p.id||0)+'"'+(Number(p.id||0)===Number(selectedId||0)?' selected':'')+'>'+esc(p.name)+'</option>';
+    }).join('');
+  }
+
+  function fillSaleModels(projectId, selectedName){
+    var sel=document.getElementById('saleModel');
+    if(!sel) return;
+    var p=PROJECTS.find(function(x){ return Number(x.id||0)===Number(projectId||0); });
+    var models=(p && Array.isArray(p.models))?p.models:[];
+    sel.innerHTML='<option value="">غير محدد</option>'+models.map(function(m){
+      var label=m.name+(m.area?' · '+m.area+' م²':'')+(Number(m.price)>0?' · '+fmt(Number(m.price))+' ر.س':'');
+      return '<option value="'+esc(m.name)+'"'+(m.name===selectedName?' selected':'')+'>'+esc(label)+'</option>';
+    }).join('');
+    sel.disabled = models.length===0;
+  }
+
+  /* يملأ حقل السعر تلقائياً ويوضّح مصدره — دون أن يمسح رقماً كتبه المستخدم يدوياً */
+  function applyAutoPrice(force){
+    var priceEl=document.getElementById('salePrice');
+    var hint=document.getElementById('salePriceHint');
+    var pid=document.getElementById('saleProject').value;
+    var model=document.getElementById('saleModel').value;
+    var p=PROJECTS.find(function(x){ return Number(x.id||0)===Number(pid||0); });
+    var auto=autoPrice(p, model);
+    if(!p){ if(hint) hint.hidden=true; return; }
+    if(force || !priceEl.value || Number(priceEl.value)===0){
+      priceEl.value = auto>0 ? auto : '';
+    }
+    if(hint){
+      if(auto>0){ hint.hidden=false; hint.textContent='السعر المعبّأ تلقائياً: '+fmt(auto)+' ر.س ('+(model?'سعر النموذج':'سعر المشروع')+') — يمكنك تعديله.'; }
+      else { hint.hidden=false; hint.textContent='لا يوجد سعر محفوظ لهذا الاختيار — أدخل السعر يدوياً.'; }
+    }
+  }
+
+  function saleRowHtml(sale){
+    var unit=[sale.modelName, sale.unitNo].filter(Boolean).join(' · ');
+    return '<tr class="sale-row" data-status="'+sale.status+'" data-id="'+sale.id+'">'+
+      '<td data-label="المشتري"><div class="sale-buyer"><b>'+esc(sale.buyerName)+'</b>'+
+        (sale.buyerPhone?'<span dir="ltr">'+esc(sale.buyerPhone)+'</span>':'')+'</div></td>'+
+      '<td data-label="المشروع / الوحدة"><b>'+esc(sale.projectName||'—')+'</b>'+
+        (unit?'<div class="sale-sub">'+esc(unit)+'</div>':'')+'</td>'+
+      '<td data-label="السعر"><span class="price">'+fmt(sale.price)+' ر.س</span>'+
+        (sale.downPayment?'<div class="sale-sub">دفعة أولى: '+fmt(sale.downPayment)+'</div>':'')+'</td>'+
+      '<td data-label="الدفع">'+esc(SALE_PAY[sale.paymentMethod]||'—')+
+        (sale.bankName?'<div class="sale-sub">'+esc(sale.bankName)+'</div>':'')+'</td>'+
+      '<td data-label="التاريخ">'+saleDateTxt(sale.saleDate||sale.createdAt)+'</td>'+
+      '<td data-label="سجّلها"><span class="sale-sub">'+esc(sale.agent||'—')+'</span></td>'+
+      '<td data-label="الحالة"><select class="sale-status" data-id="'+sale.id+'">'+
+        Object.keys(SALE_STATE).map(function(k){ return '<option value="'+k+'"'+(sale.status===k?' selected':'')+'>'+SALE_STATE[k]+'</option>'; }).join('')+
+      '</select></td>'+
+      '<td data-label=""><div style="display:flex;gap:8px">'+
+        '<button class="rowbtn sale-edit" title="تعديل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>'+
+        (isAdmin()?'<button class="rowbtn sale-del" title="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4h6v3"/></svg></button>':'')+
+      '</div></td>'+
+    '</tr>';
+  }
+
+  function isAdmin(){ return !!(window.HOMERA_CURRENT_USER && window.HOMERA_CURRENT_USER.role==='admin'); }
+
+  function renderSalesStats(){
+    var host=document.getElementById('salesStats');
+    if(!host) return;
+    var live=SALES.filter(function(x){ return x.status!=='cancelled'; });
+    var total=live.reduce(function(a,x){ return a+Number(x.price||0); },0);
+    var comm=live.reduce(function(a,x){ return a+Number(x.commission||0); },0);
+    var done=SALES.filter(function(x){ return x.status==='completed'; }).length;
+    host.innerHTML=
+      '<div class="sales-stat"><div class="k">عدد العمليات</div><div class="v">'+SALES.length+'</div></div>'+
+      '<div class="sales-stat"><div class="k">إجمالي المبيعات</div><div class="v">'+fmt(total)+' <small>ر.س</small></div></div>'+
+      '<div class="sales-stat"><div class="k">إجمالي العمولات</div><div class="v">'+fmt(comm)+' <small>ر.س</small></div></div>'+
+      '<div class="sales-stat"><div class="k">عمليات مكتملة</div><div class="v">'+done+'</div></div>';
+  }
+
+  function renderSales(){
+    var body=document.getElementById('salesTbody');
+    if(!body) return;
+    var list=SALES.filter(function(x){ return saleFilter==='all' || x.status===saleFilter; });
+    var emptyTxt = SALES.length ? 'لا توجد عمليات مطابقة لهذا الفلتر.' : 'لا توجد عمليات بيع مسجّلة بعد.';
+    body.innerHTML = list.length ? list.map(saleRowHtml).join('')
+      : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">'+emptyTxt+'</td></tr>';
+    /* الإحصائيات تُحسب من كل العمليات لا من المعروض فقط */
+    renderSalesStats();
+    var badge=document.getElementById('salesCount');
+    if(badge){ badge.textContent=SALES.length||''; badge.hidden=!SALES.length; }
+  }
+
+  function setSales(list){ SALES=Array.isArray(list)?list:[]; renderSales(); }
+
+  window.HOMERA_reloadSales=function(){
+    if(!window.HOMERA_API) return;
+    window.HOMERA_API.getSales().then(setSales).catch(function(err){ toast(err.message||'تعذّر تحميل المبيعات'); });
+  };
+
+  function openSale(sale){
+    editingSale=sale||null;
+    var f=document.getElementById('saleForm');
+    document.getElementById('saleTitle').textContent = sale?'تعديل عملية بيع':'إضافة عملية بيع';
+    f.reset();
+    fillSaleProjects(sale?sale.projectId:0);
+    fillSaleModels(sale?sale.projectId:0, sale?sale.modelName:'');
+    if(sale){
+      f.unitNo.value=sale.unitNo||''; f.price.value=sale.price||'';
+      f.downPayment.value=sale.downPayment||''; f.commission.value=sale.commission||'';
+      f.buyerName.value=sale.buyerName||''; f.buyerPhone.value=sale.buyerPhone||'';
+      f.buyerIdNo.value=sale.buyerIdNo||''; f.buyerEmail.value=sale.buyerEmail||'';
+      f.buyerCity.value=sale.buyerCity||''; f.paymentMethod.value=sale.paymentMethod||'cash';
+      f.bankName.value=sale.bankName||''; f.saleDate.value=sale.saleDate||'';
+      f.status.value=sale.status||'reserved'; f.notes.value=sale.notes||'';
+      applyAutoPrice(false);
+    } else {
+      f.status.value='reserved';
+      f.saleDate.value=new Date().toISOString().slice(0,10);
+      document.getElementById('salePriceHint').hidden=true;
+    }
+    openModal('saleModal');
+  }
+
+  document.getElementById('addSaleBtn').addEventListener('click', function(){
+    if(!PROJECTS.length) return toast('أضف مشروعاً أولاً ليمكن تسجيل بيع عليه');
+    openSale(null);
+  });
+  document.getElementById('saleClose').addEventListener('click', function(){ closeModal('saleModal'); });
+  document.getElementById('saleCancel').addEventListener('click', function(){ closeModal('saleModal'); });
+  document.getElementById('saleModal').addEventListener('click', function(e){ if(e.target.id==='saleModal') closeModal('saleModal'); });
+  document.getElementById('salesRefresh').addEventListener('click', function(){ window.HOMERA_reloadSales(); });
+
+  /* اختيار المشروع → تحديث النماذج والسعر تلقائياً */
+  document.getElementById('saleProject').addEventListener('change', function(){
+    fillSaleModels(this.value, '');
+    applyAutoPrice(true);
+  });
+  document.getElementById('saleModel').addEventListener('change', function(){ applyAutoPrice(true); });
+
+  document.querySelectorAll('#saleChips .chip').forEach(function(c){
+    c.addEventListener('click', function(){
+      document.querySelectorAll('#saleChips .chip').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on'); saleFilter=c.dataset.saleStatus; renderSales();
+    });
+  });
+
+  document.getElementById('salesTbody').addEventListener('change', function(e){
+    var sel=e.target.closest('.sale-status');
+    if(!sel || !window.HOMERA_API) return;
+    window.HOMERA_API.setSaleStatus(Number(sel.dataset.id), sel.value)
+      .then(function(list){ setSales(list); toast('تم تحديث حالة العملية'); })
+      .catch(function(err){ toast(err.message||'تعذّر تحديث الحالة'); });
+  });
+
+  document.getElementById('salesTbody').addEventListener('click', function(e){
+    var row=e.target.closest('.sale-row');
+    if(!row) return;
+    var sale=SALES.find(function(x){ return Number(x.id)===Number(row.dataset.id); });
+    if(!sale) return;
+    if(e.target.closest('.sale-edit')){ openSale(sale); return; }
+    if(e.target.closest('.sale-del')){
+      if(!confirm('حذف عملية البيع الخاصة بـ «'+sale.buyerName+'» نهائياً؟')) return;
+      window.HOMERA_API.deleteSale(sale.id)
+        .then(function(list){ setSales(list); toast('تم حذف العملية'); })
+        .catch(function(err){ toast(err.message||'تعذّر الحذف'); });
+    }
+  });
+
+  document.getElementById('saleForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!window.HOMERA_API) return toast('API غير متاح حالياً');
+    var f=e.target;
+    var pid=Number(f.projectId.value||0);
+    var project=PROJECTS.find(function(x){ return Number(x.id||0)===pid; });
+    if(!project) return toast('اختر المشروع أولاً');
+    var payload={
+      id: editingSale?editingSale.id:0,
+      projectId: pid,
+      projectName: project.name,
+      modelName: f.modelName.value,
+      unitNo: f.unitNo.value.trim(),
+      price: Number(f.price.value||0),
+      downPayment: Number(f.downPayment.value||0),
+      commission: Number(f.commission.value||0),
+      buyerName: f.buyerName.value.trim(),
+      buyerPhone: f.buyerPhone.value.trim(),
+      buyerIdNo: f.buyerIdNo.value.trim(),
+      buyerEmail: f.buyerEmail.value.trim(),
+      buyerCity: f.buyerCity.value.trim(),
+      paymentMethod: f.paymentMethod.value,
+      bankName: f.bankName.value.trim(),
+      saleDate: f.saleDate.value,
+      status: f.status.value,
+      notes: f.notes.value.trim()
+    };
+    var btn=f.querySelector('button[type=submit]');
+    btn.disabled=true;
+    window.HOMERA_API.saveSale(payload).then(function(list){
+      setSales(list); closeModal('saleModal'); editingSale=null;
+      toast(payload.id?'تم تحديث عملية البيع':'تمت إضافة عملية البيع');
+    }).catch(function(err){ toast(err.message||'تعذّر حفظ العملية'); })
+      .then(function(){ btn.disabled=false; });
+  });
+
   /* ===== طلبات الاهتمام ===== */
   var LEADS=[], leadFilter='all';
   var LEAD_TXT={cash:'كاش', bank:'تمويل بنكي', undecided:'غير محدد', yes:'نعم', no:'لا'};
@@ -1289,6 +1556,57 @@
         </div>
       </div>
       <div class="mf-foot"><button type="submit" class="btn-primary">حفظ المشروع</button><button type="button" class="btn-ghost" id="addCancel">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-ov" id="saleModal">
+  <div class="modal">
+    <div class="mh"><h3 id="saleTitle">إضافة عملية بيع</h3><button class="x" id="saleClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <form id="saleForm">
+      <div class="mb">
+        <div class="form-sep">الوحدة المباعة</div>
+        <div class="field"><label>المشروع <span style="color:#c0392b">*</span></label>
+          <select name="projectId" id="saleProject" required></select></div>
+        <div class="frow">
+          <div class="field"><label>النموذج / الوحدة</label>
+            <select name="modelName" id="saleModel"><option value="">غير محدد</option></select></div>
+          <div class="field"><label>رقم الوحدة</label><input name="unitNo" maxlength="80" placeholder="مثال: A-12"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>سعر البيع (ر.س) <span style="color:#c0392b">*</span></label>
+            <input name="price" id="salePrice" type="number" min="0" required placeholder="0"/>
+            <span class="hint" id="salePriceHint" hidden></span></div>
+          <div class="field"><label>الدفعة الأولى (ر.س)</label><input name="downPayment" type="number" min="0" placeholder="0"/></div>
+        </div>
+
+        <div class="form-sep">بيانات المشتري</div>
+        <div class="frow">
+          <div class="field"><label>اسم المشتري <span style="color:#c0392b">*</span></label><input name="buyerName" required maxlength="190" placeholder="الاسم الكامل"/></div>
+          <div class="field"><label>رقم الجوال</label><input name="buyerPhone" dir="ltr" maxlength="60" placeholder="05xxxxxxxx"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>رقم الهوية</label><input name="buyerIdNo" dir="ltr" maxlength="60" placeholder="1xxxxxxxxx"/></div>
+          <div class="field"><label>البريد الإلكتروني</label><input name="buyerEmail" type="email" dir="ltr" maxlength="190" placeholder="name@example.com"/></div>
+        </div>
+        <div class="field"><label>مدينة المشتري</label><input name="buyerCity" maxlength="120" placeholder="جدة"/></div>
+
+        <div class="form-sep">الدفع والحالة</div>
+        <div class="frow">
+          <div class="field"><label>طريقة الدفع</label>
+            <select name="paymentMethod" id="salePayMethod"><option value="cash">كاش</option><option value="bank">تمويل بنكي</option><option value="installments">أقساط</option></select></div>
+          <div class="field"><label>الجهة الممولة / البنك</label><input name="bankName" maxlength="120" placeholder="اسم البنك"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>تاريخ البيع</label><input name="saleDate" type="date"/></div>
+          <div class="field"><label>العمولة (ر.س)</label><input name="commission" type="number" min="0" placeholder="0"/></div>
+        </div>
+        <div class="field"><label>حالة العملية</label>
+          <select name="status"><option value="reserved">حجز</option><option value="contracted">عقد موقّع</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+        <div class="field"><label>ملاحظات</label><textarea name="notes" rows="3" placeholder="أي تفاصيل إضافية عن الصفقة…"></textarea></div>
+        <p class="hint">تسجيل البيع هنا لا يُخفي الوحدة من الموقع ولا يغيّر أعداد المتاح — لتعديلها استخدم شاشة المشاريع.</p>
+      </div>
+      <div class="mf-foot"><button type="submit" class="btn-primary">حفظ العملية</button><button type="button" class="btn-ghost" id="saleCancel">إلغاء</button></div>
     </form>
   </div>
 </div>

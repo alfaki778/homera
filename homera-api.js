@@ -109,6 +109,10 @@
     saveProject: function (project) { return request('project', { project: project }); },
     featureProject: function (id, featured) { return request('feature', { id: id, featured: !!featured }).then(function (data) { return data.projects || []; }); },
     /* نموذج «سجّل اهتمامك» — عام بلا جلسة */
+    getSales: function () { return request('sales', null).then(function (data) { return data.sales || []; }); },
+    saveSale: function (sale) { return request('sale', { sale: sale }).then(function (data) { return data.sales || []; }); },
+    setSaleStatus: function (id, status) { return request('saleStatus', { id: id, status: status }).then(function (data) { return data.sales || []; }); },
+    deleteSale: function (id) { return request('deleteSale', { id: id }).then(function (data) { return data.sales || []; }); },
     submitLead: function (lead) { return request('lead', { lead: lead }); },
     getLeads: function () { return request('leads', null).then(function (data) { return data.leads || []; }); },
     setLeadStatus: function (id, status) { return request('leadStatus', { id: id, status: status }).then(function (data) { return data.leads || []; }); },

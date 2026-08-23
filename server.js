@@ -561,6 +561,115 @@ async function setLeadStatus(db, data) {
   await db.query('UPDATE leads SET status=? WHERE id=?', [status, Number(data.id || 0)]);
 }
 
+/* ================= المبيعات =================
+   سجل مستقل: تسجيل عملية البيع لا يغيّر توفّر الوحدات على الموقع
+   (الوحدة المباعة تبقى معروضة ما لم يُعدّلها المستخدم من شاشة المشاريع). */
+const SALE_STATUSES = ['reserved', 'contracted', 'completed', 'cancelled'];
+const SALE_METHODS = ['cash', 'bank', 'installments'];
+
+function saleDateText(value) {
+  if (!value) return '';
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, '0');
+    const d = String(value.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
+  return String(value).slice(0, 10);
+}
+
+function saleRow(row) {
+  return {
+    id: Number(row.id),
+    projectId: Number(row.project_id || 0),
+    projectName: row.project_name || '',
+    modelName: row.model_name || '',
+    unitNo: row.unit_no || '',
+    price: Number(row.price || 0),
+    downPayment: Number(row.down_payment || 0),
+    commission: Number(row.commission || 0),
+    buyerName: row.buyer_name || '',
+    buyerPhone: row.buyer_phone || '',
+    buyerIdNo: row.buyer_id_no || '',
+    buyerEmail: row.buyer_email || '',
+    buyerCity: row.buyer_city || '',
+    paymentMethod: row.payment_method || 'cash',
+    bankName: row.bank_name || '',
+    saleDate: saleDateText(row.sale_date),
+    status: row.status || 'reserved',
+    notes: row.notes || '',
+    agent: row.agent || '',
+    createdAt: row.created_at
+  };
+}
+
+function saleColumns(data, agent) {
+  const price = Math.max(0, Math.round(Number(data.price || 0)));
+  return {
+    project_id: Math.max(0, Number(data.projectId || 0)),
+    project_name: String(data.projectName || '').trim().slice(0, 190),
+    model_name: String(data.modelName || '').trim().slice(0, 190),
+    unit_no: String(data.unitNo || '').trim().slice(0, 80),
+    price,
+    down_payment: Math.min(price, Math.max(0, Math.round(Number(data.downPayment || 0)))),
+    commission: Math.max(0, Math.round(Number(data.commission || 0))),
+    buyer_name: String(data.buyerName || '').trim().slice(0, 190),
+    buyer_phone: String(data.buyerPhone || '').trim().slice(0, 60),
+    buyer_id_no: String(data.buyerIdNo || '').trim().slice(0, 60),
+    buyer_email: String(data.buyerEmail || '').trim().slice(0, 190),
+    buyer_city: String(data.buyerCity || '').trim().slice(0, 120),
+    payment_method: SALE_METHODS.indexOf(data.paymentMethod) > -1 ? data.paymentMethod : 'cash',
+    bank_name: String(data.bankName || '').trim().slice(0, 120),
+    sale_date: /^\d{4}-\d{2}-\d{2}$/.test(String(data.saleDate || '')) ? data.saleDate : null,
+    status: SALE_STATUSES.indexOf(data.status) > -1 ? data.status : 'reserved',
+    notes: String(data.notes || '').slice(0, 2000),
+    agent: String(agent || data.agent || '').trim().slice(0, 190)
+  };
+}
+
+async function saveSale(db, data, agent) {
+  const buyer = String(data.buyerName || '').trim();
+  const project = String(data.projectName || '').trim();
+  if (!buyer || !project) {
+    const error = new Error('اسم المشتري والمشروع مطلوبان');
+    error.status = 422;
+    throw error;
+  }
+  const columns = saleColumns(data, agent);
+  const names = Object.keys(columns);
+  const values = names.map((n) => columns[n]);
+  const id = Number(data.id || 0);
+  if (id > 0) {
+    await db.query('UPDATE sales SET ' + names.map((n) => n + '=?').join(', ') + ' WHERE id=?', values.concat([id]));
+    return id;
+  }
+  const [result] = await db.query(
+    'INSERT INTO sales (' + names.join(', ') + ') VALUES (' + names.map(() => '?').join(', ') + ')',
+    values
+  );
+  return Number(result.insertId || 0);
+}
+
+async function listSales(db) {
+  const [rows] = await db.query('SELECT * FROM sales ORDER BY id DESC LIMIT 1000');
+  return rows.map(saleRow);
+}
+
+async function setSaleStatus(db, data) {
+  const status = SALE_STATUSES.indexOf(data.status) > -1 ? data.status : 'reserved';
+  await db.query('UPDATE sales SET status=? WHERE id=?', [status, Number(data.id || 0)]);
+}
+
+async function deleteSale(db, data) {
+  const id = Number(data.id || 0);
+  if (id <= 0) {
+    const error = new Error('عملية البيع غير موجودة');
+    error.status = 404;
+    throw error;
+  }
+  await db.query('DELETE FROM sales WHERE id=?', [id]);
+}
+
 function csvCell(value) {
   return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"';
 }
@@ -638,6 +747,10 @@ app.get(['/api/homera', '/api/homera.php'], async (req, res) => {
       }
       return json(res, { ok: true, leads });
     }
+    if (action === 'sales') {
+      await requireUser(db, req, ['admin', 'editor']);
+      return json(res, { ok: true, sales: await listSales(db) });
+    }
     if (action === 'settings') return json(res, { ok: true, settings: await getSettings(db) });
     if (action === 'project') {
       const row = await findProject(db, req.query.id, String(req.query.name || req.query.id || '').trim());
@@ -675,6 +788,24 @@ app.post(['/api/homera', '/api/homera.php'], async (req, res) => {
       await requireUser(db, req, ['admin', 'editor']);
       await setLeadStatus(db, req.body || {});
       return json(res, { ok: true, leads: await listLeads(db) });
+    }
+
+    if (action === 'sale') {
+      const user = await requireUser(db, req, ['admin', 'editor']);
+      await saveSale(db, req.body.sale || {}, user.name || user.email);
+      return json(res, { ok: true, sales: await listSales(db) });
+    }
+
+    if (action === 'saleStatus') {
+      await requireUser(db, req, ['admin', 'editor']);
+      await setSaleStatus(db, req.body || {});
+      return json(res, { ok: true, sales: await listSales(db) });
+    }
+
+    if (action === 'deleteSale') {
+      await requireUser(db, req, ['admin']);
+      await deleteSale(db, req.body || {});
+      return json(res, { ok: true, sales: await listSales(db) });
     }
 
     if (action === 'user') {

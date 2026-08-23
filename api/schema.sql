@@ -78,6 +78,33 @@ PREPARE add_license_stmt FROM @add_license;
 EXECUTE add_license_stmt;
 DEALLOCATE PREPARE add_license_stmt;
 
+-- سجل المبيعات المُدار من لوحة التحكم
+CREATE TABLE IF NOT EXISTS sales (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  project_id INT UNSIGNED NOT NULL DEFAULT 0,
+  project_name VARCHAR(190) NOT NULL DEFAULT '',
+  model_name VARCHAR(190) NOT NULL DEFAULT '',
+  unit_no VARCHAR(80) NOT NULL DEFAULT '',
+  price INT UNSIGNED NOT NULL DEFAULT 0,
+  down_payment INT UNSIGNED NOT NULL DEFAULT 0,
+  commission INT UNSIGNED NOT NULL DEFAULT 0,
+  buyer_name VARCHAR(190) NOT NULL DEFAULT '',
+  buyer_phone VARCHAR(60) NOT NULL DEFAULT '',
+  buyer_id_no VARCHAR(60) NOT NULL DEFAULT '',
+  buyer_email VARCHAR(190) NOT NULL DEFAULT '',
+  buyer_city VARCHAR(120) NOT NULL DEFAULT '',
+  payment_method VARCHAR(30) NOT NULL DEFAULT 'cash',
+  bank_name VARCHAR(120) NOT NULL DEFAULT '',
+  sale_date DATE NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'reserved',
+  notes TEXT NULL,
+  agent VARCHAR(190) NOT NULL DEFAULT '',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX (created_at),
+  INDEX (project_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(190) NOT NULL UNIQUE,

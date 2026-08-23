@@ -249,6 +249,31 @@ function ensure_project_columns($pdo) {
             INDEX (created_at),
             INDEX (project_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS sales (
+          id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          project_id INT UNSIGNED NOT NULL DEFAULT 0,
+          project_name VARCHAR(190) NOT NULL DEFAULT '',
+          model_name VARCHAR(190) NOT NULL DEFAULT '',
+          unit_no VARCHAR(80) NOT NULL DEFAULT '',
+          price INT UNSIGNED NOT NULL DEFAULT 0,
+          down_payment INT UNSIGNED NOT NULL DEFAULT 0,
+          commission INT UNSIGNED NOT NULL DEFAULT 0,
+          buyer_name VARCHAR(190) NOT NULL DEFAULT '',
+          buyer_phone VARCHAR(60) NOT NULL DEFAULT '',
+          buyer_id_no VARCHAR(60) NOT NULL DEFAULT '',
+          buyer_email VARCHAR(190) NOT NULL DEFAULT '',
+          buyer_city VARCHAR(120) NOT NULL DEFAULT '',
+          payment_method VARCHAR(30) NOT NULL DEFAULT 'cash',
+          bank_name VARCHAR(120) NOT NULL DEFAULT '',
+          sale_date DATE NULL,
+          status VARCHAR(30) NOT NULL DEFAULT 'reserved',
+          notes TEXT NULL,
+          agent VARCHAR(190) NOT NULL DEFAULT '',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX (created_at),
+          INDEX (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         $ready = true;
     } catch (Throwable $e) {
         /* لو تعذّرت الترقية (صلاحيات ALTER مثلاً) نكمل بدون الأعمدة بدل تعطيل الحفظ */
@@ -573,6 +598,80 @@ function lead_row($row) {
     ];
 }
 
+/* ================= المبيعات =================
+   سجل مستقل لا يغيّر توفّر الوحدات المعروضة على الموقع */
+function sale_row($row) {
+    return [
+        'id' => (int)$row['id'],
+        'projectId' => (int)$row['project_id'],
+        'projectName' => $row['project_name'] ?? '',
+        'modelName' => $row['model_name'] ?? '',
+        'unitNo' => $row['unit_no'] ?? '',
+        'price' => (int)$row['price'],
+        'downPayment' => (int)$row['down_payment'],
+        'commission' => (int)$row['commission'],
+        'buyerName' => $row['buyer_name'] ?? '',
+        'buyerPhone' => $row['buyer_phone'] ?? '',
+        'buyerIdNo' => $row['buyer_id_no'] ?? '',
+        'buyerEmail' => $row['buyer_email'] ?? '',
+        'buyerCity' => $row['buyer_city'] ?? '',
+        'paymentMethod' => $row['payment_method'] ?? 'cash',
+        'bankName' => $row['bank_name'] ?? '',
+        'saleDate' => $row['sale_date'] ? substr((string)$row['sale_date'], 0, 10) : '',
+        'status' => $row['status'] ?? 'reserved',
+        'notes' => $row['notes'] ?? '',
+        'agent' => $row['agent'] ?? '',
+        'createdAt' => $row['created_at'],
+    ];
+}
+
+function list_sales($pdo) {
+    $rows = $pdo->query('SELECT * FROM sales ORDER BY id DESC LIMIT 1000')->fetchAll();
+    return array_map('sale_row', $rows);
+}
+
+function save_sale($pdo, $data, $agent) {
+    $buyer = mb_substr(trim((string)($data['buyerName'] ?? '')), 0, 190);
+    $project = mb_substr(trim((string)($data['projectName'] ?? '')), 0, 190);
+    if ($buyer === '' || $project === '') respond(['ok' => false, 'error' => 'اسم المشتري والمشروع مطلوبان'], 422);
+    $price = max(0, (int)round((float)($data['price'] ?? 0)));
+    $method = (string)($data['paymentMethod'] ?? '');
+    $status = (string)($data['status'] ?? '');
+    $date = (string)($data['saleDate'] ?? '');
+    $columns = [
+        'project_id' => max(0, (int)($data['projectId'] ?? 0)),
+        'project_name' => $project,
+        'model_name' => mb_substr(trim((string)($data['modelName'] ?? '')), 0, 190),
+        'unit_no' => mb_substr(trim((string)($data['unitNo'] ?? '')), 0, 80),
+        'price' => $price,
+        'down_payment' => min($price, max(0, (int)round((float)($data['downPayment'] ?? 0)))),
+        'commission' => max(0, (int)round((float)($data['commission'] ?? 0))),
+        'buyer_name' => $buyer,
+        'buyer_phone' => mb_substr(trim((string)($data['buyerPhone'] ?? '')), 0, 60),
+        'buyer_id_no' => mb_substr(trim((string)($data['buyerIdNo'] ?? '')), 0, 60),
+        'buyer_email' => mb_substr(trim((string)($data['buyerEmail'] ?? '')), 0, 190),
+        'buyer_city' => mb_substr(trim((string)($data['buyerCity'] ?? '')), 0, 120),
+        'payment_method' => in_array($method, ['cash', 'bank', 'installments'], true) ? $method : 'cash',
+        'bank_name' => mb_substr(trim((string)($data['bankName'] ?? '')), 0, 120),
+        'sale_date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : null,
+        'status' => in_array($status, ['reserved', 'contracted', 'completed', 'cancelled'], true) ? $status : 'reserved',
+        'notes' => mb_substr((string)($data['notes'] ?? ''), 0, 2000),
+        'agent' => mb_substr(trim((string)($agent ?? '')), 0, 190),
+    ];
+    $names = array_keys($columns);
+    $id = (int)($data['id'] ?? 0);
+    if ($id > 0) {
+        $set = implode(', ', array_map(function ($c) { return $c . '=?'; }, $names));
+        $stmt = $pdo->prepare('UPDATE sales SET ' . $set . ' WHERE id=?');
+        $stmt->execute(array_merge(array_values($columns), [$id]));
+        return $id;
+    }
+    $stmt = $pdo->prepare('INSERT INTO sales (' . implode(', ', $names) . ') VALUES ('
+        . implode(', ', array_fill(0, count($names), '?')) . ')');
+    $stmt->execute(array_values($columns));
+    return (int)$pdo->lastInsertId();
+}
+
 function save_lead($pdo, $data) {
     $name = mb_substr(trim((string)($data['name'] ?? '')), 0, 190);
     $phone = mb_substr(trim((string)($data['phone'] ?? '')), 0, 60);
@@ -705,6 +804,10 @@ try {
             }
             respond(['ok' => true, 'leads' => $leads]);
         }
+        if ($action === 'sales') {
+            require_user($pdo, $data, ['admin', 'editor']);
+            respond(['ok' => true, 'sales' => list_sales($pdo)]);
+        }
         if ($action === 'settings') respond(['ok' => true, 'settings' => get_settings($pdo)]);
         if ($action === 'project') {
             $row = find_project($pdo, (int)($_GET['id'] ?? 0), trim((string)($_GET['name'] ?? $_GET['id'] ?? '')));
@@ -728,6 +831,27 @@ try {
         if (!in_array($status, ['new', 'contacted', 'closed'], true)) $status = 'new';
         $pdo->prepare('UPDATE leads SET status=? WHERE id=?')->execute([$status, (int)($data['id'] ?? 0)]);
         respond(['ok' => true, 'leads' => list_leads($pdo)]);
+    }
+    if ($action === 'sale') {
+        $user = require_user($pdo, $data, ['admin', 'editor']);
+        ensure_project_columns($pdo);
+        save_sale($pdo, $data['sale'] ?? [], $user['name'] ?: $user['email']);
+        respond(['ok' => true, 'sales' => list_sales($pdo)]);
+    }
+    if ($action === 'saleStatus') {
+        require_user($pdo, $data, ['admin', 'editor']);
+        $status = (string)($data['status'] ?? '');
+        if (!in_array($status, ['reserved', 'contracted', 'completed', 'cancelled'], true)) $status = 'reserved';
+        $up = $pdo->prepare('UPDATE sales SET status=? WHERE id=?');
+        $up->execute([$status, (int)($data['id'] ?? 0)]);
+        respond(['ok' => true, 'sales' => list_sales($pdo)]);
+    }
+    if ($action === 'deleteSale') {
+        require_user($pdo, $data, ['admin']);
+        $id = (int)($data['id'] ?? 0);
+        if ($id <= 0) respond(['ok' => false, 'error' => 'عملية البيع غير موجودة'], 404);
+        $pdo->prepare('DELETE FROM sales WHERE id=?')->execute([$id]);
+        respond(['ok' => true, 'sales' => list_sales($pdo)]);
     }
     if ($action === 'user') { require_user($pdo, $data, ['admin']); create_user($pdo, $data['user'] ?? []); respond(['ok' => true, 'users' => list_users($pdo)]); }
     if ($action === 'password') { $user = require_user($pdo, $data, ['admin', 'editor']); change_password($pdo, $user, $data); respond(['ok' => true]); }
