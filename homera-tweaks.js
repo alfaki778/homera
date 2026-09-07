@@ -46,6 +46,11 @@
     projRoudahImg: '',
     projSalamahImg: '',
     projNaeemImg: '',
+    partnersEyebrow: 'شركاؤنا',
+    partnersTitle: 'شركاء النجاح',
+    partnersText: 'نفخر بشراكة نخبة من الجهات والمؤسسات التي تشاركنا الرؤية والالتزام.',
+    partners: [],
+    partnersSpeed: 3,
     banners: [],
     pgProjectsBanner: '', pgPFadila: '', pgPRoudah: '', pgPSalamah: '', pgPNaeem: '', pgPSafa: '', pgPAbhur: '',
     pgFadilaBanner: '', pgFadilaMain: '', pgFadilaT1: '', pgFadilaT2: '', pgFadilaT3: '', pgFadilaT4: '', pgFadilaMap: ''
@@ -138,6 +143,12 @@
     setText('[data-tw="contactAddress"]', t.contactAddress);
     setText('[data-tw="contactEmail"]', t.contactEmail);
     setContactLinks(t.contactPhone, t.contactEmail);
+
+    // شركاء النجاح
+    setText('[data-tw="partnersEyebrow"]', t.partnersEyebrow);
+    setText('[data-tw="partnersTitle"]', t.partnersTitle);
+    setText('[data-tw="partnersText"]', t.partnersText);
+    if (window.HOMERA_renderPartners) window.HOMERA_renderPartners(t.partners, t.partnersSpeed);
 
     // الإحصائيات
     setText('[data-tw="stat1Num"]', t.stat1Num); setText('[data-tw="stat1Label"]', t.stat1Label);

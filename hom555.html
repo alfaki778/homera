@@ -47,6 +47,32 @@
 .lp-foot{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px;}
 .lp-foot .btn-ghost{text-decoration:none;display:inline-flex;align-items:center;}
 #heroImgPrev .thumb,#aboutImgPrev .thumb{width:130px;height:82px;}
+/* ===== محرّر شركاء النجاح ===== */
+#lpPartnersCard{grid-column:1/-1;}
+.pt-list{display:grid;gap:10px;margin-top:12px;}
+.pt-item{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--border);
+  border-radius:12px;background:rgba(0,0,0,.015);}
+.pt-thumb{width:104px;height:64px;flex:none;display:grid;place-items:center;padding:6px;
+  border:1px solid var(--border);border-radius:9px;background:#fff;overflow:hidden;}
+.pt-thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+.pt-fields{flex:1;display:grid;gap:8px;min-width:0;}
+.pt-fields input{width:100%;box-sizing:border-box;min-height:40px;padding:9px 12px;font-family:inherit;
+  font-size:13.5px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;}
+.pt-fields input:focus{outline:none;border-color:var(--accent);}
+.pt-actions{display:flex;flex-direction:column;gap:6px;flex:none;}
+.pt-actions button{width:30px;height:30px;display:grid;place-items:center;padding:0;cursor:pointer;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);transition:.15s;}
+.pt-actions button:hover:not(:disabled){border-color:var(--accent);color:var(--accent-d);}
+.pt-actions button:disabled{opacity:.35;cursor:default;}
+.pt-actions button svg{width:15px;height:15px;}
+.pt-actions .pt-del:hover{border-color:#c0392b;color:#c0392b;}
+.pt-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px;border:1px dashed var(--border);
+  border-radius:12px;margin-top:12px;}
+@media(max-width:640px){
+  .pt-item{flex-wrap:wrap;}
+  .pt-fields{flex-basis:100%;order:3;}
+  .pt-actions{flex-direction:row;margin-inline-start:auto;}
+}
 /* ===== بوابة الدخول ===== */
 #authGate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:20px;direction:rtl;
   background:linear-gradient(160deg,#0E3340,#15495B);font-family:'Alexandria',system-ui,sans-serif;}
@@ -422,6 +448,21 @@
               <div class="frow">
                 <div class="field"><label>الرقم 4</label><input name="stat4Num" dir="ltr"/></div>
                 <div class="field"><label>الوصف 4</label><input name="stat4Label"/></div>
+              </div>
+            </div>
+
+            <div class="card" id="lpPartnersCard">
+              <div class="hd"><h3>شركاء النجاح</h3></div>
+              <span class="hint" style="margin:0 0 14px">شريط يعرض شعارات الشركاء ويتحرّك تلقائياً في الصفحة الرئيسية. يُفضّل شعار PNG بخلفية شفافة. القسم يظهر في الموقع فور إضافة شعار واحد على الأقل، ويختفي إذا حذفتها كلها.</span>
+              <div class="field"><label>الترويسة الصغيرة</label><input name="partnersEyebrow"/></div>
+              <div class="field"><label>العنوان</label><input name="partnersTitle"/></div>
+              <div class="field"><label>النص</label><textarea name="partnersText" rows="2"></textarea></div>
+              <label class="uploader" for="partnersInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة شعارات الشركاء (يمكن اختيار عدة صور معاً)</span></label>
+              <input type="file" id="partnersInput" accept="image/*" multiple hidden/>
+              <div class="pt-list" id="partnersList"></div>
+              <div class="field" style="margin-top:16px">
+                <label>سرعة الحركة — <span id="partnersSpeedVal">متوسطة</span></label>
+                <input type="range" name="partnersSpeed" id="partnersSpeed" min="1" max="5" step="1" style="width:100%"/>
               </div>
             </div>
 
@@ -861,7 +902,7 @@
   // ===== رفع الصور (أساسية + فرعية) =====
   var coverData=null, galleryData=[], posterData=null;
   // يقرأ الصورة ويصغّرها/يضغطها لتقليل الحجم وتفادي امتلاء التخزين
-  function readFile(file){
+  function readFile(file, maxSide){
     return new Promise(function(res){
       var r=new FileReader();
       r.onload=function(){
@@ -869,7 +910,7 @@
         var img=new Image();
         img.onload=function(){
           try{
-            var maxDim=1400;
+            var maxDim=Number(maxSide)||1400;
             var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
             var scale=Math.min(1, maxDim/Math.max(w,h));
             var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
@@ -1362,11 +1403,14 @@
     stat3Num:'+1500', stat3Label:'عميل سعيد', stat4Num:'6', stat4Label:'مدن نخدمها',
     logo:'', logoSize:46, heroImage:'', aboutImage:'',
     projFadilaImg:'', projRoudahImg:'', projSalamahImg:'', projNaeemImg:'',
+    partnersEyebrow:'شركاؤنا', partnersTitle:'شركاء النجاح',
+    partnersText:'نفخر بشراكة نخبة من الجهات والمؤسسات التي تشاركنا الرؤية والالتزام.',
+    partners:[], partnersSpeed:3,
     banners:[],
     pgProjectsBanner:'', pgPFadila:'', pgPRoudah:'', pgPSalamah:'', pgPNaeem:'', pgPSafa:'', pgPAbhur:'',
     pgFadilaBanner:'', pgFadilaMain:'', pgFadilaT1:'', pgFadilaT2:'', pgFadilaT3:'', pgFadilaT4:'', pgFadilaMap:''
   };
-  var LP_TEXT_KEYS = ['heroVariant','heroEyebrow','heroTitle','heroText','aboutEyebrow','aboutTitle','aboutText','aboutP1','aboutP2','aboutP3','contactEyebrow','contactTitle','contactText','contactPhone','contactAddress','contactEmail','stat1Num','stat1Label','stat2Num','stat2Label','stat3Num','stat3Label','stat4Num','stat4Label','accent','fontFamily'];
+  var LP_TEXT_KEYS = ['heroVariant','heroEyebrow','heroTitle','heroText','aboutEyebrow','aboutTitle','aboutText','aboutP1','aboutP2','aboutP3','contactEyebrow','contactTitle','contactText','contactPhone','contactAddress','contactEmail','stat1Num','stat1Label','stat2Num','stat2Label','stat3Num','stat3Label','stat4Num','stat4Label','partnersEyebrow','partnersTitle','partnersText','accent','fontFamily'];
   var lpForm=document.getElementById('landingForm');
 
   // بطاقات صور صفحات إضافية — تُولّد ديناميكياً
@@ -1420,6 +1464,10 @@
     lpForm.logoSize.value = String(t.logoSize||46);
     document.getElementById('logoSizeVal').textContent = String(t.logoSize||46);
     LP_IMAGES.forEach(function(im){ lpImgData[im.key]=t[im.key]||''; lpImgPrev(im.prev, lpImgData[im.key], im.key); });
+    partnersData = normalizePartners(t.partners);
+    renderPartners();
+    partnersSpeedEl.value = String(Number(t.partnersSpeed) || 3);
+    document.getElementById('partnersSpeedVal').textContent = PT_SPEED_LABELS[partnersSpeedEl.value] || 'متوسطة';
     applySidebarLogo(t.logo);
   }
   LP_IMAGES.forEach(function(im){
@@ -1432,6 +1480,72 @@
     });
   });
 
+  // ===== محرّر شركاء النجاح =====
+  var PT_SPEED_LABELS = {1:'هادئة جداً', 2:'هادئة', 3:'متوسطة', 4:'سريعة', 5:'سريعة جداً'};
+  var PT_ICON = {
+    up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>',
+    down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+    del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+  };
+  var partnersData = [];
+  var partnersListEl = document.getElementById('partnersList');
+  var partnersSpeedEl = document.getElementById('partnersSpeed');
+
+  /* الشعارات قد تصل كنصوص (روابط) من نسخ أقدم — نوحّدها إلى كائنات */
+  function normalizePartners(list){
+    return (Array.isArray(list)?list:[]).map(function(it){
+      if(typeof it==='string') return {img:it, name:'', url:''};
+      it=it||{};
+      return {img:String(it.img||''), name:String(it.name||''), url:String(it.url||'')};
+    }).filter(function(it){ return !!it.img; });
+  }
+  function ptBtn(act, title, disabled){
+    return '<button type="button"'+(act==='del'?' class="pt-del"':'')+' data-act="'+act+'" title="'+title+'" aria-label="'+title+'"'+(disabled?' disabled':'')+'>'+PT_ICON[act]+'</button>';
+  }
+  function renderPartners(){
+    if(!partnersData.length){
+      partnersListEl.innerHTML='<div class="pt-empty">لا توجد شعارات بعد — أضف شعار الشريك الأول ليظهر الشريط في الصفحة الرئيسية.</div>';
+      return;
+    }
+    var last=partnersData.length-1;
+    partnersListEl.innerHTML=partnersData.map(function(p,i){
+      return '<div class="pt-item" data-i="'+i+'">'+
+        '<div class="pt-thumb"><img src="'+esc(p.img)+'" alt=""></div>'+
+        '<div class="pt-fields">'+
+          '<input data-f="name" value="'+esc(p.name)+'" maxlength="120" placeholder="اسم الشريك (اختياري)"/>'+
+          '<input data-f="url" dir="auto" value="'+esc(p.url)+'" maxlength="400" placeholder="رابط موقع الشريك (اختياري)"/>'+
+        '</div>'+
+        '<div class="pt-actions">'+ptBtn('up','تقديم',i===0)+ptBtn('down','تأخير',i===last)+ptBtn('del','حذف',false)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  /* التعديل النصّي لا يُعيد الرسم حتى لا يفقد الحقل مؤشّر الكتابة */
+  partnersListEl.addEventListener('input', function(e){
+    var field=e.target.closest('[data-f]'); if(!field) return;
+    var i=Number(field.closest('.pt-item').dataset.i);
+    if(partnersData[i]) partnersData[i][field.dataset.f]=field.value;
+  });
+  partnersListEl.addEventListener('click', function(e){
+    var btn=e.target.closest('[data-act]'); if(!btn) return;
+    var i=Number(btn.closest('.pt-item').dataset.i), act=btn.dataset.act;
+    if(act==='del') partnersData.splice(i,1);
+    else if(act==='up' && i>0) partnersData.splice(i-1,0,partnersData.splice(i,1)[0]);
+    else if(act==='down' && i<partnersData.length-1) partnersData.splice(i+1,0,partnersData.splice(i,1)[0]);
+    renderPartners();
+  });
+  document.getElementById('partnersInput').addEventListener('change', function(){
+    var input=this, files=Array.prototype.slice.call(this.files||[]);
+    if(!files.length) return;
+    /* الشعار لا يحتاج أبعاداً كبيرة — نصغّره كي يبقى حجم الإعدادات معقولاً */
+    Promise.all(files.map(function(f){ return readFile(f, 420); })).then(function(list){
+      list.forEach(function(d){ if(d) partnersData.push({img:d, name:'', url:''}); });
+      input.value=''; renderPartners();
+    });
+  });
+  partnersSpeedEl.addEventListener('input', function(){
+    document.getElementById('partnersSpeedVal').textContent=PT_SPEED_LABELS[this.value]||'متوسطة';
+  });
+
   lpForm.addEventListener('submit', function(e){
     e.preventDefault();
     var t=lpReadStore();
@@ -1439,6 +1553,10 @@
     t.headingWeight = Number(lpForm.headingWeight.value);
     t.logoSize = Number(lpForm.logoSize.value);
     LP_IMAGES.forEach(function(im){ t[im.key]=lpImgData[im.key]||''; });
+    t.partners = partnersData.filter(function(p){ return !!p.img; }).map(function(p){
+      return { img:p.img, name:String(p.name||'').trim(), url:String(p.url||'').trim() };
+    });
+    t.partnersSpeed = Number(partnersSpeedEl.value) || 3;
     try{ localStorage.setItem('homera_tweaks', JSON.stringify(t)); applySidebarLogo(t.logo); }
     catch(err){ toast('تعذّر الحفظ — قد تكون الصور كبيرة جداً'); }
     if(window.HOMERA_API){
@@ -1452,6 +1570,9 @@
   });
   document.getElementById('logoSize').addEventListener('input', function(){ document.getElementById('logoSizeVal').textContent=this.value; });
   lpLoad();
+  /* المصدر الحقيقي للإعدادات هو قاعدة البيانات — نسحبها عند الفتح كي لا يبدأ
+     المحرّر من نسخة محلية قديمة (أو فارغة على جهاز جديد) فتُمحى عند الحفظ */
+  if(window.HOMERA_API){ window.HOMERA_API.getSettings().then(function(){ lpLoad(); }).catch(function(){}); }
   });
 </script>
 

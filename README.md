@@ -24,6 +24,7 @@
 - `screens-*.jsx` — الشاشات (hub / sector / admin / support / vendor).
 - `backoffice-ui.jsx` — واجهة الإدارة الخلفية.
 - `image-slot.js` — عنصر `<image-slot>` لإدارة مواضع الصور.
+- `homera-partners.js` — شريط «شركاء النجاح» المتحرّك في الصفحة الرئيسية (الشعارات تُدار من لوحة التحكم).
 - `homera-tweaks.js` / `homera-tweaks-app.jsx` — لوحة التعديلات المباشرة للموقع.
 - `dash-tweaks.js` / `dash-tweaks-app.jsx` — لوحة التعديلات للوحة التحكم.
 - `tweaks-panel.jsx` — واجهة لوحة التعديلات.

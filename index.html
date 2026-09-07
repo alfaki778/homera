@@ -9,10 +9,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="homera-site.css?v=8"/>
+<link rel="stylesheet" href="homera-site.css?v=9"/>
 <script src="image-slot.js?v=3"></script>
 <script src="homera-api.js?v=5"></script>
-<script src="homera-tweaks.js?v=4"></script>
+<script src="homera-partners.js?v=1"></script>
+<script src="homera-tweaks.js?v=5"></script>
 <style>
 /* ===== الهيرو ===== */
 .hero{position:relative;overflow:hidden;}
@@ -107,6 +108,43 @@
 .review-stars{color:#C89A4A;font-size:18px;letter-spacing:2px;}
 .review-text{margin-top:12px;color:var(--ink);line-height:1.9;font-size:15px;}
 .review-name{margin-top:14px;color:var(--petrol-d);font-weight:800;font-size:14px;}
+
+/* ===== شريط شركاء النجاح ===== */
+.partners{background:var(--cream);}
+.partners .sec-head{margin-bottom:34px;}
+.partners-marquee{
+  position:relative;overflow:hidden;direction:ltr;padding:6px 0;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%);
+}
+.partners-track{display:flex;width:max-content;will-change:transform;
+  animation:partnersScroll var(--partners-duration,36s) linear infinite;}
+.partners-group{display:flex;align-items:center;gap:26px;padding-inline-end:26px;flex:none;}
+@keyframes partnersScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* الوقوف عند التمرير بالفأرة أو التركيز بلوحة المفاتيح */
+.partners-marquee:hover .partners-track,
+.partners-marquee:focus-within .partners-track{animation-play-state:paused;}
+
+.partner-card{
+  flex:none;width:182px;height:106px;display:grid;place-items:center;padding:18px 22px;
+  background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm);
+  box-shadow:0 8px 22px rgba(14,51,64,.06);transition:.25s ease;text-decoration:none;
+}
+a.partner-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 16px 34px rgba(14,51,64,.13);}
+.partner-card img{max-width:100%;max-height:100%;object-fit:contain;display:block;
+  filter:grayscale(1);opacity:.7;transition:.25s ease;}
+.partner-card:hover img{filter:none;opacity:1;}
+/* على شاشات اللمس لا يوجد تمرير بالفأرة — نعرض الشعارات بألوانها */
+@media(hover:none){.partner-card img{filter:none;opacity:1;}}
+@media(max-width:560px){
+  .partner-card{width:150px;height:92px;padding:14px 18px;}
+  .partners-group{gap:18px;padding-inline-end:18px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .partners-track{animation:none;}
+  .partners-marquee{overflow-x:auto;-webkit-mask-image:none;mask-image:none;}
+  .partners-group[aria-hidden="true"]{display:none;}
+}
 
 /* ===== نافذة من نحن ===== */
 .about-modal{position:fixed;inset:0;background:rgba(3,20,28,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
@@ -353,6 +391,21 @@
         <p class="review-text">حصلت على استشارة احترافية وفرت علي وقت كبير. الترشيحات كانت دقيقة، والمتابعة ممتازة بعد الشراء.</p>
         <div class="review-name">ريم الشريف</div>
       </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ شركاء النجاح ============ -->
+<!-- يظهر تلقائياً عند إضافة شعار واحد على الأقل من لوحة التحكم -->
+<section class="section partners" id="partners" data-partners-section hidden>
+  <div class="wrap">
+    <div class="sec-head center">
+      <span class="eyebrow" data-tw="partnersEyebrow">شركاؤنا</span>
+      <h2 class="sec-title" data-tw="partnersTitle">شركاء النجاح</h2>
+      <p class="sec-lead" data-tw="partnersText">نفخر بشراكة نخبة من الجهات والمؤسسات التي تشاركنا الرؤية والالتزام.</p>
+    </div>
+    <div class="partners-marquee">
+      <div class="partners-track" id="partnersTrack"></div>
     </div>
   </div>
 </section>
