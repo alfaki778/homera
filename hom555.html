@@ -50,6 +50,14 @@
 /* ===== محرّر شركاء النجاح ===== */
 #lpPartnersCard{grid-column:1/-1;}
 .pt-list{display:grid;gap:10px;margin-top:12px;}
+/* ملاحظات المقاس والصيغة — بجانب خانة رفع الشعارات مباشرة */
+.pt-notes{list-style:none;margin:10px 0 0;padding:11px 13px;display:grid;gap:6px;
+  border:1px solid var(--border);border-radius:11px;background:var(--warn-bg);}
+.pt-notes li{position:relative;padding-inline-start:15px;font-size:12.5px;line-height:1.75;color:var(--muted);}
+.pt-notes li::before{content:"";position:absolute;inset-inline-start:0;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--accent);}
+.pt-notes b{color:var(--text);font-weight:700;}
+.pt-scale{display:flex;justify-content:space-between;margin-top:5px;font-size:12px;font-weight:600;color:var(--muted);}
 .pt-item{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--border);
   border-radius:12px;background:rgba(0,0,0,.015);}
 .pt-thumb{width:104px;height:64px;flex:none;display:grid;place-items:center;padding:6px;
@@ -453,16 +461,28 @@
 
             <div class="card" id="lpPartnersCard">
               <div class="hd"><h3>شركاء النجاح</h3></div>
-              <span class="hint" style="margin:0 0 14px">شريط يعرض شعارات الشركاء ويتحرّك تلقائياً في الصفحة الرئيسية. يُفضّل شعار PNG بخلفية شفافة. القسم يظهر في الموقع فور إضافة شعار واحد على الأقل، ويختفي إذا حذفتها كلها.</span>
+              <span class="hint" style="margin:0 0 14px">شريط يعرض شعارات الشركاء ويتحرّك تلقائياً في الصفحة الرئيسية. يظهر القسم في الموقع فور إضافة شعار واحد على الأقل، ويختفي إذا حذفتها كلها.</span>
               <div class="field"><label>الترويسة الصغيرة</label><input name="partnersEyebrow"/></div>
               <div class="field"><label>العنوان</label><input name="partnersTitle"/></div>
               <div class="field"><label>النص</label><textarea name="partnersText" rows="2"></textarea></div>
-              <label class="uploader" for="partnersInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة شعارات الشركاء (يمكن اختيار عدة صور معاً)</span></label>
-              <input type="file" id="partnersInput" accept="image/*" multiple hidden/>
-              <div class="pt-list" id="partnersList"></div>
-              <div class="field" style="margin-top:16px">
-                <label>سرعة الحركة — <span id="partnersSpeedVal">متوسطة</span></label>
+
+              <div class="field">
+                <label>شعارات الشركاء</label>
+                <label class="uploader" for="partnersInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة شعارات الشركاء (يمكن اختيار عدة صور معاً)</span></label>
+                <input type="file" id="partnersInput" accept="image/*" multiple hidden/>
+                <ul class="pt-notes">
+                  <li><b>المقاس المفضّل:</b> عرض 400 بكسل وارتفاع 200 بكسل تقريباً — أي شكل عرضي أفقي.</li>
+                  <li><b>الصيغة:</b> يُفضّل PNG بخلفية شفافة ليظهر الشعار نظيفاً داخل البطاقة البيضاء.</li>
+                  <li>الصور الأكبر تُصغّر تلقائياً، وأي مقاس آخر يُعرض كاملاً داخل البطاقة دون اقتصاص.</li>
+                </ul>
+                <div class="pt-list" id="partnersList"></div>
+              </div>
+
+              <div class="field" style="margin-top:18px">
+                <label>سرعة حركة الشريط — <b id="partnersSpeedVal">متوسطة</b></label>
                 <input type="range" name="partnersSpeed" id="partnersSpeed" min="1" max="5" step="1" style="width:100%"/>
+                <div class="pt-scale"><span>أبطأ</span><span>أسرع</span></div>
+                <span class="hint">تتحكّم بسرعة انزلاق الشعارات في الصفحة الرئيسية، وتبقى ثابتة مهما تغيّر عدد الشعارات. تُطبَّق بعد الضغط على «حفظ ونشر التعديلات».</span>
               </div>
             </div>
 
