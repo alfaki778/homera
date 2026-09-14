@@ -190,14 +190,36 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
 .pagehero{
   position:relative;min-height:340px;display:grid;place-items:center;
   overflow:hidden;background:var(--petrol-d);
+  /* البنر يُعرض كاملاً بلا قصّ، والنسبة تُضبط من الصورة نفسها (homera-tweaks.js)
+     حتى تملأ القسم تماماً على الشاشات العريضة بدل ترك فراغ فوقها وتحتها.
+     width الصريح ضروري: بدونه يُشتقّ العرض من min-height عبر النسبة فيتجاوز
+     عرض الشاشة على الجوال. */
+  width:100%;box-sizing:border-box;
+  aspect-ratio:var(--pagehero-ratio,auto);
+  /* سقف للارتفاع كي لا تبتلع صورة شبه مربعة الشاشة كلها — تبقى ظاهرة كاملة
+     داخل السقف لأن العرض contain */
+  max-height:min(72vh,640px);
 }
 .pagehero image-slot{position:absolute;inset:0;width:100%;height:100%;}
 .pagehero .veil{
   position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(14,51,64,.72),rgba(14,51,64,.9)),
-             radial-gradient(circle at 50% 30%,rgba(21,73,91,.35),transparent 60%);
+  background:linear-gradient(180deg,rgba(14,51,64,.18),rgba(14,51,64,.34));
 }
 .pagehero .inner{position:relative;text-align:center;padding:70px 20px;z-index:2;}
+/* على الجوال تصبح الصورة العريضة أقصر من أن يتّسع العنوان فوقها دون أن يحجبها،
+   فنكدّسهما: البنر كاملاً بنسبته الأصلية، ثم العنوان تحته على الخلفية الداكنة.
+   has-banner تُضاف من homera-tweaks.js — بدون صورة يبقى القسم كما هو. */
+@media(max-width:700px){
+  .pagehero{min-height:230px;}
+  .pagehero .inner{padding:38px 16px;}
+  .pagehero.has-banner{display:block;min-height:0;aspect-ratio:auto;max-height:none;}
+  .pagehero.has-banner image-slot{
+    position:relative;inset:auto;display:block;width:100%;height:auto;
+    aspect-ratio:var(--pagehero-ratio,16/9);max-height:58vh;
+  }
+  .pagehero.has-banner .veil{display:none;}
+  .pagehero.has-banner .inner{padding:26px 16px;}
+}
 .pagehero .tab{
   display:inline-block;background:var(--petrol);color:#fff;
   font-size:clamp(28px,4vw,44px);font-weight:var(--heading-weight);

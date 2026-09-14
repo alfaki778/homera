@@ -166,6 +166,7 @@
     setSlotImg('home-proj-naeem', t.projNaeemImg);
     // صفحة المشاريع
     setSlotImg('projects-banner', t.pgProjectsBanner);
+    fitPageHero(t.pgProjectsBanner);
     // بديل تلقائي: إن لم توجد صورة خاصة بصفحة المشاريع، استخدم صورة الصفحة الرئيسية
     setSlotImg('p-fadila', t.pgPFadila || t.projFadilaImg);
     setSlotImg('p-roudah', t.pgPRoudah || t.projRoudahImg);
@@ -212,6 +213,20 @@
     var mailHref = 'mailto:' + String(email || '').trim();
     document.querySelectorAll('a[href^="tel:"]').forEach(function (el) { el.href = phoneHref; });
     document.querySelectorAll('a[href^="mailto:"]').forEach(function (el) { el.href = mailHref; });
+  }
+
+  /* البنر يُعرض كاملاً (fit=contain)؛ نمنح القسم نسبة الصورة نفسها كي تملأه
+     تماماً على الشاشات العريضة بدل ترك فراغ فوقها وتحتها */
+  function fitPageHero(url) {
+    var hero = document.querySelector('.pagehero');
+    if (!hero || !url) return;
+    var probe = new Image();
+    probe.onload = function () {
+      if (!probe.naturalWidth || !probe.naturalHeight) return;
+      hero.style.setProperty('--pagehero-ratio', probe.naturalWidth + ' / ' + probe.naturalHeight);
+      hero.classList.add('has-banner');
+    };
+    probe.src = url;
   }
 
   function setSlotImg(id, url) {
