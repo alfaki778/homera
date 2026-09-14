@@ -188,48 +188,18 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
    القسم البانر (رأس الصفحات الداخلية)
    ============================================================ */
 .pagehero{
-  position:relative;min-height:340px;display:grid;place-items:center;
-  overflow:hidden;background:var(--petrol-d);
-  /* البنر يُعرض كاملاً بلا قصّ، والنسبة تُضبط من الصورة نفسها (homera-tweaks.js)
-     حتى تملأ القسم تماماً على الشاشات العريضة بدل ترك فراغ فوقها وتحتها.
-     width الصريح ضروري: بدونه يُشتقّ العرض من min-height عبر النسبة فيتجاوز
-     عرض الشاشة على الجوال. */
+  position:relative;display:block;overflow:hidden;background:var(--petrol-d);
+  /* width الصريح ضروري: بدونه يُشتقّ العرض من الارتفاع عبر النسبة فيتجاوز
+     عرض الشاشة على الجوال */
   width:100%;box-sizing:border-box;
-  aspect-ratio:var(--pagehero-ratio,auto);
-  /* سقف للارتفاع كي لا تبتلع صورة شبه مربعة الشاشة كلها — تبقى ظاهرة كاملة
-     داخل السقف لأن العرض contain */
-  max-height:min(72vh,640px);
+  /* قبل معرفة أبعاد الصورة (أو عند غياب بنر) */
+  min-height:260px;
 }
+/* بوجود بنر: ارتفاع القسم = نسبة الصورة نفسها، فتملأه تماماً على كل المقاسات
+   بلا فراغ ولا قصّ. النسبة و has-banner تُضبطان من homera-tweaks.js.
+   السقف يمنع صورة شبه مربعة من ابتلاع الشاشة — وعندها تملأ بقصّ يسير. */
+.pagehero.has-banner{min-height:0;aspect-ratio:var(--pagehero-ratio);max-height:90vh;}
 .pagehero image-slot{position:absolute;inset:0;width:100%;height:100%;}
-.pagehero .veil{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(14,51,64,.18),rgba(14,51,64,.34));
-}
-.pagehero .inner{position:relative;text-align:center;padding:70px 20px;z-index:2;}
-/* عند وجود بنر يصبح ارتفاع القسم = ارتفاع الصورة تماماً بلا فراغ حولها:
-   نلغي الارتفاع الأدنى، ونرفع العنوان خارج التدفّق كي لا يفرض ارتفاعاً إضافياً. */
-.pagehero.has-banner{min-height:0;}
-.pagehero.has-banner .inner{position:absolute;inset:0;display:grid;place-items:center;padding:16px;}
-/* على الجوال تصبح الصورة العريضة أقصر من أن يتّسع العنوان فوقها دون أن يحجبها،
-   فنكدّسهما: البنر كاملاً بنسبته الأصلية، ثم العنوان تحته على الخلفية الداكنة.
-   has-banner تُضاف من homera-tweaks.js — بدون صورة يبقى القسم كما هو. */
-@media(max-width:700px){
-  .pagehero{min-height:230px;}
-  .pagehero .inner{padding:38px 16px;}
-  .pagehero.has-banner{display:block;min-height:0;aspect-ratio:auto;max-height:none;}
-  .pagehero.has-banner image-slot{
-    position:relative;inset:auto;display:block;width:100%;height:auto;
-    aspect-ratio:var(--pagehero-ratio,16/9);max-height:58vh;
-  }
-  .pagehero.has-banner .veil{display:none;}
-  .pagehero.has-banner .inner{position:relative;inset:auto;display:block;padding:26px 16px;}
-}
-.pagehero .tab{
-  display:inline-block;background:var(--petrol);color:#fff;
-  font-size:clamp(28px,4vw,44px);font-weight:var(--heading-weight);
-  padding:16px 40px;border-radius:var(--radius-sm);letter-spacing:-.01em;
-}
-.pagehero h1{color:#fff;font-size:clamp(30px,5vw,56px);font-weight:var(--heading-weight);letter-spacing:-.02em;}
 
 /* ============================================================
    بطاقات المشاريع (مشتركة)
