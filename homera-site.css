@@ -206,6 +206,10 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
   background:linear-gradient(180deg,rgba(14,51,64,.18),rgba(14,51,64,.34));
 }
 .pagehero .inner{position:relative;text-align:center;padding:70px 20px;z-index:2;}
+/* عند وجود بنر يصبح ارتفاع القسم = ارتفاع الصورة تماماً بلا فراغ حولها:
+   نلغي الارتفاع الأدنى، ونرفع العنوان خارج التدفّق كي لا يفرض ارتفاعاً إضافياً. */
+.pagehero.has-banner{min-height:0;}
+.pagehero.has-banner .inner{position:absolute;inset:0;display:grid;place-items:center;padding:16px;}
 /* على الجوال تصبح الصورة العريضة أقصر من أن يتّسع العنوان فوقها دون أن يحجبها،
    فنكدّسهما: البنر كاملاً بنسبته الأصلية، ثم العنوان تحته على الخلفية الداكنة.
    has-banner تُضاف من homera-tweaks.js — بدون صورة يبقى القسم كما هو. */
@@ -218,7 +222,7 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
     aspect-ratio:var(--pagehero-ratio,16/9);max-height:58vh;
   }
   .pagehero.has-banner .veil{display:none;}
-  .pagehero.has-banner .inner{padding:26px 16px;}
+  .pagehero.has-banner .inner{position:relative;inset:auto;display:block;padding:26px 16px;}
 }
 .pagehero .tab{
   display:inline-block;background:var(--petrol);color:#fff;
