@@ -30,6 +30,8 @@ const defaultSettings = {
   logo: '',
   logoSize: 46,
   heroImage: '',
+  heroImages: [],
+  heroSpeed: 5,
   aboutImage: '',
   aboutEyebrow: 'من نحن',
   aboutTitle: 'نبني الثقة قبل أن نبني العقار',

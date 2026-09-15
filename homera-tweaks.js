@@ -25,6 +25,8 @@
     logo: '',
     logoSize: 46,
     heroImage: '',
+    heroImages: [],
+    heroSpeed: 5,
     aboutImage: '',
     aboutEyebrow: 'من نحن',
     aboutTitle: 'نبني الثقة قبل أن نبني العقار',
@@ -157,10 +159,14 @@
     setText('[data-tw="stat4Num"]', t.stat4Num); setText('[data-tw="stat4Label"]', t.stat4Label);
 
     // الصور (عبر خاصية src في عنصر image-slot)
-    setSlotImg('home-hero', t.heroImage);
-    var heroSlot = document.getElementById('home-hero');
-    if (heroSlot) fitBanner(heroSlot.closest('.hero-centered'), heroSlot.getAttribute('src'));
-    setSlotImg('home-hero-split', t.heroImage);
+    // غلاف الرئيسية: سلايدر صور، ونسبة القسم تُؤخذ من الصورة الأولى
+    var heroList = heroImageList(t);
+    var heroFirst = window.HOMERA_renderHeroSlider
+      ? window.HOMERA_renderHeroSlider(heroList, t.heroSpeed)
+      : heroList[0];
+    fitBanner(document.querySelector('.hero-centered'), heroFirst);
+    setSlotImg('home-hero', heroList[0]);       // صفحات قديمة ما زالت تستخدم image-slot
+    setSlotImg('home-hero-split', heroList[0]);
     setSlotImg('about-img', t.aboutImage);
     setSlotImg('home-proj-fadila', t.projFadilaImg);
     setSlotImg('home-proj-roudah', t.projRoudahImg);
@@ -228,6 +234,13 @@
       host.classList.add('has-banner');
     };
     probe.src = url;
+  }
+
+  /* قائمة صور الغلاف؛ الإعدادات القديمة كانت تحفظ صورة واحدة في heroImage */
+  function heroImageList(t) {
+    var list = (Array.isArray(t.heroImages) ? t.heroImages : []).filter(Boolean);
+    if (!list.length && t.heroImage) list = [t.heroImage];
+    return list;
   }
 
   function setSlotImg(id, url) {

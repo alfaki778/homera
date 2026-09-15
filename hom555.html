@@ -46,7 +46,7 @@
 @media(max-width:1180px){.lp-grid{grid-template-columns:1fr;}}
 .lp-foot{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px;}
 .lp-foot .btn-ghost{text-decoration:none;display:inline-flex;align-items:center;}
-#heroImgPrev .thumb,#aboutImgPrev .thumb{width:130px;height:82px;}
+#aboutImgPrev .thumb{width:130px;height:82px;}
 /* ===== محرّر شركاء النجاح ===== */
 #lpPartnersCard{grid-column:1/-1;}
 .pt-list{display:grid;gap:10px;margin-top:12px;}
@@ -63,6 +63,11 @@
 .pt-thumb{width:104px;height:64px;flex:none;display:grid;place-items:center;padding:6px;
   border:1px solid var(--border);border-radius:9px;background:#fff;overflow:hidden;}
 .pt-thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+/* صور الهيرو صور فوتوغرافية — تملأ المصغّرة بدل الاحتواء على خلفية بيضاء */
+.pt-thumb.photo{padding:0;}
+.pt-thumb.photo img{width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;}
+.pt-caption{font-size:13.5px;color:var(--muted);}
+.pt-caption b{color:var(--text);}
 .pt-fields{flex:1;display:grid;gap:8px;min-width:0;}
 .pt-fields input{width:100%;box-sizing:border-box;min-height:40px;padding:9px 12px;font-family:inherit;
   font-size:13.5px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;}
@@ -406,16 +411,22 @@
               <div class="field"><label>الترويسة الصغيرة</label><input name="heroEyebrow"/></div>
               <div class="field"><label>العنوان الرئيسي</label><input name="heroTitle"/></div>
               <div class="field"><label>النص التعريفي</label><textarea name="heroText" rows="3"></textarea></div>
-              <div class="field"><label>صورة الهيرو</label>
-                <label class="uploader" for="heroImgInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>اضغط لاختيار صورة الهيرو</span></label>
-                <input type="file" id="heroImgInput" accept="image/*" hidden/>
+              <div class="field"><label>صور الهيرو (سلايدر)</label>
+                <label class="uploader" for="heroImgsInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>اضغط لإضافة صور الهيرو (يمكن اختيار عدة صور معاً)</span></label>
+                <input type="file" id="heroImgsInput" accept="image/*" multiple hidden/>
                 <ul class="up-notes">
-                  <li><b>المقاس المفضّل:</b> عرض 1400 بكسل وارتفاع 600 بكسل تقريباً — شكل عرضي أفقي. الصور الأكبر تُصغّر تلقائياً.</li>
-                  <li>تُعرض الصورة كبانر بنسبتها الأصلية <b>كاملةً على الشاشات الكبيرة</b>، باهتة قليلاً والعنوان والنص فوقها.</li>
-                  <li>على الجوال يحتاج النص ارتفاعاً أكبر من الصورة العريضة، فتُقصّ حوافها الجانبية — اجعل العنصر المهم في وسط الصورة.</li>
-                  <li>تجنّب الصور الأعرض من ذلك: مقاس مثل عرض 1400 وارتفاع 400 تُقصّ جوانبه على معظم شاشات الحاسوب لأن النص لا يتّسع في ارتفاعه.</li>
+                  <li><b>المقاس المفضّل:</b> عرض 1400 بكسل وارتفاع 600 بكسل تقريباً — ويُفضّل نفس المقاس لكل الصور.</li>
+                  <li><b>الصورة الأولى تحدّد ارتفاع الغلاف</b>، والصور ذات المقاس المختلف تملأ نفس المساحة بقصّ يسير.</li>
+                  <li>تظهر الصور باهتة قليلاً والعنوان والنص فوقها. على الجوال تُقصّ حوافها الجانبية لأن النص يحتاج ارتفاعاً أكبر — اجعل العنصر المهم في الوسط.</li>
+                  <li>صورة واحدة = غلاف ثابت بلا أسهم. صورتان فأكثر = سلايدر متحرك بسهمين على طرفي الصورة.</li>
                 </ul>
-                <div class="thumbs" id="heroImgPrev"></div>
+                <div class="pt-list" id="heroImgsList"></div>
+              </div>
+              <div class="field">
+                <label>مدة عرض كل صورة — <b id="heroSpeedVal">5 ثوانٍ</b></label>
+                <input type="range" id="heroSpeed" min="2" max="12" step="1" style="width:100%"/>
+                <div class="pt-scale"><span>أسرع</span><span>أبطأ</span></div>
+                <span class="hint">كلما قلّت المدة تبدّلت الصور أسرع. تتوقف الحركة مؤقتاً عند مرور المؤشّر فوق الغلاف، وتُطبَّق بعد «حفظ ونشر التعديلات».</span>
               </div>
             </div>
 
@@ -1427,7 +1438,7 @@
     contactPhone:'+966 53 042 5505', contactAddress:'حي الفيصلية، جدة، السعودية', contactEmail:'info@homera.sa',
     stat1Num:'+12', stat1Label:'سنة خبرة', stat2Num:'+40', stat2Label:'مشروع منجز',
     stat3Num:'+1500', stat3Label:'عميل سعيد', stat4Num:'6', stat4Label:'مدن نخدمها',
-    logo:'', logoSize:46, heroImage:'', aboutImage:'',
+    logo:'', logoSize:46, heroImage:'', heroImages:[], heroSpeed:5, aboutImage:'',
     projFadilaImg:'', projRoudahImg:'', projSalamahImg:'', projNaeemImg:'',
     partnersEyebrow:'شركاؤنا', partnersTitle:'شركاء النجاح',
     partnersText:'نفخر بشراكة نخبة من الجهات والمؤسسات التي تشاركنا الرؤية والالتزام.',
@@ -1472,7 +1483,6 @@
 
   var LP_IMAGES = [
     {key:'logo',         input:'logoInput',       prev:'logoPrev'},
-    {key:'heroImage',    input:'heroImgInput',    prev:'heroImgPrev'},
     {key:'aboutImage',   input:'aboutImgInput',   prev:'aboutImgPrev'}
   ];
   LP_EXTRA_GROUPS.forEach(function(g){ g.items.forEach(function(it){ LP_IMAGES.push({key:it.key, input:it.key+'Input', prev:it.key+'Prev'}); }); });
@@ -1497,6 +1507,12 @@
     lpForm.logoSize.value = String(t.logoSize||46);
     document.getElementById('logoSizeVal').textContent = String(t.logoSize||46);
     LP_IMAGES.forEach(function(im){ lpImgData[im.key]=t[im.key]||''; lpImgPrev(im.prev, lpImgData[im.key], im.key); });
+    /* الإعدادات القديمة كانت تحفظ صورة هيرو واحدة في heroImage */
+    heroImgsData = (Array.isArray(t.heroImages) ? t.heroImages : []).filter(Boolean).map(String);
+    if(!heroImgsData.length && t.heroImage) heroImgsData = [String(t.heroImage)];
+    renderHeroImgs();
+    heroSpeedEl.value = String(Number(t.heroSpeed) || 5);
+    document.getElementById('heroSpeedVal').textContent = heroSecondsLabel(heroSpeedEl.value);
     partnersData = normalizePartners(t.partners);
     renderPartners();
     partnersSpeedEl.value = String(Number(t.partnersSpeed) || 3);
@@ -1579,6 +1595,45 @@
     document.getElementById('partnersSpeedVal').textContent=PT_SPEED_LABELS[this.value]||'متوسطة';
   });
 
+  // ===== صور الهيرو (سلايدر) =====
+  var heroImgsData = [];
+  var heroImgsListEl = document.getElementById('heroImgsList');
+  var heroSpeedEl = document.getElementById('heroSpeed');
+  function heroSecondsLabel(n){ n=Number(n)||5; return n===2 ? 'ثانيتان' : (n<=10 ? n+' ثوانٍ' : n+' ثانية'); }
+  function renderHeroImgs(){
+    if(!heroImgsData.length){
+      heroImgsListEl.innerHTML='<div class="pt-empty">لا توجد صور — ستظهر صورة الغلاف الافتراضية. أضف صورتين أو أكثر لتفعيل السلايدر.</div>';
+      return;
+    }
+    var last=heroImgsData.length-1;
+    heroImgsListEl.innerHTML=heroImgsData.map(function(src,i){
+      return '<div class="pt-item" data-i="'+i+'">'+
+        '<div class="pt-thumb photo"><img src="'+esc(src)+'" alt=""></div>'+
+        '<div class="pt-fields"><span class="pt-caption"><b>الصورة '+(i+1)+'</b>'+(i===0?' — تحدّد ارتفاع الغلاف':'')+'</span></div>'+
+        '<div class="pt-actions">'+ptBtn('up','تقديم',i===0)+ptBtn('down','تأخير',i===last)+ptBtn('del','حذف',false)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  heroImgsListEl.addEventListener('click', function(e){
+    var btn=e.target.closest('[data-act]'); if(!btn) return;
+    var i=Number(btn.closest('.pt-item').dataset.i), act=btn.dataset.act;
+    if(act==='del') heroImgsData.splice(i,1);
+    else if(act==='up' && i>0) heroImgsData.splice(i-1,0,heroImgsData.splice(i,1)[0]);
+    else if(act==='down' && i<heroImgsData.length-1) heroImgsData.splice(i+1,0,heroImgsData.splice(i,1)[0]);
+    renderHeroImgs();
+  });
+  document.getElementById('heroImgsInput').addEventListener('change', function(){
+    var input=this, files=Array.prototype.slice.call(this.files||[]);
+    if(!files.length) return;
+    Promise.all(files.map(function(f){ return readFile(f); })).then(function(list){
+      list.forEach(function(d){ if(d) heroImgsData.push(d); });
+      input.value=''; renderHeroImgs();
+    });
+  });
+  heroSpeedEl.addEventListener('input', function(){
+    document.getElementById('heroSpeedVal').textContent=heroSecondsLabel(this.value);
+  });
+
   lpForm.addEventListener('submit', function(e){
     e.preventDefault();
     var t=lpReadStore();
@@ -1586,6 +1641,9 @@
     t.headingWeight = Number(lpForm.headingWeight.value);
     t.logoSize = Number(lpForm.logoSize.value);
     LP_IMAGES.forEach(function(im){ t[im.key]=lpImgData[im.key]||''; });
+    t.heroImages = heroImgsData.slice();
+    t.heroImage = heroImgsData[0] || '';   // للصفحات والإصدارات التي تقرأ صورة واحدة
+    t.heroSpeed = Number(heroSpeedEl.value) || 5;
     t.partners = partnersData.filter(function(p){ return !!p.img; }).map(function(p){
       return { img:p.img, name:String(p.name||'').trim(), url:String(p.url||'').trim() };
     });

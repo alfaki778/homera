@@ -13,7 +13,8 @@
 <script src="image-slot.js?v=3"></script>
 <script src="homera-api.js?v=5"></script>
 <script src="homera-partners.js?v=1"></script>
-<script src="homera-tweaks.js?v=7"></script>
+<script src="homera-hero-slider.js?v=1"></script>
+<script src="homera-tweaks.js?v=8"></script>
 <style>
 /* ===== الهيرو ===== */
 .hero{position:relative;overflow:hidden;}
@@ -24,7 +25,30 @@
 .hero-centered{
   display:none;position:relative;min-height:720px;place-items:center;text-align:center;overflow:hidden;
 }
-.hero-centered image-slot{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+/* شرائح الغلاف: متراكبة، والنشطة تظهر بتلاشٍ ناعم (homera-hero-slider.js) */
+.hero-slides{position:absolute;inset:0;z-index:0;}
+.hero-slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;}
+.hero-slide.is-active{opacity:1;}
+.hero-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+/* سهما التنقّل على طرفي الصورة — في الواجهة العربية «التالي» على اليسار */
+.hero-arrow{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+  width:50px;height:50px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;
+  border:1px solid rgba(255,255,255,.4);background:rgba(14,51,64,.38);color:#fff;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);transition:.2s ease;
+}
+.hero-arrow:hover,.hero-arrow:focus-visible{background:var(--gold);border-color:var(--gold);color:#22150A;outline:none;}
+.hero-arrow svg{width:22px;height:22px;}
+.hero-arrow.prev{right:24px;}
+.hero-arrow.next{left:24px;}
+/* تحت ~940px يمتدّ النص حتى طرفي الغلاف فيغطيه السهمان في المنتصف؛ ننقلهما إلى
+   الزاويتين السفليتين الفارغتين بدل تضييق النص وزيادة ارتفاع الغلاف */
+@media(max-width:940px){
+  .hero-arrow{top:auto;bottom:16px;transform:none;width:42px;height:42px;}
+  .hero-arrow.prev{right:14px;}
+  .hero-arrow.next{left:14px;}
+  .hero-arrow svg{width:19px;height:19px;}
+}
 /* بانر الغلاف: القسم يأخذ نسبة الصورة (--banner-ratio من homera-tweaks.js) فتظهر
    كاملة والنص فوقها. إن احتاج النص ارتفاعاً أكبر من الصورة (الجوال غالباً) يتمدّد
    القسم وتبقى الصورة مالئةً له بقصّ جانبي.
@@ -57,10 +81,8 @@
 .hero-scroll{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:3;display:grid;place-items:center;color:rgba(255,255,255,.65);}
 .hero-scroll svg{width:26px;height:26px;}
 @media (prefers-reduced-motion: no-preference){
-  [data-hero-variant="centered"] .hero-centered image-slot{animation:heroKB 9s ease-out forwards;}
   .hero-scroll svg{animation:heroBounce 1.9s ease-in-out infinite;}
 }
-@keyframes heroKB{from{transform:scale(1.12)}to{transform:scale(1)}}
 @keyframes heroBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
 
 /* --- المتغيّر: مقسوم --- */
@@ -251,8 +273,16 @@ a.partner-card:hover img{transform:scale(1.04);}
 <section class="hero">
   <!-- مركزي -->
   <div class="hero-centered">
-    <image-slot id="home-hero" src="uploads/1.jpg" placeholder="أفلت صورة الغلاف (مجلس / صالة)"></image-slot>
+    <div class="hero-slides" id="heroSlides" aria-roledescription="carousel" aria-label="صور الغلاف">
+      <div class="hero-slide is-active" aria-hidden="false"><img src="uploads/1.jpg" alt="" fetchpriority="high"/></div>
+    </div>
     <div class="veil"></div>
+    <button type="button" class="hero-arrow prev" aria-label="الصورة السابقة" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <button type="button" class="hero-arrow next" aria-label="الصورة التالية" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
     <div class="cnt">
       <h1 class="hero-title-anim">حياة عنوانها <span class="swap"><span class="w">الرقي</span><span class="w">الراحة</span></span></h1>
       <div class="hero-rule"></div>
