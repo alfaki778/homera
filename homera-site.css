@@ -198,7 +198,7 @@ html[data-btn-shape="bevel"] .btn, html[data-btn-shape="bevel"] .btn-wa-lg, html
 /* بوجود بنر: ارتفاع القسم = نسبة الصورة نفسها، فتملأه تماماً على كل المقاسات
    بلا فراغ ولا قصّ. النسبة و has-banner تُضبطان من homera-tweaks.js.
    السقف يمنع صورة شبه مربعة من ابتلاع الشاشة — وعندها تملأ بقصّ يسير. */
-.pagehero.has-banner{min-height:0;aspect-ratio:var(--pagehero-ratio);max-height:90vh;}
+.pagehero.has-banner{min-height:0;aspect-ratio:var(--banner-ratio);max-height:90vh;}
 .pagehero image-slot{position:absolute;inset:0;width:100%;height:100%;}
 
 /* ============================================================

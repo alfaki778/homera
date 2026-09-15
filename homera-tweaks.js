@@ -158,6 +158,8 @@
 
     // الصور (عبر خاصية src في عنصر image-slot)
     setSlotImg('home-hero', t.heroImage);
+    var heroSlot = document.getElementById('home-hero');
+    if (heroSlot) fitBanner(heroSlot.closest('.hero-centered'), heroSlot.getAttribute('src'));
     setSlotImg('home-hero-split', t.heroImage);
     setSlotImg('about-img', t.aboutImage);
     setSlotImg('home-proj-fadila', t.projFadilaImg);
@@ -166,7 +168,7 @@
     setSlotImg('home-proj-naeem', t.projNaeemImg);
     // صفحة المشاريع
     setSlotImg('projects-banner', t.pgProjectsBanner);
-    fitPageHero(t.pgProjectsBanner);
+    fitBanner(document.querySelector('.pagehero'), t.pgProjectsBanner);
     // بديل تلقائي: إن لم توجد صورة خاصة بصفحة المشاريع، استخدم صورة الصفحة الرئيسية
     setSlotImg('p-fadila', t.pgPFadila || t.projFadilaImg);
     setSlotImg('p-roudah', t.pgPRoudah || t.projRoudahImg);
@@ -215,16 +217,15 @@
     document.querySelectorAll('a[href^="mailto:"]').forEach(function (el) { el.href = mailHref; });
   }
 
-  /* البنر يُعرض كاملاً (fit=contain)؛ نمنح القسم نسبة الصورة نفسها كي تملأه
-     تماماً على الشاشات العريضة بدل ترك فراغ فوقها وتحتها */
-  function fitPageHero(url) {
-    var hero = document.querySelector('.pagehero');
-    if (!hero || !url) return;
+  /* قسم بانر (غلاف الرئيسية / بنر صفحة المشاريع): نمنحه نسبة الصورة نفسها
+     عبر --banner-ratio كي تملأه تماماً بدل ارتفاع ثابت يقصّها أو يترك فراغاً */
+  function fitBanner(host, url) {
+    if (!host || !url) return;
     var probe = new Image();
     probe.onload = function () {
       if (!probe.naturalWidth || !probe.naturalHeight) return;
-      hero.style.setProperty('--pagehero-ratio', probe.naturalWidth + ' / ' + probe.naturalHeight);
-      hero.classList.add('has-banner');
+      host.style.setProperty('--banner-ratio', probe.naturalWidth + ' / ' + probe.naturalHeight);
+      host.classList.add('has-banner');
     };
     probe.src = url;
   }
