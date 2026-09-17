@@ -32,6 +32,7 @@ const defaultSettings = {
   heroImage: '',
   heroImages: [],
   heroSpeed: 5,
+  heroDim: 40,
   aboutImage: '',
   aboutEyebrow: 'من نحن',
   aboutTitle: 'نبني الثقة قبل أن نبني العقار',

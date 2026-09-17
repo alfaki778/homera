@@ -27,6 +27,7 @@
     heroImage: '',
     heroImages: [],
     heroSpeed: 5,
+    heroDim: 40,
     aboutImage: '',
     aboutEyebrow: 'من نحن',
     aboutTitle: 'نبني الثقة قبل أن نبني العقار',
@@ -159,6 +160,10 @@
     setText('[data-tw="stat4Num"]', t.stat4Num); setText('[data-tw="stat4Label"]', t.stat4Label);
 
     // الصور (عبر خاصية src في عنصر image-slot)
+    // ضبابية الغلاف (0-100 من لوحة التحكم) — الطبقة فوق الصورة
+    var dim = Math.min(100, Math.max(0, Number(t.heroDim)));
+    r.setProperty('--hero-dim', String((isNaN(dim) ? 40 : dim) / 100));
+
     // غلاف الرئيسية: سلايدر صور، ونسبة القسم تُؤخذ من الصورة الأولى
     var heroList = heroImageList(t);
     var heroFirst = window.HOMERA_renderHeroSlider

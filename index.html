@@ -14,7 +14,7 @@
 <script src="homera-api.js?v=5"></script>
 <script src="homera-partners.js?v=1"></script>
 <script src="homera-hero-slider.js?v=1"></script>
-<script src="homera-tweaks.js?v=8"></script>
+<script src="homera-tweaks.js?v=9"></script>
 <style>
 /* ===== الهيرو ===== */
 .hero{position:relative;overflow:hidden;}
@@ -60,9 +60,13 @@
   aspect-ratio:var(--banner-ratio);max-height:88vh;overflow:clip;
 }
 /* تعتيم خفيف متجانس: الصورة تبدو باهتة قليلاً ويبقى النص الأبيض واضحاً */
+/* شدّة الضبابية تُضبط من لوحة التحكم (heroDim) عبر --hero-dim؛ الأسفل أعتم
+   قليلاً من الأعلى ليبقى الزر وسهم التمرير واضحين */
 .hero-centered .veil{
   position:absolute;inset:0;z-index:1;
-  background:linear-gradient(180deg,rgba(14,51,64,.40) 0%,rgba(14,51,64,.56) 100%);
+  background:linear-gradient(180deg,
+    rgba(14,51,64,calc(var(--hero-dim,.40))) 0%,
+    rgba(14,51,64,calc(var(--hero-dim,.40) * 1.4)) 100%);
 }
 /* الحشوة السفلية أكبر بـ 30px لتحجز مكان سهم «مرّر للأسفل» فلا يتداخل مع الزر
    حين يكون القسم بارتفاع النص تماماً */
